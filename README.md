@@ -8,6 +8,8 @@
 
 ---
 
+![OpenAEON Architecture](https://github.com/user-attachments/assets/81111427-3e68-4620-b6e9-e3ba5f36a5ea)
+
 ---
 
 <div align="center">
