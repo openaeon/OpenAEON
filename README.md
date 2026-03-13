@@ -103,7 +103,7 @@ For headless or containerized environments:
 对于无头或容器化环境：
 
 ```bash
-git clone https://github.com/openaeon/OpenAEON.git
+git clone https://github.com/gu2003li/OpenAEON.git
 cd OpenAEON
 ./docker-setup.sh
 ```
