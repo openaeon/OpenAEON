@@ -74,16 +74,6 @@ Inspired by fractal geometry, every turn of the engine is an iteration. **Diverg
 
 ## 🛠 Installation / 安装教程
 
-### Quick Start (CLI) / 快速开始
-The fastest way to experience OpenAEON is via our one-line installer:
-
-体验 OpenAEON 最快的方式是通过我们的单行安装程序：
-
-```bash
-# macOS / Linux / WSL2
-curl -fsSL https://openaeon.ai/install.sh | bash
-```
-
 ### From Source (Developer) / 源码安装（开发者）
 For contributors or those who want to run from a local checkout:
 
@@ -91,7 +81,7 @@ For contributors or those who want to run from a local checkout:
 
 ```bash
 # 克隆仓库
-git clone https://github.com/openaeon/OpenAEON.git
+git clone https://github.com/gu2003li/OpenAEON.git
 cd OpenAEON
 
 # 安装项目依赖
@@ -113,7 +103,7 @@ For headless or containerized environments:
 对于无头或容器化环境：
 
 ```bash
-git clone https://github.com/openaeon/OpenAEON.git
+git clone https://github.com/gu2003li/OpenAEON.git
 cd OpenAEON
 ./docker-setup.sh
 ```
