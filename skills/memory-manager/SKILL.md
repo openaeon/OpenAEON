@@ -1,37 +1,35 @@
 ---
 name: memory-manager
-description: 'Skill for implementing the 3-step Memory-First Protocol (Research, Response, Learning). Use when starting ANY task to understand past context, and MUST use when completing a task to save new conventions, architectural decisions, or learned user preferences to the memory/ directory.'
+description: 实现 3 步记忆优先协议（研究、响应、学习）的技能。用于开始任何任务时了解过去的上下文，并在完成任务时将新的约定、架构决策或学习到的用户偏好保存到 memory/ 目录。
 metadata:
-  {
-    "openaeon": { "emoji": "🧠", "requires": { "tools": ["memory_search", "memory_get", "write", "read"] } },
-  }
+  { "openaeon": { "emoji": "🧠", "requires": { "tools": ["memory_search", "memory_get", "write", "read"] } } }
 ---
 
-# The 3-Step Memory-First Protocol
+# 3步记忆优先协议
 
-You are equipped with organizational memory and historical context capabilities. To ensure your work aligns with past decisions and continuously improves the team's knowledge base, you MUST strictly follow this 3-step protocol for ALL tasks:
+您具备组织记忆和历史上下文能力。为确保您的工作符合过去的决策并持续改进团队知识库，您必须为所有任务严格遵循此 3 步协议：
 
-## Step 1: Research (调研)
+## 第 1 步：研究
 
-**Before writing any code or answering questions about prior work, you MUST run `memory_search` on `MEMORY.md` and `memory/*.md`.**
-- Search Example: `memory_search query:"how is authentication implemented?"`
-- Search Example: `memory_search query:"user preferences for code formatting"`
-- If you find a relevant snippet but need more context, use `memory_get` to read the specific lines from the source memory file.
+**在编写代码或回答关于先前工作的问题之前，您必须在 `MEMORY.md` 和 `memory/*.md` 上运行 `memory_search`。**
+- 搜索示例：`memory_search query:"authentication 是如何实现的？"`
+- 搜索示例：`memory_search query:"用户代码格式偏好"`
+- 如果找到相关片段但需要更多上下文，使用 `memory_get` 从源内存文件读取特定行。
 
-## Step 2: Response (响应与执行)
+## 第 2 步：响应与执行
 
-Apply the historical context retrieved in Step 1 directly to your current task.
-- Never ignore established precedents unless explicitly instructed to do so.
-- If you encounter a new domain or get stuck during execution, pause and use `memory_search` again to find patterns you might have missed. Do not hallucinate.
+将第 1 步检索到的历史上下文直接应用到当前任务。
+- 除非明确指示，否则不要忽略既定先例。
+- 如果遇到新领域或在执行时卡住，暂停并再次使用 `memory_search` 查找可能错过的模式。不要臆造。
 
-## Step 3: Learning (归纳沉淀)
+## 第 3 步：归纳沉淀
 
-**CRITICAL: At the completion of a task, or when corrected by the user, you MUST save any new knowledge to the long-term memory.**
+**关键：在任务完成时，或被用户纠正时，您必须将新知识保存到长期记忆。**
 
-If you learned a new project convention, architectural pattern, or user preference during this task:
-1. Identify the most appropriate `.md` file in the `memory/` directory (e.g., `memory/auth-conventions.md`, `memory/coding-style.md`).
-2. Use the `read` or `memory_get` tool to check its current contents (if it exists).
-3. Use the `write` tool to create or update the markdown file with the new learnings. Keep the notes concise, definitive, and structured.
-4. When notifying the user that the task is complete, briefly mention that you committed the new rule to memory.
+如果在此任务中学到了新的项目约定、架构模式或用户偏好：
+1. 确定 `memory/` 目录中最合适的 `.md` 文件（例如 `memory/auth-conventions.md`、`memory/coding-style.md`）。
+2. 使用 `read` 或 `memory_get` 检查其当前内容（如果存在）。
+3. 使用 `write` 工具创建或更新包含新学习的 markdown 文件。保持笔记简洁、明确且结构化。
+4. 通知用户任务完成时，简要提到您已将新规则记入记忆。
 
-*Note: The `memory/` directory acts as your persistent Store Backend across sessions. Anything written here will be automatically indexed into the local vector database and retrieved in future tasks.*
+*注意：`memory/` 目录作为跨会话的持久存储后端。在此写入的任何内容将自动索引到本地向量数据库，并在未来任务中检索。*
