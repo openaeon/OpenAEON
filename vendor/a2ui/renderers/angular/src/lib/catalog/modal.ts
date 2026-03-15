@@ -14,13 +14,13 @@
  limitations under the License.
  */
 
-import { Component, signal, viewChild, ElementRef, effect } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Types } from '@a2ui/lit/0.8';
-import { Renderer } from '../rendering';
+import { Component, signal, viewChild, ElementRef, effect } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Types } from "@a2ui/lit/0.8";
+import { Renderer } from "../rendering";
 
 @Component({
-  selector: 'a2ui-modal',
+  selector: "a2ui-modal",
   imports: [Renderer],
   template: `
     @if (showDialog()) {
@@ -77,7 +77,7 @@ import { Renderer } from '../rendering';
 })
 export class Modal extends DynamicComponent<Types.ModalNode> {
   protected readonly showDialog = signal(false);
-  protected readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dialog');
+  protected readonly dialog = viewChild<ElementRef<HTMLDialogElement>>("dialog");
 
   constructor() {
     super();

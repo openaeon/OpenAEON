@@ -442,7 +442,7 @@ function renderJsonCard(jsonText: string) {
     if (typeof data !== "object" || data === null) return nothing;
 
     const entries = Object.entries(data);
-    
+
     // Group keys into "Status/Meta" and "Content"
     const metaKeys = ["status", "id", "updated", "ok", "error", "code"];
     const meta = entries.filter(([k]) => metaKeys.includes(k.toLowerCase()));
@@ -450,14 +450,20 @@ function renderJsonCard(jsonText: string) {
 
     return html`
       <div class="json-card">
-        ${meta.length > 0 ? html`
+        ${
+          meta.length > 0
+            ? html`
           <div class="json-card-group">
             <div class="json-card-group__title">Logic Trace (逻辑追踪)</div>
             ${meta.map(([k, v]) => renderSimpleKeyValue(k, v))}
           </div>
-        ` : nothing}
+        `
+            : nothing
+        }
         
-        ${content.length > 0 ? html`
+        ${
+          content.length > 0
+            ? html`
           <div class="json-card-group">
             <div class="json-card-group__title">Data Synthesis (数据综合)</div>
             ${content.slice(0, 8).map(([k, v]) => {
@@ -473,7 +479,9 @@ function renderJsonCard(jsonText: string) {
             })}
             ${content.length > 8 ? html`<div class="json-kv" style="opacity:0.5; font-size:10px;">+ ${content.length - 8} more fields...</div>` : nothing}
           </div>
-        ` : nothing}
+        `
+            : nothing
+        }
       </div>
     `;
   } catch {
@@ -501,7 +509,8 @@ export function renderToolCardSidebar(card: ToolCard, onOpenSidebar?: (content: 
         }
       : undefined;
 
-  const isJson = hasText && (card.text?.trim().startsWith("{") || card.text?.trim().startsWith("["));
+  const isJson =
+    hasText && (card.text?.trim().startsWith("{") || card.text?.trim().startsWith("["));
   const isShort = hasText && (card.text?.length ?? 0) <= TOOL_INLINE_THRESHOLD;
   const showCollapsed = hasText && !isShort && !isJson;
   const showInline = hasText && isShort && !isJson;

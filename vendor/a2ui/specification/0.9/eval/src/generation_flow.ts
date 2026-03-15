@@ -64,10 +64,7 @@ Request:
 ${prompt}
 `;
     const estimatedInputTokens = Math.ceil(fullPrompt.length / 2.5);
-    await rateLimiter.acquirePermit(
-      modelConfig as ModelConfiguration,
-      estimatedInputTokens
-    );
+    await rateLimiter.acquirePermit(modelConfig as ModelConfiguration, estimatedInputTokens);
 
     // Generate text response
     let response;
@@ -102,19 +99,16 @@ ${prompt}
 
     if (!candidate) {
       logger.error(
-        `No candidates returned in response. Full response: ${JSON.stringify(response, null, 2)}`
+        `No candidates returned in response. Full response: ${JSON.stringify(response, null, 2)}`,
       );
       throw new Error("No candidates returned");
     }
 
-    if (
-      candidate.finishReason !== "STOP" &&
-      candidate.finishReason !== undefined
-    ) {
+    if (candidate.finishReason !== "STOP" && candidate.finishReason !== undefined) {
       logger.warn(
         `Model finished with reason: ${candidate.finishReason}. Content: ${JSON.stringify(
-          candidate.content
-        )}`
+          candidate.content,
+        )}`,
       );
     }
 
@@ -129,20 +123,13 @@ ${prompt}
     // For safety, we just record any *additional* tokens if we under-estimated.
     // And we definitely record the output tokens.
 
-    const additionalInputTokens = Math.max(
-      0,
-      inputTokens - estimatedInputTokens
-    );
+    const additionalInputTokens = Math.max(0, inputTokens - estimatedInputTokens);
     const tokensToAdd = additionalInputTokens + outputTokens;
 
     if (tokensToAdd > 0) {
-      rateLimiter.recordUsage(
-        modelConfig as ModelConfiguration,
-        tokensToAdd,
-        false
-      );
+      rateLimiter.recordUsage(modelConfig as ModelConfiguration, tokensToAdd, false);
     }
 
     return { text: response.text, latency };
-  }
+  },
 );

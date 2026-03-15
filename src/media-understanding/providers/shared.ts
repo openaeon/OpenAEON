@@ -19,6 +19,7 @@ export async function fetchWithTimeoutGuarded(
     ssrfPolicy?: SsrFPolicy;
     lookupFn?: LookupFn;
     pinDns?: boolean;
+    proxy?: string;
   },
 ): Promise<GuardedFetchResult> {
   return await fetchWithSsrFGuard({
@@ -29,6 +30,7 @@ export async function fetchWithTimeoutGuarded(
     policy: options?.ssrfPolicy,
     lookupFn: options?.lookupFn,
     pinDns: options?.pinDns,
+    proxy: options?.proxy,
   });
 }
 
@@ -39,6 +41,7 @@ export async function postTranscriptionRequest(params: {
   timeoutMs: number;
   fetchFn: typeof fetch;
   allowPrivateNetwork?: boolean;
+  proxy?: string;
 }) {
   return fetchWithTimeoutGuarded(
     params.url,
@@ -49,7 +52,10 @@ export async function postTranscriptionRequest(params: {
     },
     params.timeoutMs,
     params.fetchFn,
-    params.allowPrivateNetwork ? { ssrfPolicy: { allowPrivateNetwork: true } } : undefined,
+    {
+      ssrfPolicy: params.allowPrivateNetwork ? { allowPrivateNetwork: true } : undefined,
+      proxy: params.proxy,
+    },
   );
 }
 

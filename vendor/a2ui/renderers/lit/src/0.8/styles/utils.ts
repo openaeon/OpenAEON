@@ -21,9 +21,7 @@ export function merge(...classes: Array<Record<string, boolean>>) {
   for (const clazz of classes) {
     for (const [key, val] of Object.entries(clazz)) {
       const prefix = key.split("-").with(-1, "").join("-");
-      const existingKeys = Object.keys(styles).filter((key) =>
-        key.startsWith(prefix)
-      );
+      const existingKeys = Object.keys(styles).filter((key) => key.startsWith(prefix));
 
       for (const existingKey of existingKeys) {
         delete styles[existingKey];
@@ -81,9 +79,7 @@ export function appendToAll(
   return updatedTarget;
 }
 
-export function createThemeStyles(
-  palettes: ColorPalettes
-): Record<string, string> {
+export function createThemeStyles(palettes: ColorPalettes): Record<string, string> {
   const styles: Record<string, string> = {};
   for (const palette of Object.values(palettes)) {
     for (const [key, val] of Object.entries(palette)) {

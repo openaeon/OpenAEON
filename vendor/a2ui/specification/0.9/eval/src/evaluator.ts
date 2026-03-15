@@ -27,17 +27,15 @@ export class Evaluator {
   constructor(
     private schemas: any,
     private evalModel: string,
-    private outputDir?: string
+    private outputDir?: string,
   ) {}
 
   async run(results: ValidatedResult[]): Promise<EvaluatedResult[]> {
-    const passedResults = results.filter(
-      (r) => r.validationErrors.length === 0 && r.components
-    );
+    const passedResults = results.filter((r) => r.validationErrors.length === 0 && r.components);
     const skippedCount = results.length - passedResults.length;
 
     logger.info(
-      `Starting Phase 3: LLM Evaluation (${passedResults.length} items to evaluate, ${skippedCount} skipped due to validation failure)`
+      `Starting Phase 3: LLM Evaluation (${passedResults.length} items to evaluate, ${skippedCount} skipped due to validation failure)`,
     );
 
     const totalJobs = passedResults.length;
@@ -74,13 +72,10 @@ export class Evaluator {
 
     const progressInterval = setInterval(() => {
       const queuedCount = rateLimiter.waitingCount;
-      const inProgressCount =
-        totalJobs - completedCount - failedCount - queuedCount;
-      const pct = Math.round(
-        ((completedCount + failedCount) / totalJobs) * 100
-      );
+      const inProgressCount = totalJobs - completedCount - failedCount - queuedCount;
+      const pct = Math.round(((completedCount + failedCount) / totalJobs) * 100);
       process.stderr.write(
-        `\r[Phase 3] Progress: ${pct}% | Completed: ${completedCount} | In Progress: ${inProgressCount} | Queued: ${queuedCount} | Failed: ${failedCount}          `
+        `\r[Phase 3] Progress: ${pct}% | Completed: ${completedCount} | In Progress: ${inProgressCount} | Queued: ${queuedCount} | Failed: ${failedCount}          `,
       );
     }, 1000);
 
@@ -93,7 +88,7 @@ export class Evaluator {
         }
         evaluatedResults.push(evalResult);
         return evalResult;
-      })
+      }),
     );
 
     await Promise.all(promises);
@@ -126,16 +121,14 @@ export class Evaluator {
       } catch (e: any) {
         if (evalRetry === maxEvalRetries - 1) {
           logger.warn(
-            `Evaluation failed for ${result.prompt.name} run ${result.runNumber}: ${e.message}`
+            `Evaluation failed for ${result.prompt.name} run ${result.runNumber}: ${e.message}`,
           );
           evaluationResult = {
             pass: false,
             reason: `Evaluation flow failed: ${e.message}`,
           };
         } else {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * Math.pow(2, evalRetry))
-          );
+          await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, evalRetry)));
         }
       }
     }
@@ -158,9 +151,7 @@ export class Evaluator {
 
     return {
       ...result,
-      evaluationResult: evaluationResult
-        ? { ...evaluationResult, overallSeverity }
-        : undefined,
+      evaluationResult: evaluationResult ? { ...evaluationResult, overallSeverity } : undefined,
     };
   }
 
@@ -172,33 +163,24 @@ export class Evaluator {
       issues?: { issue: string; severity: IssueSeverity }[];
       evalPrompt?: string;
     },
-    overallSeverity?: IssueSeverity
+    overallSeverity?: IssueSeverity,
   ) {
     if (!this.outputDir) return;
 
     // Only save if the evaluation failed
     if (evaluationResult.pass) return;
 
-    const modelDir = path.join(
-      this.outputDir,
-      `output-${result.modelName.replace(/[\/:]/g, "_")}`
-    );
+    const modelDir = path.join(this.outputDir, `output-${result.modelName.replace(/[/:]/g, "_")}`);
     const detailsDir = path.join(modelDir, "details");
     fs.writeFileSync(
-      path.join(
-        detailsDir,
-        `${result.prompt.name}.${result.runNumber}.failed.yaml`
-      ),
-      yaml.dump({ ...evaluationResult, overallSeverity })
+      path.join(detailsDir, `${result.prompt.name}.${result.runNumber}.failed.yaml`),
+      yaml.dump({ ...evaluationResult, overallSeverity }),
     );
 
     if (evaluationResult.evalPrompt) {
       fs.writeFileSync(
-        path.join(
-          detailsDir,
-          `${result.prompt.name}.${result.runNumber}.eval_prompt.txt`
-        ),
-        evaluationResult.evalPrompt
+        path.join(detailsDir, `${result.prompt.name}.${result.runNumber}.eval_prompt.txt`),
+        evaluationResult.evalPrompt,
       );
     }
   }

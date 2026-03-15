@@ -14,16 +14,16 @@
  limitations under the License.
  */
 
-import { Component, input } from '@angular/core';
-import { Types } from '@a2ui/lit/0.8';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Renderer } from '../rendering/renderer';
+import { Component, input } from "@angular/core";
+import { Types } from "@a2ui/lit/0.8";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Renderer } from "../rendering/renderer";
 
 @Component({
-  selector: 'a2ui-list',
+  selector: "a2ui-list",
   imports: [Renderer],
   host: {
-    '[attr.direction]': 'direction()',
+    "[attr.direction]": "direction()",
   },
   styles: `
     :host {
@@ -33,11 +33,11 @@ import { Renderer } from '../rendering/renderer';
       overflow: auto;
     }
 
-    :host([direction='vertical']) section {
+    :host([direction="vertical"]) section {
       display: grid;
     }
 
-    :host([direction='horizontal']) section {
+    :host([direction="horizontal"]) section {
       display: flex;
       max-width: 100%;
       overflow-x: scroll;
@@ -59,5 +59,5 @@ import { Renderer } from '../rendering/renderer';
   `,
 })
 export class List extends DynamicComponent<Types.ListNode> {
-  readonly direction = input<'vertical' | 'horizontal'>('vertical');
+  readonly direction = input<"vertical" | "horizontal">("vertical");
 }

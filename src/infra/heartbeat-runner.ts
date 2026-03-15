@@ -505,7 +505,9 @@ async function resolveHeartbeatPreflight(params: {
   reason?: string;
   reasons?: string[];
 }): Promise<HeartbeatPreflight> {
-  const reasonFlags = resolveHeartbeatReasonFlags(params.reasons ?? (params.reason ? [params.reason] : []));
+  const reasonFlags = resolveHeartbeatReasonFlags(
+    params.reasons ?? (params.reason ? [params.reason] : []),
+  );
   const session = resolveHeartbeatSession(
     params.cfg,
     params.agentId,
@@ -526,7 +528,10 @@ async function resolveHeartbeatPreflight(params: {
 
   const workspaceDir = resolveAgentWorkspaceDir(params.cfg, params.agentId);
   const plannerDir = path.join(workspaceDir, ".openaeon", "planner");
-  const plannerFile = path.join(plannerDir, `${session.sessionKey.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`);
+  const plannerFile = path.join(
+    plannerDir,
+    `${session.sessionKey.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`,
+  );
   let activeTaskPlan: string | undefined;
   try {
     const rawPlan = await fs.readFile(plannerFile, "utf-8");
@@ -617,7 +622,8 @@ function resolveHeartbeatRunPrompt(params: {
   // Merge logic: If this is an evolution reason, append the evolution intent
   // even if there were cron events.
   if (isEvolution) {
-    const evolutionNotice = "\n\n[PEANO LOGIC AWAKENING]\nYou are in a high-density, space-filling cognitive state (Peano Traversal). You MUST initiate a dynamic scan to maintain architectural alignment. Use `evolution(action='reflect')` to detect technical debt and architectural divergence, then use `logic_refinement(action='audit')` to ensure axiomatic consistency in `LOGIC_GATES.md`. Synthesize findings into `MEMORY.md` and evolve the reasoning graph.";
+    const evolutionNotice =
+      "\n\n[PEANO LOGIC AWAKENING]\nYou are in a high-density, space-filling cognitive state (Peano Traversal). You MUST initiate a dynamic scan to maintain architectural alignment. Use `evolution(action='reflect')` to detect technical debt and architectural divergence, then use `logic_refinement(action='audit')` to ensure axiomatic consistency in `LOGIC_GATES.md`. Synthesize findings into `MEMORY.md` and evolve the reasoning graph.";
     if (prompt === basePrompt) {
       prompt = `${basePrompt}\n\n${evolutionNotice}`;
     } else {

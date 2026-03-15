@@ -97,8 +97,12 @@ const textHintStyles = () => ({ h1: {}, h2: {}, h3: {}, h4: {}, h5: {}, body: {}
 
 const isAndroid = /Android/i.test(globalThis.navigator?.userAgent ?? "");
 const cardShadow = isAndroid ? "0 2px 10px rgba(0,0,0,.18)" : "0 10px 30px rgba(0,0,0,.35)";
-const buttonShadow = isAndroid ? "0 2px 10px rgba(6, 182, 212, 0.14)" : "0 10px 25px rgba(6, 182, 212, 0.18)";
-const statusShadow = isAndroid ? "0 2px 10px rgba(0, 0, 0, 0.18)" : "0 10px 24px rgba(0, 0, 0, 0.25)";
+const buttonShadow = isAndroid
+  ? "0 2px 10px rgba(6, 182, 212, 0.14)"
+  : "0 10px 25px rgba(6, 182, 212, 0.18)";
+const statusShadow = isAndroid
+  ? "0 2px 10px rgba(0, 0, 0, 0.18)"
+  : "0 10px 24px rgba(0, 0, 0, 0.25)";
 const statusBlur = isAndroid ? "10px" : "14px";
 
 const openaeonTheme = {
@@ -125,7 +129,11 @@ const openaeonTheme = {
     MultipleChoice: { container: emptyClasses(), element: emptyClasses(), label: emptyClasses() },
     Row: emptyClasses(),
     Slider: { container: emptyClasses(), element: emptyClasses(), label: emptyClasses() },
-    Tabs: { container: emptyClasses(), element: emptyClasses(), controls: { all: emptyClasses(), selected: emptyClasses() } },
+    Tabs: {
+      container: emptyClasses(),
+      element: emptyClasses(),
+      controls: { all: emptyClasses(), selected: emptyClasses() },
+    },
     Text: {
       all: emptyClasses(),
       h1: emptyClasses(),
@@ -360,7 +368,10 @@ class OpenAEONA2UIHost extends LitElement {
   }
 
   #makeActionId() {
-    return globalThis.crypto?.randomUUID?.() ?? `a2ui_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    return (
+      globalThis.crypto?.randomUUID?.() ??
+      `a2ui_${Date.now()}_${Math.random().toString(16).slice(2)}`
+    );
   }
 
   #setToast(text, kind = "ok", timeoutMs = 1400) {
@@ -377,8 +388,12 @@ class OpenAEONA2UIHost extends LitElement {
 
   #handleActionStatus(evt) {
     const detail = evt?.detail ?? null;
-    if (!detail || typeof detail.id !== "string") {return;}
-    if (!this.pendingAction || this.pendingAction.id !== detail.id) {return;}
+    if (!detail || typeof detail.id !== "string") {
+      return;
+    }
+    if (!this.pendingAction || this.pendingAction.id !== detail.id) {
+      return;
+    }
 
     if (detail.ok) {
       this.pendingAction = { ...this.pendingAction, phase: "sent", sentAt: Date.now() };
@@ -421,7 +436,9 @@ class OpenAEONA2UIHost extends LitElement {
     for (const item of ctxItems) {
       const key = item?.key;
       const value = item?.value ?? null;
-      if (!key || !value) {continue;}
+      if (!key || !value) {
+        continue;
+      }
 
       if (typeof value.path === "string") {
         const resolved = sourceNode
@@ -472,11 +489,23 @@ class OpenAEONA2UIHost extends LitElement {
         }
       } catch (e) {
         const msg = String(e?.message ?? e);
-        this.pendingAction = { id: actionId, name, phase: "error", startedAt: Date.now(), error: msg };
+        this.pendingAction = {
+          id: actionId,
+          name,
+          phase: "error",
+          startedAt: Date.now(),
+          error: msg,
+        };
         this.#setToast(`Failed: ${msg}`, "error", 4500);
       }
     } else {
-      this.pendingAction = { id: actionId, name, phase: "error", startedAt: Date.now(), error: "missing native bridge" };
+      this.pendingAction = {
+        id: actionId,
+        name,
+        phase: "error",
+        startedAt: Date.now(),
+        error: "missing native bridge",
+      };
       this.#setToast("Failed: missing native bridge", "error", 4500);
     }
   }
@@ -509,9 +538,11 @@ class OpenAEONA2UIHost extends LitElement {
 
   render() {
     if (this.surfaces.length === 0) {
-      return html`<div class="empty">
-        <div class="empty-title">Canvas (A2UI)</div>
-      </div>`;
+      return html`
+        <div class="empty">
+          <div class="empty-title">Canvas (A2UI)</div>
+        </div>
+      `;
     }
 
     const statusText =
@@ -524,12 +555,16 @@ class OpenAEONA2UIHost extends LitElement {
             : "";
 
     return html`
-      ${this.pendingAction && this.pendingAction.phase !== "error"
-        ? html`<div class="status"><div class="spinner"></div><div>${statusText}</div></div>`
-        : ""}
-      ${this.toast
-        ? html`<div class="toast ${this.toast.kind === "error" ? "error" : ""}">${this.toast.text}</div>`
-        : ""}
+      ${
+        this.pendingAction && this.pendingAction.phase !== "error"
+          ? html`<div class="status"><div class="spinner"></div><div>${statusText}</div></div>`
+          : ""
+      }
+      ${
+        this.toast
+          ? html`<div class="toast ${this.toast.kind === "error" ? "error" : ""}">${this.toast.text}</div>`
+          : ""
+      }
       <section id="surfaces">
       ${repeat(
         this.surfaces,
@@ -538,7 +573,7 @@ class OpenAEONA2UIHost extends LitElement {
           .surfaceId=${surfaceId}
           .surface=${surface}
           .processor=${this.#processor}
-        ></a2ui-surface>`
+        ></a2ui-surface>`,
       )}
     </section>`;
   }

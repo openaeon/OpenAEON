@@ -280,7 +280,7 @@
 }
 
 /* Hide the "Message" label - keep textarea only */
-.chat-compose__field>span {
+.chat-compose__field > span {
   display: none;
 }
 

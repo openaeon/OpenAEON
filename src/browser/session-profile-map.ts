@@ -87,8 +87,8 @@ function enqueueWrite(map: Record<string, string>): void {
 export function sessionKeyToProfileName(sessionKey: string): string {
   const normalized = sessionKey
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")   // non-alphanum → hyphens
-    .replace(/^-+|-+$/g, "");       // trim leading/trailing hyphens
+    .replace(/[^a-z0-9]+/g, "-") // non-alphanum → hyphens
+    .replace(/^-+|-+$/g, ""); // trim leading/trailing hyphens
 
   const raw = `${SESSION_PROFILE_PREFIX}${normalized}`;
   // Truncate to stay within sane limits
@@ -110,10 +110,7 @@ export function getSessionProfile(sessionKey: string): string | null {
  * Record a session key → profile name mapping and persist it to disk.
  * Idempotent: updating an existing key is safe.
  */
-export async function setSessionProfile(
-  sessionKey: string,
-  profileName: string,
-): Promise<void> {
+export async function setSessionProfile(sessionKey: string, profileName: string): Promise<void> {
   const map = loadMap();
   if (map[sessionKey] === profileName) {
     return; // No change, skip file write.

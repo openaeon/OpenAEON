@@ -22,7 +22,7 @@ export function extractStringValue(
   val: StringValue | null,
   component: AnyComponentNode | null,
   processor: A2uiMessageProcessor | null,
-  surfaceId: string | null
+  surfaceId: string | null,
 ): string {
   if (val !== null && typeof val === "object") {
     if ("literalString" in val) {
@@ -37,7 +37,7 @@ export function extractStringValue(
       const textValue = processor.getData(
         component,
         val.path,
-        surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+        surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
       );
 
       if (textValue === null || typeof textValue !== "string") {
@@ -55,7 +55,7 @@ export function extractNumberValue(
   val: NumberValue | null,
   component: AnyComponentNode | null,
   processor: A2uiMessageProcessor | null,
-  surfaceId: string | null
+  surfaceId: string | null,
 ): number {
   if (val !== null && typeof val === "object") {
     if ("literalNumber" in val) {
@@ -70,7 +70,7 @@ export function extractNumberValue(
       let numberValue = processor.getData(
         component,
         val.path,
-        surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+        surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
       );
 
       if (typeof numberValue === "string") {

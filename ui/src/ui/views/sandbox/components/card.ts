@@ -53,12 +53,11 @@ export function renderTaskCard(
   row: GatewaySessionRow,
   index: number,
   sandboxChatEvents?: Record<string, unknown>,
-  taskPlan?: TaskPlanSnapshot | null
+  taskPlan?: TaskPlanSnapshot | null,
 ) {
   const progress = tokenProgress(row);
   const isWorking = Boolean(
-    (row.outputTokens && row.outputTokens > 0) || 
-    (sandboxChatEvents && sandboxChatEvents[row.key])
+    (row.outputTokens && row.outputTokens > 0) || (sandboxChatEvents && sandboxChatEvents[row.key]),
   );
   const status = sessionStatusLabel(row, isWorking);
   const statusColor = sessionStatusColor(row, isWorking);
@@ -69,27 +68,75 @@ export function renderTaskCard(
   // Kingdom role detection
   let kingdomRole = "";
   const label = (row.label || "").toLowerCase();
-  if (label.includes("leader") || label.includes("大长老") || label.includes("king")) kingdomRole = "龙虾大长老";
-  else if (label.includes("chieftain") || label.includes("酋长") || label.includes("marshal") || label.includes("元帅") || label.includes("priest") || label.includes("祭司")) kingdomRole = "龙虾酋长";
-  else if (label.includes("lord") || label.includes("领主") || label.includes("general") || label.includes("将军")) kingdomRole = "龙虾领主";
-  else if (label.includes("warrior") || label.includes("勇士") || label.includes("citizen") || label.includes("公民")) kingdomRole = "龙虾勇士";
-  else if (label.includes("recruit") || label.includes("新兵") || label.includes("subject") || label.includes("子民")) kingdomRole = "龙虾子民";
+  if (label.includes("leader") || label.includes("大长老") || label.includes("king"))
+    kingdomRole = "龙虾大长老";
+  else if (
+    label.includes("chieftain") ||
+    label.includes("酋长") ||
+    label.includes("marshal") ||
+    label.includes("元帅") ||
+    label.includes("priest") ||
+    label.includes("祭司")
+  )
+    kingdomRole = "龙虾酋长";
+  else if (
+    label.includes("lord") ||
+    label.includes("领主") ||
+    label.includes("general") ||
+    label.includes("将军")
+  )
+    kingdomRole = "龙虾领主";
+  else if (
+    label.includes("warrior") ||
+    label.includes("勇士") ||
+    label.includes("citizen") ||
+    label.includes("公民")
+  )
+    kingdomRole = "龙虾勇士";
+  else if (
+    label.includes("recruit") ||
+    label.includes("新兵") ||
+    label.includes("subject") ||
+    label.includes("子民")
+  )
+    kingdomRole = "龙虾子民";
 
   let executionPhase = "";
   if (isWorking && sandboxChatEvents) {
     const message = sandboxChatEvents[row.key];
     if (message) {
       const cards = extractToolCards(message);
-      const lastCall = [...cards].reverse().find(c => c.kind === "call");
+      const lastCall = [...cards].reverse().find((c) => c.kind === "call");
       if (lastCall) {
         const t_name = lastCall.name.toLowerCase();
-        if (t_name.includes("browser") || t_name.includes("search") || t_name.includes("fetch") || t_name.includes("read") || t_name.includes("list")) {
+        if (
+          t_name.includes("browser") ||
+          t_name.includes("search") ||
+          t_name.includes("fetch") ||
+          t_name.includes("read") ||
+          t_name.includes("list")
+        ) {
           executionPhase = t("sandbox.card.researching");
-        } else if (t_name.includes("exec") || t_name.includes("run") || t_name.includes("replace") || t_name.includes("edit") || t_name.includes("write") || t_name.includes("bash")) {
+        } else if (
+          t_name.includes("exec") ||
+          t_name.includes("run") ||
+          t_name.includes("replace") ||
+          t_name.includes("edit") ||
+          t_name.includes("write") ||
+          t_name.includes("bash")
+        ) {
           executionPhase = t("sandbox.card.coding");
-        } else if (t_name.includes("subagent") || t_name.includes("plan") || t_name.includes("todo")) {
+        } else if (
+          t_name.includes("subagent") ||
+          t_name.includes("plan") ||
+          t_name.includes("todo")
+        ) {
           executionPhase = t("sandbox.card.planning");
-        } else if (t_name.includes("test") || t_name.includes("verify") || t_name.includes("check")) {
+        } else if (
+          t_name.includes("test") ||
+          t_name.includes("verify") ||
+          t_name.includes("check")
+        ) {
           executionPhase = t("sandbox.card.verifying");
         } else {
           executionPhase = t("sandbox.card.executingTools");
@@ -103,9 +150,12 @@ export function renderTaskCard(
   let linkedTask: TaskTodo | undefined;
   if (taskPlan && taskPlan.todos) {
     const wLabel = (row.label || row.subject || "").toLowerCase();
-    linkedTask = taskPlan.todos.find(t => {
-      const titleWords = t.title.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-      return titleWords.some(w => wLabel.includes(w));
+    linkedTask = taskPlan.todos.find((t) => {
+      const titleWords = t.title
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 2);
+      return titleWords.some((w) => wLabel.includes(w));
     });
   }
 
@@ -129,7 +179,7 @@ export function renderTaskCard(
           ${kingdomRole ? html`<span class="meta-chip" style="color:#facc15;border-color:rgba(250,204,21,0.5);font-weight:bold;">${kingdomRole}</span>` : nothing}
           ${html`<span class="meta-chip" style="color:#94a3b8;border-color:rgba(148,163,184,0.3);">${roleLabel}</span>`}
           ${executionPhase ? html`<span class="meta-chip" style="color:#818cf8;border-color:rgba(129,140,248,0.5);">${executionPhase}</span>` : nothing}
-          ${linkedTask ? html`<span class="meta-chip" style="color:#10b981;border-color:rgba(16,185,129,0.5);" title="${linkedTask.title}">🔗 ${t("tabs.tasks")}: ${linkedTask.title.slice(0, 15)}${linkedTask.title.length > 15 ? '...' : ''}</span>` : nothing}
+          ${linkedTask ? html`<span class="meta-chip" style="color:#10b981;border-color:rgba(16,185,129,0.5);" title="${linkedTask.title}">🔗 ${t("tabs.tasks")}: ${linkedTask.title.slice(0, 15)}${linkedTask.title.length > 15 ? "..." : ""}</span>` : nothing}
           ${row.model ? html`<span class="meta-chip">🤖 ${row.model}</span>` : nothing}
           ${row.outputTokens ? html`<span class="meta-chip">⚡ ${totalTokens} tok</span>` : nothing}
           <span class="meta-chip">🕐 ${relativeTime(row.updatedAt)}</span>

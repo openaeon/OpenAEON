@@ -74,16 +74,18 @@ export class Checkbox extends Root {
       this.component,
       this.value.path,
       value,
-      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
     );
   }
 
   #renderField(value: boolean | number) {
     return html` <section
       class=${classMap(this.theme.components.CheckBox.container)}
-      style=${this.theme.additionalStyles?.CheckBox
-        ? styleMap(this.theme.additionalStyles?.CheckBox)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.CheckBox
+          ? styleMap(this.theme.additionalStyles?.CheckBox)
+          : nothing
+      }
     >
       <input
         class=${classMap(this.theme.components.CheckBox.element)}
@@ -113,21 +115,27 @@ export class Checkbox extends Root {
         return this.#renderField(this.value.literal);
       } else if (this.value && "path" in this.value && this.value.path) {
         if (!this.processor || !this.component) {
-          return html`(no model)`;
+          return html`
+            (no model)
+          `;
         }
 
         const textValue = this.processor.getData(
           this.component,
           this.value.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
 
         if (textValue === null) {
-          return html`Invalid label`;
+          return html`
+            Invalid label
+          `;
         }
 
         if (typeof textValue !== "boolean") {
-          return html`Invalid label`;
+          return html`
+            Invalid label
+          `;
         }
 
         return this.#renderField(textValue);

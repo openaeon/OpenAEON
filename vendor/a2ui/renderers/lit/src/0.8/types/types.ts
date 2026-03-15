@@ -39,16 +39,12 @@ export type MessageProcessor = {
    * This correctly handles the special `.` path, which refers to the node's
    * own data context.
    */
-  getData(
-    node: AnyComponentNode,
-    relativePath: string,
-    surfaceId: string
-  ): DataValue | null;
+  getData(node: AnyComponentNode, relativePath: string, surfaceId: string): DataValue | null;
   setData(
     node: AnyComponentNode | null,
     relativePath: string,
     value: DataValue,
-    surfaceId: string
+    surfaceId: string,
   ): void;
   resolvePath(path: string, dataContextPath?: string): string;
 };
@@ -209,14 +205,7 @@ export interface UserAction {
   };
 }
 /** A recursive type for any valid JSON-like value in the data model. */
-export type DataValue =
-  | string
-  | number
-  | boolean
-  | null
-  | DataMap
-  | DataObject
-  | DataArray;
+export type DataValue = string | number | boolean | null | DataMap | DataObject | DataArray;
 export type DataObject = { [key: string]: DataValue };
 export type DataMap = Map<string, DataValue>;
 export type DataArray = DataValue[];
@@ -416,24 +405,12 @@ export type ResolvedMultipleChoice = MultipleChoice;
 export type ResolvedSlider = Slider;
 export interface ResolvedRow {
   children: AnyComponentNode[];
-  distribution?:
-  | "start"
-  | "center"
-  | "end"
-  | "spaceBetween"
-  | "spaceAround"
-  | "spaceEvenly";
+  distribution?: "start" | "center" | "end" | "spaceBetween" | "spaceAround" | "spaceEvenly";
   alignment?: "start" | "center" | "end" | "stretch";
 }
 export interface ResolvedColumn {
   children: AnyComponentNode[];
-  distribution?:
-  | "start"
-  | "center"
-  | "end"
-  | "spaceBetween"
-  | "spaceAround"
-  | "spaceEvenly";
+  distribution?: "start" | "center" | "end" | "spaceBetween" | "spaceAround" | "spaceEvenly";
   alignment?: "start" | "center" | "end" | "stretch";
 }
 export interface ResolvedButton {

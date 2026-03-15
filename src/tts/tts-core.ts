@@ -1,6 +1,7 @@
 import { rmSync } from "node:fs";
 import { completeSimple, type TextContent } from "@mariozechner/pi-ai";
 import { EdgeTTS } from "node-edge-tts";
+import { ProxyAgent } from "undici";
 import { getApiKeyForModel, requireApiKey } from "../agents/model-auth.js";
 import {
   buildModelAliasIndex,
@@ -523,6 +524,7 @@ export async function elevenLabsTTS(params: {
   languageCode?: string;
   voiceSettings: ResolvedTtsConfig["elevenlabs"]["voiceSettings"];
   timeoutMs: number;
+  proxy?: string;
 }): Promise<Buffer> {
   const {
     text,
@@ -536,6 +538,7 @@ export async function elevenLabsTTS(params: {
     languageCode,
     voiceSettings,
     timeoutMs,
+    proxy,
   } = params;
   if (!isValidVoiceId(voiceId)) {
     throw new Error("Invalid voiceId format");
@@ -576,7 +579,8 @@ export async function elevenLabsTTS(params: {
         },
       }),
       signal: controller.signal,
-    });
+      ...(proxy ? { dispatcher: new ProxyAgent(proxy) } : {}),
+    } as RequestInit);
 
     if (!response.ok) {
       throw new Error(`ElevenLabs API error (${response.status})`);
@@ -595,8 +599,10 @@ export async function openaiTTS(params: {
   voice: string;
   responseFormat: "mp3" | "opus" | "pcm";
   timeoutMs: number;
+  baseUrl?: string;
+  proxy?: string;
 }): Promise<Buffer> {
-  const { text, apiKey, model, voice, responseFormat, timeoutMs } = params;
+  const { text, apiKey, model, voice, responseFormat, timeoutMs, baseUrl, proxy } = params;
 
   if (!isValidOpenAIModel(model)) {
     throw new Error(`Invalid model: ${model}`);
@@ -609,7 +615,8 @@ export async function openaiTTS(params: {
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(`${getOpenAITtsBaseUrl()}/audio/speech`, {
+    const url = (baseUrl?.trim() || getOpenAITtsBaseUrl()) + "/audio/speech";
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -622,7 +629,8 @@ export async function openaiTTS(params: {
         response_format: responseFormat,
       }),
       signal: controller.signal,
-    });
+      ...(proxy ? { dispatcher: new ProxyAgent(proxy) } : {}),
+    } as RequestInit);
 
     if (!response.ok) {
       throw new Error(`OpenAI TTS API error (${response.status})`);

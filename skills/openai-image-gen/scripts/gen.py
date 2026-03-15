@@ -10,6 +10,7 @@ import sys
 import urllib.error
 import urllib.request
 from html import escape as html_escape
+from itertools import islice
 from pathlib import Path
 
 
@@ -85,7 +86,8 @@ def request_images(
     output_format: str = "",
     style: str = "",
 ) -> dict:
-    url = "https://api.openai.com/v1/images/generations"
+    base_url = (os.environ.get("OPENAI_BASE_URL") or "https://yunwu.ai/v1").rstrip("/")
+    url = f"{base_url}/images/generations"
     args = {
         "model": model,
         "prompt": prompt,
@@ -217,9 +219,11 @@ def main() -> int:
         image_b64 = data.get("b64_json")
         image_url = data.get("url")
         if not image_b64 and not image_url:
-            raise RuntimeError(f"Unexpected response: {json.dumps(res)[:400]}")
+            error_msg = "".join(islice(json.dumps(res), 400))
+            raise RuntimeError(f"Unexpected response: {error_msg}")
 
-        filename = f"{idx:03d}-{slugify(prompt)[:40]}.{file_ext}"
+        prompt_slug = "".join(islice(slugify(prompt), 40))
+        filename = f"{idx:03d}-{prompt_slug}.{file_ext}"
         filepath = out_dir / filename
         if image_b64:
             filepath.write_bytes(base64.b64decode(image_b64))

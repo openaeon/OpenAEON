@@ -28,13 +28,13 @@ import {
   Type,
   untracked,
   ViewContainerRef,
-} from '@angular/core';
-import { Types, Styles } from '@a2ui/lit/0.8';
-import { Catalog } from './catalog';
-import { isPlatformBrowser } from '@angular/common';
+} from "@angular/core";
+import { Types, Styles } from "@a2ui/lit/0.8";
+import { Catalog } from "./catalog";
+import { isPlatformBrowser } from "@angular/common";
 
 @Directive({
-  selector: 'ng-container[a2ui-renderer]',
+  selector: "ng-container[a2ui-renderer]",
 })
 export class Renderer implements OnDestroy {
   private viewContainerRef = inject(ViewContainerRef);
@@ -58,7 +58,7 @@ export class Renderer implements OnDestroy {
     const document = inject(DOCUMENT);
 
     if (!Renderer.hasInsertedStyles && isPlatformBrowser(platformId)) {
-      const styles = document.createElement('style');
+      const styles = document.createElement("style");
       styles.textContent = Styles.structuralStyles;
       document.head.appendChild(styles);
       Renderer.hasInsertedStyles = true;
@@ -75,9 +75,9 @@ export class Renderer implements OnDestroy {
     let newComponent: Type<unknown> | null = null;
     let componentBindings: Binding[] | null = null;
 
-    if (typeof config === 'function') {
+    if (typeof config === "function") {
       newComponent = await config();
-    } else if (typeof config === 'object') {
+    } else if (typeof config === "object") {
       newComponent = await config.type();
       componentBindings = config.bindings(component as any);
     }
@@ -86,9 +86,9 @@ export class Renderer implements OnDestroy {
 
     if (newComponent && !this.isDestroyed) {
       const bindings = [
-        inputBinding('surfaceId', () => surfaceId),
-        inputBinding('component', () => component),
-        inputBinding('weight', () => component.weight ?? 'initial'),
+        inputBinding("surfaceId", () => surfaceId),
+        inputBinding("component", () => component),
+        inputBinding("weight", () => component.weight ?? "initial"),
       ];
 
       if (componentBindings) {

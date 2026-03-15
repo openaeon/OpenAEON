@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Primitives } from '@a2ui/lit/0.8';
+import { Component, computed, input } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Primitives } from "@a2ui/lit/0.8";
 
 @Component({
-  selector: 'a2ui-video',
+  selector: "a2ui-video",
   template: `
     @let resolvedUrl = this.resolvedUrl();
 

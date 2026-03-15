@@ -22,6 +22,8 @@ export type SkillsProps = {
   onToggle: (skillKey: string, enabled: boolean) => void;
   onEdit: (skillKey: string, value: string) => void;
   onSaveKey: (skillKey: string) => void;
+  onSaveBaseUrl: (skillKey: string) => void;
+  onSaveProxy: (skillKey: string) => void;
   onInstall: (skillKey: string, name: string, installId: string) => void;
 };
 
@@ -170,18 +172,57 @@ function renderSkill(skill: SkillStatusEntry, props: SkillsProps) {
                 <span>API key</span>
                 <input
                   type="password"
-                  .value=${apiKey}
+                  .value=${props.edits[skill.skillKey] ?? ""}
+                  placeholder="Enter API key"
                   @input=${(e: Event) =>
                     props.onEdit(skill.skillKey, (e.target as HTMLInputElement).value)}
                 />
               </div>
               <button
                 class="btn primary"
-                style="margin-top: 8px;"
+                style="margin-top: 4px; margin-bottom: 12px;"
                 ?disabled=${busy}
                 @click=${() => props.onSaveKey(skill.skillKey)}
               >
                 Save key
+              </button>
+
+              <div class="field" style="margin-top: 10px;">
+                <span>Base URL (Optional)</span>
+                <input
+                  type="text"
+                  .value=${props.edits[`${skill.skillKey}:baseUrl`] ?? skill.baseUrl ?? ""}
+                  placeholder="https://api.openai.com/v1"
+                  @input=${(e: Event) =>
+                    props.onEdit(`${skill.skillKey}:baseUrl`, (e.target as HTMLInputElement).value)}
+                />
+              </div>
+              <button
+                class="btn"
+                style="margin-top: 4px; margin-bottom: 12px;"
+                ?disabled=${busy}
+                @click=${() => props.onSaveBaseUrl(skill.skillKey)}
+              >
+                Save Base URL
+              </button>
+
+              <div class="field" style="margin-top: 10px;">
+                <span>Proxy (Optional)</span>
+                <input
+                  type="text"
+                  .value=${props.edits[`${skill.skillKey}:proxy`] ?? skill.proxy ?? ""}
+                  placeholder="http://127.0.0.1:7890"
+                  @input=${(e: Event) =>
+                    props.onEdit(`${skill.skillKey}:proxy`, (e.target as HTMLInputElement).value)}
+                />
+              </div>
+              <button
+                class="btn"
+                style="margin-top: 4px;"
+                ?disabled=${busy}
+                @click=${() => props.onSaveProxy(skill.skillKey)}
+              >
+                Save Proxy
               </button>
             `
             : nothing

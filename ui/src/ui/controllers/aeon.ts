@@ -8,7 +8,7 @@ export type AeonState = {
   aeonLogicError: string | null;
   aeonLogicContent: string | null;
   aeonSystemStatus: AeonStatusResult | null;
-  aeonActiveTab: 'logic' | 'memory';
+  aeonActiveTab: "logic" | "memory";
   aeonManualVisible: boolean;
 };
 
@@ -29,9 +29,9 @@ export async function loadAeonLogic(state: AeonState) {
       }),
       state.client.request<AeonStatusResult | null>("aeon.status", {
         agentId: "main",
-      })
+      }),
     ]);
-    
+
     state.aeonLogicContent = contentRes?.file?.content ?? null;
     state.aeonSystemStatus = statusRes;
   } catch (err) {
@@ -41,6 +41,6 @@ export async function loadAeonLogic(state: AeonState) {
   }
 }
 
-export function handleAeonTabChange(state: AeonState, tab: 'logic' | 'memory') {
+export function handleAeonTabChange(state: AeonState, tab: "logic" | "memory") {
   state.aeonActiveTab = tab;
 }

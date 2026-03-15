@@ -13,7 +13,8 @@ async function testBackend() {
   const logicGatesPath = "./LOGIC_GATES.md";
 
   // Setup test data
-  const testMemory = "# MEMORY\n\n[AXIOM] The universe is vast.\n[VERIFIED] Logic is key.\nRoutine data that should be ignored.\n";
+  const testMemory =
+    "# MEMORY\n\n[AXIOM] The universe is vast.\n[VERIFIED] Logic is key.\nRoutine data that should be ignored.\n";
   await fs.writeFile(memoryPath, testMemory);
   await fs.writeFile(logicGatesPath, "# LOGIC GATES\n");
 

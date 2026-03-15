@@ -9,7 +9,7 @@ export function extractLatestProgress(text: string): string | undefined {
   const closedRegex = /<execution_progress>\s*([\s\S]*?)\s*<\/execution_progress>/g;
   let lastClosedMatch: string | undefined;
   let match;
-  
+
   // We iterate to find the absolute last one if multiple exist
   while ((match = closedRegex.exec(text)) !== null) {
     lastClosedMatch = match[1].trim();

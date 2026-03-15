@@ -19,10 +19,10 @@ on:
     branches:
       - main
     paths:
-      - 'a2a_agents/java/**'
+      - "a2a_agents/java/**"
   pull_request:
     paths:
-      - 'a2a_agents/java/**'
+      - "a2a_agents/java/**"
 
 jobs:
   build-and-test:
@@ -36,8 +36,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
 
       - name: Build with Maven
         working-directory: a2a_agents/java

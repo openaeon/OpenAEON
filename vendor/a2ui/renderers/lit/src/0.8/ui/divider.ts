@@ -43,9 +43,11 @@ export class Divider extends Root {
   render() {
     return html`<hr
       class=${classMap(this.theme.components.Divider)}
-      style=${this.theme.additionalStyles?.Divider
-        ? styleMap(this.theme.additionalStyles?.Divider)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Divider
+          ? styleMap(this.theme.additionalStyles?.Divider)
+          : nothing
+      }
     />`;
   }
 }

@@ -51,9 +51,7 @@ export class BasicSchemaMatcher extends SchemaMatcher {
 
     if (this.propertyValue !== undefined) {
       if (JSON.stringify(actualValue) !== JSON.stringify(this.propertyValue)) {
-        const error = `Property '${
-          this.propertyPath
-        }' has value '${JSON.stringify(
+        const error = `Property '${this.propertyPath}' has value '${JSON.stringify(
           actualValue,
         )}', but expected '${JSON.stringify(this.propertyValue)}'.`;
         return { success: false, error };

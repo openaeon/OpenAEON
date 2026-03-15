@@ -58,7 +58,12 @@ export function renderClusterZone(nodes: any[]) {
         </div>
       </div>
       <div class="zone__nodes">
-        ${nodes?.slice(0, 3).map(() => html`<div class="node-mini"></div>`)}
+        ${nodes?.slice(0, 3).map(
+          () =>
+            html`
+              <div class="node-mini"></div>
+            `,
+        )}
         ${nodeCount > 3 ? html`<div class="node-more">+${nodeCount - 3}</div>` : nothing}
       </div>
     </div>

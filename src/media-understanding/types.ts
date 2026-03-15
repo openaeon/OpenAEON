@@ -61,6 +61,7 @@ export type AudioTranscriptionRequest = {
   query?: Record<string, string | number | boolean>;
   timeoutMs: number;
   fetchFn?: typeof fetch;
+  proxy?: string;
 };
 
 export type AudioTranscriptionResult = {
@@ -79,6 +80,7 @@ export type VideoDescriptionRequest = {
   prompt?: string;
   timeoutMs: number;
   fetchFn?: typeof fetch;
+  proxy?: string;
 };
 
 export type VideoDescriptionResult = {

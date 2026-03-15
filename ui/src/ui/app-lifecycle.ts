@@ -112,7 +112,9 @@ export function handleUpdated(host: LifecycleHost, changed: Map<PropertyKey, unk
   }
   if (changed.has("tab")) {
     const prevTab = changed.get("tab");
-    if (prevTab === "aeon") stopAeonPolling(host as unknown as Parameters<typeof stopAeonPolling>[0]);
-    if (host.tab === "aeon") startAeonPolling(host as unknown as Parameters<typeof startAeonPolling>[0]);
+    if (prevTab === "aeon")
+      stopAeonPolling(host as unknown as Parameters<typeof stopAeonPolling>[0]);
+    if (host.tab === "aeon")
+      startAeonPolling(host as unknown as Parameters<typeof startAeonPolling>[0]);
   }
 }

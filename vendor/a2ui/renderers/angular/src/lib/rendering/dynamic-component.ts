@@ -14,16 +14,16 @@
  limitations under the License.
  */
 
-import { Types, Primitives } from '@a2ui/lit/0.8';
-import { Directive, inject, input } from '@angular/core';
-import { MessageProcessor } from '../data';
-import { Theme } from './theming';
+import { Types, Primitives } from "@a2ui/lit/0.8";
+import { Directive, inject, input } from "@angular/core";
+import { MessageProcessor } from "../data";
+import { Theme } from "./theming";
 
 let idCounter = 0;
 
 @Directive({
   host: {
-    '[style.--weight]': 'weight()',
+    "[style.--weight]": "weight()",
   },
 })
 export abstract class DynamicComponent<T extends Types.AnyComponentNode = Types.AnyComponentNode> {
@@ -77,17 +77,17 @@ export abstract class DynamicComponent<T extends Types.AnyComponentNode = Types.
     const component = this.component();
     const surfaceId = this.surfaceId();
 
-    if (!value || typeof value !== 'object') {
+    if (!value || typeof value !== "object") {
       return null;
     } else if (value.literal != null) {
       return value.literal;
     } else if (value.path) {
       return this.processor.getData(component, value.path, surfaceId ?? undefined);
-    } else if ('literalString' in value) {
+    } else if ("literalString" in value) {
       return value.literalString;
-    } else if ('literalNumber' in value) {
+    } else if ("literalNumber" in value) {
       return value.literalNumber;
-    } else if ('literalBoolean' in value) {
+    } else if ("literalBoolean" in value) {
       return value.literalBoolean;
     }
 

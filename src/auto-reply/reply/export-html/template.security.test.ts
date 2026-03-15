@@ -37,7 +37,10 @@ const highlightJs = fs.readFileSync(path.join(exportHtmlDir, "vendor", "highligh
 function renderTemplate(sessionData: SessionData) {
   const html = templateHtml
     .replace("{{CSS}}", "")
-    .replace("{{SESSION_DATA}}", Buffer.from(JSON.stringify(sessionData), "utf8").toString("base64"))
+    .replace(
+      "{{SESSION_DATA}}",
+      Buffer.from(JSON.stringify(sessionData), "utf8").toString("base64"),
+    )
     .replace("{{MARKED_JS}}", "")
     .replace("{{HIGHLIGHT_JS}}", "")
     .replace("{{JS}}", "");

@@ -14,10 +14,15 @@ export const CollectiveResonanceSchema = Type.Object({
   } as const),
   key: Type.Optional(Type.String({ description: "Unique identifier for the pulsed axiom" })),
   value: Type.Optional(Type.Any({ description: "Data to pulse into the matrix" })),
-  peano: Type.Optional(Type.Object({
-    x: Type.Number(),
-    y: Type.Number(),
-  }, { description: "Peano coordinates for topological placement" })),
+  peano: Type.Optional(
+    Type.Object(
+      {
+        x: Type.Number(),
+        y: Type.Number(),
+      },
+      { description: "Peano coordinates for topological placement" },
+    ),
+  ),
   radius: Type.Optional(Type.Number({ description: "Radius for topological query (0-1)" })),
 });
 
@@ -39,16 +44,24 @@ export function createCollectiveResonanceTool(): AnyAgentTool {
             throw new Error("key, value, and peano are required for pulse action");
           }
           matrix.pulse(params.key, params.value, params.peano);
-          return jsonResult({ status: "pulsed", key: params.key, text: `Axiom "${params.key}" pulsed into collective matrix.` });
+          return jsonResult({
+            status: "pulsed",
+            key: params.key,
+            text: `Axiom "${params.key}" pulsed into collective matrix.`,
+          });
 
         case "query":
           const peano = params.peano || { x: 0.5, y: 0.5 };
           const radius = params.radius || 0.2;
           const results = matrix.topologicalQuery(peano, radius);
-          return jsonResult({ 
-            status: "queried", 
-            results: results.map(r => ({ key: r.key, value: r.value, dist: Math.sqrt(Math.pow(r.peano.x - peano.x, 2) + Math.pow(r.peano.y - peano.y, 2)) })),
-            text: `Found ${results.length} related axioms in topological proximity.` 
+          return jsonResult({
+            status: "queried",
+            results: results.map((r) => ({
+              key: r.key,
+              value: r.value,
+              dist: Math.sqrt(Math.pow(r.peano.x - peano.x, 2) + Math.pow(r.peano.y - peano.y, 2)),
+            })),
+            text: `Found ${results.length} related axioms in topological proximity.`,
           });
 
         default:

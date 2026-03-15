@@ -22,17 +22,12 @@ import { DataMap, DataValue } from "./types/types";
 // Helper function to strip reactivity for clean comparisons.
 const toPlainObject = (value: unknown): ReturnType<typeof JSON.parse> => {
   if (value instanceof Map) {
-    return Object.fromEntries(
-      Array.from(value.entries(), ([k, v]) => [k, toPlainObject(v)])
-    );
+    return Object.fromEntries(Array.from(value.entries(), ([k, v]) => [k, toPlainObject(v)]));
   }
   if (Array.isArray(value)) {
     return value.map(toPlainObject);
   }
-  if (
-    v0_8.Data.Guards.isObject(value) &&
-    value.constructor.name === "SignalObject"
-  ) {
+  if (v0_8.Data.Guards.isObject(value) && value.constructor.name === "SignalObject") {
     const obj: Record<string, unknown> = {};
     for (const key in value) {
       if (Object.prototype.hasOwnProperty.call(value, key)) {
@@ -141,7 +136,7 @@ describe("A2uiMessageProcessor", () => {
       ]);
       const name = processor.getData(
         { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
-        "/user/name"
+        "/user/name",
       );
       assert.strictEqual(name, "Alice");
     });
@@ -152,15 +147,13 @@ describe("A2uiMessageProcessor", () => {
           dataModelUpdate: {
             surfaceId: "@default",
             path: "/",
-            contents: [
-              { key: "user", valueString: JSON.stringify({ name: "Bob" }) },
-            ],
+            contents: [{ key: "user", valueString: JSON.stringify({ name: "Bob" }) }],
           },
         },
       ]);
       const user = processor.getData(
         { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
-        "/user"
+        "/user",
       );
       assert.deepStrictEqual(toPlainObject(user), { name: "Bob" });
     });
@@ -228,7 +221,7 @@ describe("A2uiMessageProcessor", () => {
 
       const info = processor.getData(
         { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
-        "/data/users"
+        "/data/users",
       );
 
       // The expected result is a Map of Maps.
@@ -287,7 +280,7 @@ describe("A2uiMessageProcessor", () => {
 
       let messagesData = processor.getData(
         { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
-        "/messages"
+        "/messages",
       );
 
       // Check that it's a Map and has the first item.
@@ -316,22 +309,14 @@ describe("A2uiMessageProcessor", () => {
 
       messagesData = processor.getData(
         { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
-        "/messages"
+        "/messages",
       );
 
       // 4. Check that the Map was additively updated and now has both items.
       assertIsDataMap(messagesData);
       assert.strictEqual(messagesData.size, 2, "Map should have 2 items total");
-      assert.strictEqual(
-        (messagesData as DataMap).get(key1),
-        message1,
-        "First item correct"
-      );
-      assert.strictEqual(
-        messagesData.get(key2),
-        message2,
-        "Second item correct"
-      );
+      assert.strictEqual((messagesData as DataMap).get(key1), message1, "First item correct");
+      assert.strictEqual(messagesData.get(key2), message2, "Second item correct");
     });
   });
 
@@ -441,11 +426,7 @@ describe("A2uiMessageProcessor", () => {
       }, new Error(`Circular dependency for component "a".`));
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
-      assert.strictEqual(
-        tree,
-        null,
-        "Tree should be null due to circular dependency"
-      );
+      assert.strictEqual(tree, null, "Tree should be null due to circular dependency");
     });
 
     it("should correctly expand a template with `dataBinding`", () => {
@@ -552,7 +533,7 @@ describe("A2uiMessageProcessor", () => {
       assert.strictEqual(
         toPlainObject(tree).properties.children.length,
         0,
-        "Children should be empty before data arrives"
+        "Children should be empty before data arrives",
       );
 
       // Now, the data arrives.
@@ -575,7 +556,7 @@ describe("A2uiMessageProcessor", () => {
       assert.strictEqual(
         toPlainObject(tree).properties.children.length,
         2,
-        "Children should be populated after data arrives"
+        "Children should be populated after data arrives",
       );
     });
 
@@ -950,8 +931,7 @@ describe("A2uiMessageProcessor", () => {
                       },
                       {
                         key: "imageUrl",
-                        valueString:
-                          "http://www.example.com/static/shrimpchowmein.jpeg",
+                        valueString: "http://www.example.com/static/shrimpchowmein.jpeg",
                       },
                       {
                         key: "address",
@@ -980,8 +960,7 @@ describe("A2uiMessageProcessor", () => {
                       },
                       {
                         key: "imageUrl",
-                        valueString:
-                          "http://www.example.com/static/mapotofu.jpeg",
+                        valueString: "http://www.example.com/static/mapotofu.jpeg",
                       },
                       {
                         key: "address",
@@ -1002,8 +981,7 @@ describe("A2uiMessageProcessor", () => {
                       },
                       {
                         key: "detail",
-                        valueString:
-                          "Modern food with a farm-to-table approach.",
+                        valueString: "Modern food with a farm-to-table approach.",
                       },
                       {
                         key: "infoLink",
@@ -1011,8 +989,7 @@ describe("A2uiMessageProcessor", () => {
                       },
                       {
                         key: "imageUrl",
-                        valueString:
-                          "http://www.example.com/static/beefbroccoli.jpeg",
+                        valueString: "http://www.example.com/static/beefbroccoli.jpeg",
                       },
                       {
                         key: "address",
@@ -1041,8 +1018,7 @@ describe("A2uiMessageProcessor", () => {
                       },
                       {
                         key: "imageUrl",
-                        valueString:
-                          "http://www.example.com/static/springrolls.jpeg",
+                        valueString: "http://www.example.com/static/springrolls.jpeg",
                       },
                       {
                         key: "address",
@@ -1071,8 +1047,7 @@ describe("A2uiMessageProcessor", () => {
                       },
                       {
                         key: "imageUrl",
-                        valueString:
-                          "http://www.example.com/static/kungpao.jpeg",
+                        valueString: "http://www.example.com/static/kungpao.jpeg",
                       },
                       {
                         key: "address",
@@ -1214,10 +1189,7 @@ describe("A2uiMessageProcessor", () => {
 
       assert.strictEqual(day1Activities.length, 2);
       assert.strictEqual(day1Activities[0].id, "activity-text:0:0");
-      assert.strictEqual(
-        day1Activities[0].dataContextPath,
-        "/days/0/activities/0"
-      );
+      assert.strictEqual(day1Activities[0].dataContextPath, "/days/0/activities/0");
       assert.deepStrictEqual(day1.properties.children[0].properties.text, {
         path: "title",
       });
@@ -1229,10 +1201,7 @@ describe("A2uiMessageProcessor", () => {
       const day2Activities = day2.properties.children[1].properties.children;
       assert.strictEqual(day2Activities.length, 1);
       assert.strictEqual(day2Activities[0].id, "activity-text:1:0");
-      assert.strictEqual(
-        day2Activities[0].dataContextPath,
-        "/days/1/activities/0"
-      );
+      assert.strictEqual(day2Activities[0].dataContextPath, "/days/1/activities/0");
       assert.deepStrictEqual(day2.properties.children[0].properties.text, {
         path: "title",
       });
@@ -1351,10 +1320,9 @@ describe("A2uiMessageProcessor", () => {
       assert.deepStrictEqual(toPlainObject(surfaceA!.dataModel), {
         name: "Surface A Data",
       });
-      assert.deepStrictEqual(
-        toPlainObject(surfaceA!.componentTree).properties.text,
-        { path: "/name" }
-      );
+      assert.deepStrictEqual(toPlainObject(surfaceA!.componentTree).properties.text, {
+        path: "/name",
+      });
 
       // Check Surface B
       assert.ok(surfaceB, "Surface B exists.");
@@ -1363,10 +1331,9 @@ describe("A2uiMessageProcessor", () => {
       assert.deepStrictEqual(toPlainObject(surfaceB!.dataModel), {
         name: "Surface B Data",
       });
-      assert.deepStrictEqual(
-        toPlainObject(surfaceB!.componentTree).properties.text,
-        { path: "/name" }
-      );
+      assert.deepStrictEqual(toPlainObject(surfaceB!.componentTree).properties.text, {
+        path: "/name",
+      });
     });
   });
 });

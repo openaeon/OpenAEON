@@ -26,10 +26,10 @@ let kvRaf: number | null = null;
 export function renderSandbox(props: SandboxProps) {
   const rows = props.result?.sessions || [];
   const activeSessions = rows.filter((r) => r.kind !== "global" && r.kind !== "unknown");
-  const globalSession = rows.find(r => r.key === "agent:main:main");
-  
+  const globalSession = rows.find((r) => r.key === "agent:main:main");
+
   // Calculate aggregate stats
-  const totalBusy = activeSessions.filter(r => r.outputTokens && r.outputTokens > 0).length;
+  const totalBusy = activeSessions.filter((r) => r.outputTokens && r.outputTokens > 0).length;
   const totalIdle = activeSessions.length - totalBusy;
   const healthPercent = Number((props.health as any)?.percent) || 100;
   const healthStatus = String((props.health as any)?.status || "OPTIMAL");
@@ -37,7 +37,7 @@ export function renderSandbox(props: SandboxProps) {
   const totalTokens = rows.reduce((acc, r) => acc + (r.totalTokens || 0), 0);
 
   return html`
-    <div class="sandbox-wrap ${props.evolution?.singularityActive ? 'self-repairing' : ''}" data-text="AEON NEXUS">
+    <div class="sandbox-wrap ${props.evolution?.singularityActive ? "self-repairing" : ""}" data-text="AEON NEXUS">
       ${baseStyles}
       ${figureStyles}
       ${sidebarStyles}
@@ -104,8 +104,16 @@ export function renderSandbox(props: SandboxProps) {
             ${renderTaskPlanPanel(props.taskPlan, activeSessions)}
           </div>
 
-          ${activeSessions.length > 0 ? html`<div class="sandbox-sidebar-header">ACTIVE_NEXUS // 活跃节点</div>` : nothing}
-          ${activeSessions.length > 0 ? html`
+          ${
+            activeSessions.length > 0
+              ? html`
+                  <div class="sandbox-sidebar-header">ACTIVE_NEXUS // 活跃节点</div>
+                `
+              : nothing
+          }
+          ${
+            activeSessions.length > 0
+              ? html`
             <div class="sidebar-cards" style="padding-top: 0;">
               ${activeSessions.map((row) => {
                 const isWorking = row.outputTokens && row.outputTokens > 0;
@@ -121,17 +129,24 @@ export function renderSandbox(props: SandboxProps) {
                 `;
               })}
             </div>
-          ` : nothing}
+          `
+              : nothing
+          }
 
           <div class="sandbox-sidebar-header" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05);">CHRONOLOGY // 历史</div>
           <div class="sidebar-cards" style="max-height: 200px; flex: none;">
              <!-- Tribal Resonance Logs -->
              <div class="tribe-logs">
-                ${(props.evolution?.cognitiveLog || []).slice(-3).reverse().map(log => html`
+                ${(props.evolution?.cognitiveLog || [])
+                  .slice(-3)
+                  .reverse()
+                  .map(
+                    (log) => html`
                    <div class="tribe-log-entry" style="font-size: 0.65rem; color: rgba(255,255,255,0.5); padding: 4px 8px; border-left: 2px solid var(--nexus-secondary); background: rgba(255,255,255,0.02); margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                       ${log.content}
                    </div>
-                `)}
+                `,
+                  )}
              </div>
           </div>
         </div>
@@ -148,7 +163,7 @@ export function renderSandbox(props: SandboxProps) {
                 <div class="leader-card__role" style="font-size: 0.65rem; opacity: 0.5; letter-spacing: 0.2em;">ORCHESTRATOR_UNIT</div>
                 <div class="leader-card__name" style="font-size: 1.5rem; font-weight: 900; background: linear-gradient(135deg, #fff, var(--nexus-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AEON ELDER</div>
                 <div class="leader-card__status" style="margin-top: 8px; font-size: 0.7rem; display: flex; align-items: center; gap: 8px;">
-                  <div class="leader-card__status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${totalBusy > 0 ? 'var(--nexus-accent)' : '#10b981'}; box-shadow: 0 0 10px ${totalBusy > 0 ? 'var(--nexus-accent)' : '#10b981'};"></div>
+                  <div class="leader-card__status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${totalBusy > 0 ? "var(--nexus-accent)" : "#10b981"}; box-shadow: 0 0 10px ${totalBusy > 0 ? "var(--nexus-accent)" : "#10b981"};"></div>
                   CORE_STATE: ${totalBusy > 0 ? "RESONANCE_ACTIVE" : "STABLE"}
                 </div>
               </div>
@@ -173,7 +188,9 @@ export function renderSandbox(props: SandboxProps) {
                    e.preventDefault();
                    const delta = e.deltaY > 0 ? 0.92 : 1.08;
                    kvScale = Math.min(Math.max(0.5, kvScale * delta), 2.5);
-                   const scene = (e.currentTarget as HTMLElement).querySelector('.kingdom-scene') as HTMLElement;
+                   const scene = (e.currentTarget as HTMLElement).querySelector(
+                     ".kingdom-scene",
+                   ) as HTMLElement;
                    if (scene) {
                      if (kvRaf) return;
                      kvRaf = requestAnimationFrame(() => {
@@ -184,15 +201,20 @@ export function renderSandbox(props: SandboxProps) {
                  }}
                  @pointerdown=${(e: PointerEvent) => {
                    if (e.button !== 0) return;
-                   kvDragging = true; kvLastX = e.clientX; kvLastY = e.clientY;
+                   kvDragging = true;
+                   kvLastX = e.clientX;
+                   kvLastY = e.clientY;
                    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
                  }}
                  @pointermove=${(e: PointerEvent) => {
                    if (!kvDragging) return;
                    kvPanX += e.clientX - kvLastX;
                    kvPanY += e.clientY - kvLastY;
-                   kvLastX = e.clientX; kvLastY = e.clientY;
-                   const scene = (e.currentTarget as HTMLElement).querySelector('.kingdom-scene') as HTMLElement;
+                   kvLastX = e.clientX;
+                   kvLastY = e.clientY;
+                   const scene = (e.currentTarget as HTMLElement).querySelector(
+                     ".kingdom-scene",
+                   ) as HTMLElement;
                    if (scene) {
                      if (kvRaf) return;
                      kvRaf = requestAnimationFrame(() => {
@@ -201,10 +223,14 @@ export function renderSandbox(props: SandboxProps) {
                      });
                    }
                  }}
-                 @pointerup=${() => { kvDragging = false; }}
-                 @pointercancel=${() => { kvDragging = false; }}>
+                 @pointerup=${() => {
+                   kvDragging = false;
+                 }}
+                 @pointercancel=${() => {
+                   kvDragging = false;
+                 }}>
               <div class="kingdom-viewport__title">🦞 LOBSTER_CITADEL_OS // ${activeSessions.length} UNITS ONLINE</div>
-              <div class="kingdom-scene ${props.evolution?.systemEntropy && props.evolution.systemEntropy > 50 ? 'kingdom-scene--unstable' : ''}" 
+              <div class="kingdom-scene ${props.evolution?.systemEntropy && props.evolution.systemEntropy > 50 ? "kingdom-scene--unstable" : ""}" 
                    style="transform: translate(${kvPanX}px, ${kvPanY}px) scale(${kvScale});">
                 <div class="kingdom-grid"></div>
 
@@ -220,13 +246,17 @@ export function renderSandbox(props: SandboxProps) {
                 </div>
 
                 ${(() => {
-                  const positions = new Map<string, { x: number, y: number, isWorking: boolean }>();
-                  const workingAgents = activeSessions.filter(r => Boolean(r.outputTokens && r.outputTokens > 0));
-                  const idleAgents = activeSessions.filter(r => !Boolean(r.outputTokens && r.outputTokens > 0));
+                  const positions = new Map<string, { x: number; y: number; isWorking: boolean }>();
+                  const workingAgents = activeSessions.filter((r) =>
+                    Boolean(r.outputTokens && r.outputTokens > 0),
+                  );
+                  const idleAgents = activeSessions.filter(
+                    (r) => !(r.outputTokens && r.outputTokens > 0),
+                  );
 
                   // Calculate positions with Subject-based Clustering
                   const subjectClusters = new Map<string, string[]>();
-                  activeSessions.forEach(r => {
+                  activeSessions.forEach((r) => {
                     const sub = r.subject || "IDLE";
                     if (!subjectClusters.has(sub)) subjectClusters.set(sub, []);
                     subjectClusters.get(sub)!.push(r.key);
@@ -235,9 +265,9 @@ export function renderSandbox(props: SandboxProps) {
                   let clusterIdx = 0;
                   subjectClusters.forEach((keys, sub) => {
                     keys.forEach((key, i) => {
-                      const row = activeSessions.find(r => r.key === key)!;
+                      const row = activeSessions.find((r) => r.key === key)!;
                       const isWorking = Boolean(row.outputTokens && row.outputTokens > 0);
-                      
+
                       // Cluster-based offset
                       const clusterX = isWorking ? 80 + clusterIdx * 150 : 520;
                       const clusterY = isWorking ? 220 : 240;
@@ -245,7 +275,7 @@ export function renderSandbox(props: SandboxProps) {
                       positions.set(key, {
                         x: clusterX + (i % 2) * 60,
                         y: clusterY + Math.floor(i / 2) * 80 + (clusterIdx % 2) * 40,
-                        isWorking
+                        isWorking,
                       });
                     });
                     if (sub !== "IDLE") clusterIdx++;
@@ -254,24 +284,34 @@ export function renderSandbox(props: SandboxProps) {
                   // Render Tribal Tethers (SVG)
                   const tethers: any[] = [];
                   const keys = Array.from(positions.keys());
-                  
+
                   // Elder Tethers
                   if (totalBusy > 0) {
-                    workingAgents.forEach(w => {
+                    workingAgents.forEach((w) => {
                       const pW = positions.get(w.key)!;
-                      tethers.push(html`<line class="tribe-link" x1="${1000 + 470 + 30}" y1="${1000 + 80 + 30}" x2="${pW.x + 30 + 1000}" y2="${pW.y + 30 + 1000}" style="opacity: 0.2;" />`);
+                      tethers.push(
+                        html`<line class="tribe-link" x1="${1000 + 470 + 30}" y1="${1000 + 80 + 30}" x2="${pW.x + 30 + 1000}" y2="${pW.y + 30 + 1000}" style="opacity: 0.2;" />`,
+                      );
                     });
                   }
 
                   for (let i = 0; i < keys.length; i++) {
                     for (let j = i + 1; j < keys.length; j++) {
-                      const a = activeSessions.find(r => r.key === keys[i]);
-                      const b = activeSessions.find(r => r.key === keys[j]);
-                      if (a?.subject && b?.subject && (a.subject === b.subject || a.subject.includes(b.subject) || b.subject.includes(a.subject))) {
-                         const pA = positions.get(keys[i])!;
-                         const pB = positions.get(keys[j])!;
-                         // Offset to center of figure (roughly 30,30 from top-left)
-                         tethers.push(html`<line class="tribe-link tribe-link--active" x1="${pA.x + 30 + 1000}" y1="${pA.y + 30 + 1000}" x2="${pB.x + 30 + 1000}" y2="${pB.y + 30 + 1000}" />`);
+                      const a = activeSessions.find((r) => r.key === keys[i]);
+                      const b = activeSessions.find((r) => r.key === keys[j]);
+                      if (
+                        a?.subject &&
+                        b?.subject &&
+                        (a.subject === b.subject ||
+                          a.subject.includes(b.subject) ||
+                          b.subject.includes(a.subject))
+                      ) {
+                        const pA = positions.get(keys[i])!;
+                        const pB = positions.get(keys[j])!;
+                        // Offset to center of figure (roughly 30,30 from top-left)
+                        tethers.push(
+                          html`<line class="tribe-link tribe-link--active" x1="${pA.x + 30 + 1000}" y1="${pA.y + 30 + 1000}" x2="${pB.x + 30 + 1000}" y2="${pB.y + 30 + 1000}" />`,
+                        );
                       }
                     }
                   }
@@ -302,14 +342,15 @@ export function renderSandbox(props: SandboxProps) {
                       const pos = positions.get(row.key)!;
                       const isWorking = pos.isWorking;
                       const globalResonance = props.evolution?.collectiveResonance || 0;
-                      const isResonant = globalResonance >= 0.6 || (isWorking && globalResonance >= 0.3);
-                      
+                      const isResonant =
+                        globalResonance >= 0.6 || (isWorking && globalResonance >= 0.3);
+
                       const roleEmoji = row.role === "manager" ? "🎩" : "🦞";
                       const codeSnippets = ["{...}", "RUN()", "EXE", "LINK", "SYNC", "ACK"];
                       const snippet = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
 
                       return html`
-                        <div class="kingdom-agent ${isWorking ? 'kingdom-agent--working' : ''}" style="top: ${pos.y}px; left: ${pos.x}px;">
+                        <div class="kingdom-agent ${isWorking ? "kingdom-agent--working" : ""}" style="top: ${pos.y}px; left: ${pos.x}px;">
                           ${isWorking ? html`<div class="kingdom-agent__particles">${snippet}</div>` : nothing}
                           <div class="kingdom-agent__figure">
                             ${renderAgentFigure(row, props.agentIdentityById?.[row.key]?.avatar, isResonant)}
@@ -322,12 +363,34 @@ export function renderSandbox(props: SandboxProps) {
                   `;
                 })()}
 
-                ${activeSessions.length === 0 ? html`
-                  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 15;">
-                    <div style="font-size: 3rem; opacity: 0.2; filter: grayscale(1);">🦞</div>
-                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.2); letter-spacing: 0.3em; margin-top: 10px;">IDLE_STATE</div>
-                  </div>
-                ` : nothing}
+                ${
+                  activeSessions.length === 0
+                    ? html`
+                        <div
+                          style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            text-align: center;
+                            z-index: 15;
+                          "
+                        >
+                          <div style="font-size: 3rem; opacity: 0.2; filter: grayscale(1)">🦞</div>
+                          <div
+                            style="
+                              font-size: 0.8rem;
+                              color: rgba(255, 255, 255, 0.2);
+                              letter-spacing: 0.3em;
+                              margin-top: 10px;
+                            "
+                          >
+                            IDLE_STATE
+                          </div>
+                        </div>
+                      `
+                    : nothing
+                }
               </div>
             </div>
           </div>
@@ -335,14 +398,16 @@ export function renderSandbox(props: SandboxProps) {
           <!-- Agent Work Grid -->
           <div class="nexus-agent-grid-section">
             <div class="section-title">AGENT_HUD // 探针矩阵</div>
-            ${activeSessions.length === 0
-              ? html`
-                <div class="empty-state">
-                  <div class="empty-state__icon">📡</div>
-                  <div class="empty-state__title">NO ACTIVE SIGNALS</div>
-                  <div class="empty-state__sub">Swarms are currently docked. Initiate routine to deploy.</div>
-                </div>`
-              : html`
+            ${
+              activeSessions.length === 0
+                ? html`
+                    <div class="empty-state">
+                      <div class="empty-state__icon">📡</div>
+                      <div class="empty-state__title">NO ACTIVE SIGNALS</div>
+                      <div class="empty-state__sub">Swarms are currently docked. Initiate routine to deploy.</div>
+                    </div>
+                  `
+                : html`
                 <div class="agent-grid">
                   ${activeSessions.map((row) => {
                     const isWorking = Boolean(row.outputTokens && row.outputTokens > 0);
@@ -350,14 +415,14 @@ export function renderSandbox(props: SandboxProps) {
                     const roleEmoji = row.role === "manager" ? "🎩" : "🦞";
 
                     return html`
-                      <div class="agent-card ${isWorking ? 'agent-card--working' : 'agent-card--idle'}">
+                      <div class="agent-card ${isWorking ? "agent-card--working" : "agent-card--idle"}">
                         <div class="agent-card__figure">
                           ${renderAgentFigure(row, props.agentIdentityById?.[row.key]?.avatar)}
                         </div>
                         <div class="agent-card__body">
                           <div class="agent-card__header">
                              <div class="agent-card__name">${row.label || row.key.slice(0, 16)}</div>
-                             <div class="agent-card__status-dot ${isWorking ? 'agent-card__status-dot--working' : 'agent-card__status-dot--idle'}"></div>
+                             <div class="agent-card__status-dot ${isWorking ? "agent-card__status-dot--working" : "agent-card__status-dot--idle"}"></div>
                           </div>
                           <div class="agent-card__task">${row.subject || "LISTENING_FOR_WAVES"}</div>
                           <div class="agent-card__progress">
@@ -369,7 +434,8 @@ export function renderSandbox(props: SandboxProps) {
                     `;
                   })}
                 </div>
-              `}
+              `
+            }
           </div>
 
           <!-- Zone Status Bar -->
@@ -404,7 +470,7 @@ export function renderSandbox(props: SandboxProps) {
       ${renderAgentRecruitmentModal(
         Boolean((props as any).recruitModalOpen),
         () => (props as any).onRecruitModalClose?.(),
-        (avatarId) => (props as any).onAvatarSelect?.("new", avatarId)
+        (avatarId) => (props as any).onAvatarSelect?.("new", avatarId),
       )}
     </div>
   `;

@@ -306,16 +306,25 @@ export const sidebarStyles = html`
       animation: planCompletePulse 2s ease infinite;
     }
     @keyframes planCompletePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2); }
-      50% { box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.15); }
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.15);
+      }
     }
     .sandbox-wrap .task-plan__celebrate {
       font-size: 1.2rem;
       animation: celebrateBounce 0.6s ease infinite alternate;
     }
     @keyframes celebrateBounce {
-      from { transform: translateY(0); }
-      to { transform: translateY(-4px); }
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(-4px);
+      }
     }
     .sandbox-wrap .task-plan__worker-link {
       font-size: 0.65rem;
@@ -345,8 +354,14 @@ export const sidebarStyles = html`
       opacity: 0;
     }
     @keyframes confettiFall {
-      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
-      100% { opacity: 0; transform: translateY(48px) rotate(720deg); }
+      0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(48px) rotate(720deg);
+      }
     }
 
     /* ─── Office Roster ─── */

@@ -30,14 +30,21 @@ function resolveAgentContext(rawAgentId: unknown) {
   const cfg = loadConfig();
   const idStr = typeof rawAgentId === "string" ? rawAgentId : "";
   const agentId = resolveAgentId(idStr, cfg);
-  if (!agentId) {return null;}
+  if (!agentId) {
+    return null;
+  }
   const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
   return { cfg, agentId, workspaceDir };
 }
 
-function resolveMemoryIoPath(workspaceDir: string, reqPath: string): { target: string; rel: string } | null {
+function resolveMemoryIoPath(
+  workspaceDir: string,
+  reqPath: string,
+): { target: string; rel: string } | null {
   const target = path.resolve(workspaceDir, reqPath);
-  if (!target.endsWith(".md")) {return null;}
+  if (!target.endsWith(".md")) {
+    return null;
+  }
   // Ensure it's inside the workspace
   const rel = path.relative(workspaceDir, target).replace(/\\/g, "/");
   if (rel.startsWith("../") || path.isAbsolute(rel)) {
@@ -104,7 +111,10 @@ export const memoryHandlers: GatewayRequestHandlers = {
       respond(
         false,
         undefined,
-        errorShape(ErrorCodes.INVALID_REQUEST, formatValidationErrors(validateAgentsMemoryGetParams.errors)),
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          formatValidationErrors(validateAgentsMemoryGetParams.errors),
+        ),
       );
       return;
     }
@@ -166,7 +176,10 @@ export const memoryHandlers: GatewayRequestHandlers = {
       respond(
         false,
         undefined,
-        errorShape(ErrorCodes.INVALID_REQUEST, formatValidationErrors(validateAgentsMemorySetParams.errors)),
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          formatValidationErrors(validateAgentsMemorySetParams.errors),
+        ),
       );
       return;
     }
@@ -216,7 +229,10 @@ export const memoryHandlers: GatewayRequestHandlers = {
       respond(
         false,
         undefined,
-        errorShape(ErrorCodes.INVALID_REQUEST, formatValidationErrors(validateAgentsMemoryDeleteParams.errors)),
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          formatValidationErrors(validateAgentsMemoryDeleteParams.errors),
+        ),
       );
       return;
     }
@@ -255,7 +271,10 @@ export const memoryHandlers: GatewayRequestHandlers = {
       respond(
         false,
         undefined,
-        errorShape(ErrorCodes.INVALID_REQUEST, formatValidationErrors(validateAgentsMemoryStatusParams.errors)),
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          formatValidationErrors(validateAgentsMemoryStatusParams.errors),
+        ),
       );
       return;
     }
@@ -267,12 +286,12 @@ export const memoryHandlers: GatewayRequestHandlers = {
     }
 
     const { cfg, agentId } = context;
-    
+
     // Get memory status
     const { manager } = await getMemorySearchManager({ cfg, agentId });
     let totalChunks = 0;
     let totalVectors = 0;
-    
+
     if (manager) {
       try {
         const status = await manager.status();

@@ -14,16 +14,16 @@
  limitations under the License.
  */
 
-import { Data, Types } from '@a2ui/lit/0.8';
-import { Injectable } from '@angular/core';
-import { firstValueFrom, Subject } from 'rxjs';
+import { Data, Types } from "@a2ui/lit/0.8";
+import { Injectable } from "@angular/core";
+import { firstValueFrom, Subject } from "rxjs";
 
 export interface DispatchedEvent {
   message: Types.A2UIClientEventMessage;
   completion: Subject<Types.ServerToClientMessage[]>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class MessageProcessor extends Data.A2uiMessageProcessor {
   readonly events = new Subject<DispatchedEvent>();
 

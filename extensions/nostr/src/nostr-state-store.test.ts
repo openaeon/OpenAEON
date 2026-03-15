@@ -18,7 +18,8 @@ async function withTempStateDir<T>(fn: (dir: string) => Promise<T>) {
     state: {
       resolveStateDir: (env, homedir) => {
         const stateEnv = env ?? process.env;
-        const override = stateEnv.OPENAEON_STATE_DIR?.trim() || stateEnv.AEONPROPHET_STATE_DIR?.trim();
+        const override =
+          stateEnv.OPENAEON_STATE_DIR?.trim() || stateEnv.AEONPROPHET_STATE_DIR?.trim();
         if (override) {
           return override;
         }

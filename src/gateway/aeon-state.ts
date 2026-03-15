@@ -10,7 +10,7 @@ export type CognitiveLogEntry = {
 
 export type MemoryNode = {
   id: string;
-  type: 'axiom' | 'verified' | 'unverified';
+  type: "axiom" | "verified" | "unverified";
   content: string;
 };
 
@@ -58,7 +58,10 @@ export function recordAeonDreaming(timestampMs: number): void {
   });
 }
 
-export function recordAeonMaintenance(timestampMs: number, intensity: "low" | "medium" | "high" = "medium"): void {
+export function recordAeonMaintenance(
+  timestampMs: number,
+  intensity: "low" | "medium" | "high" = "medium",
+): void {
   lastMaintenanceAt = timestampMs;
   lastMaintenanceIntensity = intensity;
 }
@@ -72,7 +75,7 @@ export function updateCollectiveResonance(activeFactors: number[]): void {
     collectiveResonance = collectiveResonance * 0.95; // Decay
   } else {
     const avg = activeFactors.reduce((a, b) => a + b, 0) / activeFactors.length;
-    collectiveResonance = (collectiveResonance * 0.7) + (avg * 0.3); // Weighted smooth
+    collectiveResonance = collectiveResonance * 0.7 + avg * 0.3; // Weighted smooth
   }
 }
 
@@ -103,19 +106,19 @@ export function getAeonMemoryGraph(): MemoryGraph {
   }
 
   const content = fs.readFileSync(memoryPath, "utf-8");
-  const lines = content.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("#"));
+  const lines = content.split("\n").filter((l) => l.trim().length > 0 && !l.startsWith("#"));
   const nodes: MemoryNode[] = [];
   const edges: MemoryEdge[] = [];
 
   lines.forEach((line, index) => {
-    let type: MemoryNode['type'] = 'unverified';
+    let type: MemoryNode["type"] = "unverified";
     let text = line.trim();
 
     if (text.startsWith("[AXIOM]")) {
-      type = 'axiom';
+      type = "axiom";
       text = text.replace("[AXIOM]", "").trim();
     } else if (text.startsWith("[VERIFIED]")) {
-      type = 'verified';
+      type = "verified";
       text = text.replace("[VERIFIED]", "").trim();
     }
 
@@ -127,7 +130,7 @@ export function getAeonMemoryGraph(): MemoryGraph {
       edges.push({
         source: `node-${index - 1}`,
         target: id,
-        label: type === 'axiom' ? 'principle' : 'continuation'
+        label: type === "axiom" ? "principle" : "continuation",
       });
     }
   });
@@ -167,4 +170,3 @@ export function getAeonEvolutionState(): {
     singularityActive,
   };
 }
-

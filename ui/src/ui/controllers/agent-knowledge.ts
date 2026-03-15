@@ -38,7 +38,9 @@ function removeFileEntry(
   list: AgentsMemoryListResult | null,
   name: string,
 ): AgentsMemoryListResult | null {
-  if (!list) {return list;}
+  if (!list) {
+    return list;
+  }
   return { ...list, files: list.files.filter((f) => f.name !== name) };
 }
 
@@ -54,7 +56,10 @@ export async function loadAgentKnowledge(state: AgentKnowledgeState, agentId: st
     });
     if (res) {
       state.agentKnowledgeList = res;
-      if (state.agentKnowledgeFileActive && !res.files.some((file) => file.name === state.agentKnowledgeFileActive)) {
+      if (
+        state.agentKnowledgeFileActive &&
+        !res.files.some((file) => file.name === state.agentKnowledgeFileActive)
+      ) {
         state.agentKnowledgeFileActive = null;
       }
     }
@@ -71,9 +76,12 @@ export async function loadAgentKnowledgeStatus(state: AgentKnowledgeState, agent
   }
   // We can fetch status alongside list or separately without blocking the list
   try {
-    const res = await state.client.request<AgentsMemoryStatusResult | null>("agents.memory.status", {
-      agentId,
-    });
+    const res = await state.client.request<AgentsMemoryStatusResult | null>(
+      "agents.memory.status",
+      {
+        agentId,
+      },
+    );
     if (res) {
       state.agentKnowledgeStatus = res;
     }

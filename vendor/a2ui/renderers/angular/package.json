@@ -1,6 +1,7 @@
 {
   "name": "@a2ui/angular",
   "version": "0.8.1",
+  "sideEffects": false,
   "scripts": {
     "build": "ng build"
   },
@@ -8,11 +9,6 @@
     "@a2ui/lit": "file:../lit",
     "markdown-it": "^14.1.0",
     "tslib": "^2.3.0"
-  },
-  "peerDependencies": {
-    "@angular/common": "^21.0.0",
-    "@angular/core": "^21.0.0",
-    "@angular/platform-browser": "^21.0.0"
   },
   "devDependencies": {
     "@angular/build": "^21.0.2",
@@ -43,10 +39,12 @@
     "typescript": "~5.9.2",
     "vitest": "^4.0.15"
   },
-  "sideEffects": false,
+  "peerDependencies": {
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0"
+  },
   "prettier": {
-    "printWidth": 100,
-    "singleQuote": true,
     "overrides": [
       {
         "files": "*.html",
@@ -54,6 +52,8 @@
           "parser": "angular"
         }
       }
-    ]
+    ],
+    "printWidth": 100,
+    "singleQuote": true
   }
 }

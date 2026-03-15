@@ -23,12 +23,12 @@ extra:
     provider: google
     property: G-YX9TPV8DCC
   consent:
-      title: Cookie consent
-      description: >-
-        We use cookies to recognize repeated visits and preferences,
-        as well as to measure the effectiveness of our documentation and
-        whether users find the information they need. With your consent,
-        you're helping us to make our documentation better.
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize repeated visits and preferences,
+      as well as to measure the effectiveness of our documentation and
+      whether users find the information they need. With your consent,
+      you're helping us to make our documentation better.
 
 # Navigation
 nav:
@@ -77,7 +77,6 @@ copyright: Copyright Google 2025&nbsp;&nbsp;|&nbsp;&nbsp;<a href="//policies.goo
 # Custom CSS
 extra_css:
   - stylesheets/custom.css
-
 
 # Configuration
 theme:

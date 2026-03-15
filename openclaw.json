@@ -6,7 +6,9 @@
         "default": true,
         "name": "帮主 (LeaderAgent)",
         "model": "gpt-4o",
-        "tools": { "allowlist": ["sessions_spawn", "write_todos", "read", "write", "exec", "web_search"] },
+        "tools": {
+          "allowlist": ["sessions_spawn", "write_todos", "read", "write", "exec", "web_search"]
+        },
         "subagents": { "allowAgents": ["*"] }
       },
       {

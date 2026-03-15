@@ -367,6 +367,42 @@ function resolveConfiguredPlugins(
   return changes;
 }
 
+function resolveConfiguredSkills(
+  cfg: OPENAEONConfig,
+  registry: PluginManifestRegistry,
+): PluginEnableChange[] {
+  const changes: PluginEnableChange[] = [];
+  const knownIds = new Set(registry.plugins.map((record) => record.id));
+
+  const openaiConfigured = isProviderConfigured(cfg, "openai");
+  if (!openaiConfigured) {
+    if (knownIds.has("openai-whisper")) {
+      changes.push({
+        pluginId: "openai-whisper",
+        reason: "openai not configured, enabling local whisper",
+      });
+    }
+    if (knownIds.has("openai-image-gen")) {
+      changes.push({
+        pluginId: "openai-image-gen",
+        reason: "openai not configured, enabling local image gen",
+      });
+    }
+  }
+  const tts = cfg.messages?.tts;
+  const hasElevenLabs = hasNonEmptyString(tts?.elevenlabs?.apiKey);
+  const hasOpenAI_TTS = hasNonEmptyString(tts?.openai?.apiKey);
+  if (!hasElevenLabs && !hasOpenAI_TTS) {
+    if (knownIds.has("sherpa-onnx-tts")) {
+      changes.push({
+        pluginId: "sherpa-onnx-tts",
+        reason: "no cloud TTS keys, enabling local TTS",
+      });
+    }
+  }
+  return changes;
+}
+
 function isPluginExplicitlyDisabled(cfg: OPENAEONConfig, pluginId: string): boolean {
   const builtInChannelId = normalizeChatChannelId(pluginId);
   if (builtInChannelId) {
@@ -478,7 +514,9 @@ export function applyPluginAutoEnable(params: {
 }): PluginAutoEnableResult {
   const env = params.env ?? process.env;
   const registry = params.manifestRegistry ?? loadPluginManifestRegistry({ config: params.config });
-  const configured = resolveConfiguredPlugins(params.config, env, registry);
+  const configuredPlugins = resolveConfiguredPlugins(params.config, env, registry);
+  const configuredSkills = resolveConfiguredSkills(params.config, registry);
+  const configured = [...configuredPlugins, ...configuredSkills];
   if (configured.length === 0) {
     return { config: params.config, changes: [] };
   }

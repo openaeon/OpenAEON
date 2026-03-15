@@ -75,7 +75,7 @@ export class TextField extends Root {
       this.component,
       this.text.path,
       value,
-      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
     );
   }
 
@@ -83,19 +83,23 @@ export class TextField extends Root {
     return html` <section
       class=${classMap(this.theme.components.TextField.container)}
     >
-      ${label && label !== ""
-        ? html`<label
+      ${
+        label && label !== ""
+          ? html`<label
             class=${classMap(this.theme.components.TextField.label)}
             for="data"
             >${label}</label
           >`
-        : nothing}
+          : nothing
+      }
       <input
         autocomplete="off"
         class=${classMap(this.theme.components.TextField.element)}
-        style=${this.theme.additionalStyles?.TextField
-          ? styleMap(this.theme.additionalStyles?.TextField)
-          : nothing}
+        style=${
+          this.theme.additionalStyles?.TextField
+            ? styleMap(this.theme.additionalStyles?.TextField)
+            : nothing
+        }
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
@@ -113,18 +117,8 @@ export class TextField extends Root {
   }
 
   render() {
-    const label = extractStringValue(
-      this.label,
-      this.component,
-      this.processor,
-      this.surfaceId
-    );
-    const value = extractStringValue(
-      this.text,
-      this.component,
-      this.processor,
-      this.surfaceId
-    );
+    const label = extractStringValue(this.label, this.component, this.processor, this.surfaceId);
+    const value = extractStringValue(this.text, this.component, this.processor, this.surfaceId);
 
     return this.#renderField(value, label);
   }

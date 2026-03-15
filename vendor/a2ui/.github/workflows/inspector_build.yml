@@ -16,16 +16,16 @@ name: Inspector build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'tools/inspector/**'
-      - 'renderers/lit/**'
-      - '.github/workflows/inspector_build.yml'
+      - "tools/inspector/**"
+      - "renderers/lit/**"
+      - ".github/workflows/inspector_build.yml"
   pull_request:
     paths:
-      - 'tools/inspector/**'
-      - 'renderers/lit/**'
-      - '.github/workflows/inspector_build.yml'
+      - "tools/inspector/**"
+      - "renderers/lit/**"
+      - ".github/workflows/inspector_build.yml"
 
 jobs:
   build:
@@ -37,7 +37,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install lib's deps
         working-directory: ./renderers/lit

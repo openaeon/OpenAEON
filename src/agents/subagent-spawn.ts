@@ -216,9 +216,18 @@ async function spawnDialecticSubagent(
 
   // Step 2: Parallel Antitheses (并行反题) - Multiple critical perspectives
   const antithesisPersonas = [
-    { name: "Logic Critic", prompt: "作为一个极度严苛的逻辑审查者，指出其中所有潜在的逻辑漏洞和推导缺陷。" },
-    { name: "Security & Risk Analyst", prompt: "作为一个安全专家，指出其中所有潜在的安全性风险、隐私隐患或边缘案例崩溃点。" },
-    { name: "Optimization Architect", prompt: "作为一个资深架构师，指出是否有性能更优、更简洁或更具扩展性的替代路径。" }
+    {
+      name: "Logic Critic",
+      prompt: "作为一个极度严苛的逻辑审查者，指出其中所有潜在的逻辑漏洞和推导缺陷。",
+    },
+    {
+      name: "Security & Risk Analyst",
+      prompt: "作为一个安全专家，指出其中所有潜在的安全性风险、隐私隐患或边缘案例崩溃点。",
+    },
+    {
+      name: "Optimization Architect",
+      prompt: "作为一个资深架构师，指出是否有性能更优、更简洁或更具扩展性的替代路径。",
+    },
   ];
 
   const antithesisPromises = antithesisPersonas.map(async (persona) => {
@@ -236,7 +245,7 @@ ${thesisOutput || "(无输出内容)"}`;
       dialecticMode: false,
       label: `${label || "Task"} [Antithesis - ${persona.name}]`,
     };
-    
+
     const result = await spawnSubagentDirect(antithesisParams, ctx);
     if (result.status === "accepted" && result.runId && result.childSessionKey) {
       await waitForSubagentCompletion(result.runId, timeoutMs);
@@ -319,11 +328,16 @@ export async function spawnSubagentDirect(
     typeof cfg?.agents?.defaults?.subagents?.runTimeoutSeconds === "number" &&
     Number.isFinite(cfg.agents.defaults.subagents.runTimeoutSeconds)
       ? Math.max(0, Math.floor(cfg.agents.defaults.subagents.runTimeoutSeconds))
-      : 0;
-  const runTimeoutSeconds =
+      : 600; // default 10m if unset (align with DEFAULT_AGENT_TIMEOUT_SECONDS)
+  const runTimeoutSecondsCandidate =
     typeof params.runTimeoutSeconds === "number" && Number.isFinite(params.runTimeoutSeconds)
       ? Math.max(0, Math.floor(params.runTimeoutSeconds))
       : cfgSubagentTimeout;
+  // If explicitly set to 0, use the config default if it's non-zero.
+  const runTimeoutSeconds =
+    runTimeoutSecondsCandidate === 0 && cfgSubagentTimeout > 0
+      ? cfgSubagentTimeout
+      : runTimeoutSecondsCandidate;
   let modelApplied = false;
   let threadBindingReady = false;
   const { mainKey, alias } = resolveMainSessionAlias(cfg);

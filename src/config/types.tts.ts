@@ -52,12 +52,15 @@ export type TtsConfig = {
       useSpeakerBoost?: boolean;
       speed?: number;
     };
+    proxy?: string;
   };
   /** OpenAI configuration. */
   openai?: {
     apiKey?: string;
     model?: string;
     voice?: string;
+    baseUrl?: string;
+    proxy?: string;
   };
   /** Microsoft Edge (node-edge-tts) configuration. */
   edge?: {

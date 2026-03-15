@@ -29,13 +29,13 @@ export function renderConsciousnessStream(props: ConsciousnessStreamProps) {
             <div class="consciousness-entry ${entry.type}">
               <div class="consciousness-entry-meta">
                 <span class="consciousness-type">${entry.type.toUpperCase()}</span>
-                <span class="consciousness-time">${new Date(entry.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                <span class="consciousness-time">${new Date(entry.timestamp).toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
               </div>
               <div class="consciousness-content">${entry.content}</div>
               ${entry.metadata?.focus ? html`<div class="consciousness-focus">FOCUS: ${entry.metadata.focus}</div>` : nothing}
               ${entry.metadata?.pivot ? html`<div class="consciousness-pivot">PIVOT: ${entry.metadata.pivot}</div>` : nothing}
             </div>
-          `
+          `,
         )}
       </div>
     </div>

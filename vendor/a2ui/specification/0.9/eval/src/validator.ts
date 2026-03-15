@@ -28,21 +28,19 @@ export class Validator {
 
   constructor(
     private schemas: Record<string, any>,
-    private outputDir?: string
+    private outputDir?: string,
   ) {
     this.ajv = new Ajv({ allErrors: true, strict: false }); // strict: false to be lenient with unknown keywords if any
     for (const [name, schema] of Object.entries(schemas)) {
       this.ajv.addSchema(schema, name);
     }
     this.validateFn = this.ajv.getSchema(
-      "https://a2ui.dev/specification/0.9/server_to_client.json"
+      "https://a2ui.dev/specification/0.9/server_to_client.json",
     );
   }
 
   async run(results: GeneratedResult[]): Promise<ValidatedResult[]> {
-    logger.info(
-      `Starting Phase 2: Schema Validation (${results.length} items)`
-    );
+    logger.info(`Starting Phase 2: Schema Validation (${results.length} items)`);
     const validatedResults: ValidatedResult[] = [];
     let passedCount = 0;
     let failedCount = 0;
@@ -66,29 +64,16 @@ export class Validator {
           // Smart validation: check which key is present and validate against that specific definition
           // to avoid noisy "oneOf" errors.
           let validated = false;
-          const schemaUri =
-            "https://a2ui.dev/specification/0.9/server_to_client.json";
+          const schemaUri = "https://a2ui.dev/specification/0.9/server_to_client.json";
 
           if (message.createSurface) {
-            validated = this.ajv.validate(
-              `${schemaUri}#/$defs/CreateSurfaceMessage`,
-              message
-            );
+            validated = this.ajv.validate(`${schemaUri}#/$defs/CreateSurfaceMessage`, message);
           } else if (message.updateComponents) {
-            validated = this.ajv.validate(
-              `${schemaUri}#/$defs/UpdateComponentsMessage`,
-              message
-            );
+            validated = this.ajv.validate(`${schemaUri}#/$defs/UpdateComponentsMessage`, message);
           } else if (message.updateDataModel) {
-            validated = this.ajv.validate(
-              `${schemaUri}#/$defs/UpdateDataModelMessage`,
-              message
-            );
+            validated = this.ajv.validate(`${schemaUri}#/$defs/UpdateDataModelMessage`, message);
           } else if (message.deleteSurface) {
-            validated = this.ajv.validate(
-              `${schemaUri}#/$defs/DeleteSurfaceMessage`,
-              message
-            );
+            validated = this.ajv.validate(`${schemaUri}#/$defs/DeleteSurfaceMessage`, message);
           } else {
             // Fallback to top-level validation if no known key matches (or if it's empty/invalid structure)
             validated = this.validateFn(message);
@@ -96,9 +81,7 @@ export class Validator {
 
           if (!validated) {
             errors.push(
-              ...(this.ajv.errors || []).map(
-                (err: any) => `${err.instancePath} ${err.message}`
-              )
+              ...(this.ajv.errors || []).map((err: any) => `${err.instancePath} ${err.message}`),
             );
           }
         }
@@ -122,18 +105,13 @@ export class Validator {
       });
     }
 
-    logger.info(
-      `Phase 2: Validation Complete. Passed: ${passedCount}, Failed: ${failedCount}`
-    );
+    logger.info(`Phase 2: Validation Complete. Passed: ${passedCount}, Failed: ${failedCount}`);
     return validatedResults;
   }
 
   private saveFailure(result: GeneratedResult, errors: string[]) {
     if (!this.outputDir) return;
-    const modelDir = path.join(
-      this.outputDir,
-      `output-${result.modelName.replace(/[\/:]/g, "_")}`
-    );
+    const modelDir = path.join(this.outputDir, `output-${result.modelName.replace(/[/:]/g, "_")}`);
     const detailsDir = path.join(modelDir, "details");
     const failureData = {
       pass: false,
@@ -146,11 +124,8 @@ export class Validator {
     };
 
     fs.writeFileSync(
-      path.join(
-        detailsDir,
-        `${result.prompt.name}.${result.runNumber}.failed.yaml`
-      ),
-      yaml.dump(failureData)
+      path.join(detailsDir, `${result.prompt.name}.${result.runNumber}.failed.yaml`),
+      yaml.dump(failureData),
     );
   }
 
@@ -165,7 +140,7 @@ export class Validator {
         const surfaceId = message.updateComponents.surfaceId;
         if (surfaceId && !createdSurfaces.has(surfaceId)) {
           errors.push(
-            `updateComponents message received for surface '${surfaceId}' before createSurface message.`
+            `updateComponents message received for surface '${surfaceId}' before createSurface message.`,
           );
         }
 
@@ -189,16 +164,14 @@ export class Validator {
       } else if (message.deleteSurface) {
         this.validateDeleteSurface(message.deleteSurface, errors);
       } else {
-        errors.push(
-          `Unknown message type in output: ${JSON.stringify(message)}`
-        );
+        errors.push(`Unknown message type in output: ${JSON.stringify(message)}`);
       }
     }
 
     // Algorithmic check for root component
     if (hasUpdateComponents && !hasRootComponent) {
       errors.push(
-        "Missing root component: At least one 'updateComponents' message must contain a component with id: 'root'."
+        "Missing root component: At least one 'updateComponents' message must contain a component with id: 'root'.",
       );
     }
   }
@@ -253,8 +226,7 @@ export class Validator {
       // Smart Component Validation
       if (this.ajv && c.component) {
         const componentType = c.component;
-        const schemaUri =
-          "https://a2ui.dev/specification/0.9/standard_catalog_definition.json";
+        const schemaUri = "https://a2ui.dev/specification/0.9/standard_catalog_definition.json";
 
         const defRef = `${schemaUri}#/$defs/${componentType}`;
 
@@ -263,10 +235,8 @@ export class Validator {
           errors.push(
             ...(this.ajv.errors || []).map(
               (err: any) =>
-                `${err.instancePath} ${err.message} (in component '${
-                  c.id || "unknown"
-                }')`
-            )
+                `${err.instancePath} ${err.message} (in component '${c.id || "unknown"}')`,
+            ),
           );
         }
       }
@@ -283,25 +253,17 @@ export class Validator {
 
     if (data.op === "remove") {
       if (data.value !== undefined) {
-        errors.push(
-          "updateDataModel 'value' property must not be present when op is 'remove'."
-        );
+        errors.push("updateDataModel 'value' property must not be present when op is 'remove'.");
       }
     } else {
       // op is 'add' or 'replace' (schema validates enum values)
       if (data.value === undefined) {
-        errors.push(
-          `updateDataModel 'value' property is required when op is '${data.op}'.`
-        );
+        errors.push(`updateDataModel 'value' property is required when op is '${data.op}'.`);
       }
     }
   }
 
-  private validateComponent(
-    component: any,
-    allIds: Set<string>,
-    errors: string[]
-  ) {
+  private validateComponent(component: any, allIds: Set<string>, errors: string[]) {
     const id = component.id;
     if (!id) {
       errors.push(`Component is missing an 'id'.`);
@@ -320,9 +282,7 @@ export class Validator {
     const checkRefs = (ids: (string | undefined)[]) => {
       for (const id of ids) {
         if (id && !allIds.has(id)) {
-          errors.push(
-            `Component ${JSON.stringify(id)} references non-existent component ID.`
-          );
+          errors.push(`Component ${JSON.stringify(id)} references non-existent component ID.`);
         }
       }
     };
@@ -334,10 +294,7 @@ export class Validator {
         if (component.children) {
           if (Array.isArray(component.children)) {
             checkRefs(component.children);
-          } else if (
-            typeof component.children === "object" &&
-            component.children !== null
-          ) {
+          } else if (typeof component.children === "object" && component.children !== null) {
             if (component.children.componentId) {
               checkRefs([component.children.componentId]);
             }

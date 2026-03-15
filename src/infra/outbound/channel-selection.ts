@@ -61,6 +61,12 @@ export async function listConfiguredMessageChannels(
       channels.push(plugin.id);
     }
   }
+
+  // Explicitly include webchat if enabled (Internal channel, not a plugin)
+  if (cfg.channels?.webchat?.enabled !== false) {
+    channels.push("webchat" as MessageChannelId);
+  }
+
   return channels;
 }
 

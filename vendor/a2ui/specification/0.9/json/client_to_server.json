@@ -32,13 +32,7 @@
           "additionalProperties": true
         }
       },
-      "required": [
-        "name",
-        "surfaceId",
-        "sourceComponentId",
-        "timestamp",
-        "context"
-      ]
+      "required": ["name", "surfaceId", "sourceComponentId", "timestamp", "context"]
     },
     "error": {
       "description": "Reports a client-side error.",

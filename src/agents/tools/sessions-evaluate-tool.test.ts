@@ -52,7 +52,7 @@ describe("sessions_evaluate tool", () => {
       }),
       expect.objectContaining({
         agentSessionKey: "agent:main:main",
-      })
+      }),
     );
   });
 

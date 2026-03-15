@@ -7,8 +7,7 @@
   "dependencies": {
     "google-auth-library": "^10.6.1"
   },
-  "peerDependencies": {
-  },
+  "peerDependencies": {},
   "openaeon": {
     "extensions": [
       "./index.ts"

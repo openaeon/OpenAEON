@@ -4,8 +4,7 @@
   "private": true,
   "description": "OpenAEON core memory search plugin",
   "type": "module",
-  "peerDependencies": {
-  },
+  "peerDependencies": {},
   "openaeon": {
     "extensions": [
       "./index.ts"

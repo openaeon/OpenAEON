@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { type AeonStatusResult } from "../../ui/src/ui/types.js";
 import { loadConfig } from "../config/config.js";
 import { resolveWorkspaceRoot } from "../agents/workspace-dir.js";
 
@@ -25,23 +24,23 @@ export async function applyLogicGateMutation(proposal: string): Promise<Mutation
     const meta = {
       ts: timestamp,
       v: 2, // version 2 supports patching
-      peano: { x: 0.5, y: 0.5 }
+      peano: { x: 0.5, y: 0.5 },
     };
     const newEntry = `${proposal} <!-- ${JSON.stringify(meta)} -->\n`;
 
     await fs.appendFile(logicGatesPath, newEntry);
-    
+
     return {
       success: true,
       affectedFile: "LOGIC_GATES.md",
-      changeSummary: `Added new logic gate: ${proposal}`
+      changeSummary: `Added new logic gate: ${proposal}`,
     };
   } catch (err) {
     console.error("Mutation failed:", err);
     return {
       success: false,
       affectedFile: "LOGIC_GATES.md",
-      changeSummary: `Error: ${(err as Error).message}`
+      changeSummary: `Error: ${(err as Error).message}`,
     };
   }
 }
@@ -49,7 +48,10 @@ export async function applyLogicGateMutation(proposal: string): Promise<Mutation
 /**
  * Patches an existing logic gate by replacing target text with new refined logic.
  */
-export async function patchLogicGate(targetPattern: string, replacement: string): Promise<MutationResult> {
+export async function patchLogicGate(
+  targetPattern: string,
+  replacement: string,
+): Promise<MutationResult> {
   const cfg = loadConfig();
   const workspaceRoot = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
   const logicGatesPath = path.join(workspaceRoot, "LOGIC_GATES.md");
@@ -60,27 +62,27 @@ export async function patchLogicGate(targetPattern: string, replacement: string)
       return {
         success: false,
         affectedFile: "LOGIC_GATES.md",
-        changeSummary: `Target pattern not found in logic gates.`
+        changeSummary: `Target pattern not found in logic gates.`,
       };
     }
 
     const timestamp = Date.now();
     const meta = { ts: timestamp, v: 2, patched: true };
     const replacementWithMeta = `${replacement} <!-- ${JSON.stringify(meta)} -->`;
-    
+
     const newContent = content.replace(targetPattern, replacementWithMeta);
     await fs.writeFile(logicGatesPath, newContent);
 
     return {
       success: true,
       affectedFile: "LOGIC_GATES.md",
-      changeSummary: `Refined logic gate: ${targetPattern.slice(0, 30)}... -> ${replacement.slice(0, 30)}...`
+      changeSummary: `Refined logic gate: ${targetPattern.slice(0, 30)}... -> ${replacement.slice(0, 30)}...`,
     };
   } catch (err) {
     return {
       success: false,
       affectedFile: "LOGIC_GATES.md",
-      changeSummary: `Error: ${(err as Error).message}`
+      changeSummary: `Error: ${(err as Error).message}`,
     };
   }
 }
@@ -93,21 +95,22 @@ export async function applyMandateEvolution(change: string): Promise<MutationRes
     const content = await fs.readFile(agentsMdPath, "utf-8");
     // We append to the end of AGENTS.md as a "New Mandate" section if not present,
     // or just append to the end.
-    const newContent = content + `\n\n## [AUTONOMOUS_EVOLUTION_${new Date().toISOString()}]\n${change}\n`;
-    
+    const newContent =
+      content + `\n\n## [AUTONOMOUS_EVOLUTION_${new Date().toISOString()}]\n${change}\n`;
+
     await fs.writeFile(agentsMdPath, newContent);
 
     return {
       success: true,
       affectedFile: "AGENTS.md",
-      changeSummary: "Injected new architectural mandate."
+      changeSummary: "Injected new architectural mandate.",
     };
   } catch (err) {
     console.error("Mandate update failed:", err);
     return {
       success: false,
       affectedFile: "AGENTS.md",
-      changeSummary: `Error: ${(err as Error).message}`
+      changeSummary: `Error: ${(err as Error).message}`,
     };
   }
 }

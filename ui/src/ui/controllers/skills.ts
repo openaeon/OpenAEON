@@ -122,6 +122,58 @@ export async function saveSkillApiKey(state: SkillsState, skillKey: string) {
   }
 }
 
+export async function saveSkillBaseUrl(state: SkillsState, skillKey: string) {
+  if (!state.client || !state.connected) {
+    return;
+  }
+  state.skillsBusyKey = skillKey;
+  state.skillsError = null;
+  try {
+    const baseUrl = state.skillEdits[`${skillKey}:baseUrl`] ?? "";
+    await state.client.request("skills.update", { skillKey, baseUrl });
+    await loadSkills(state);
+    setSkillMessage(state, skillKey, {
+      kind: "success",
+      message: "Base URL saved",
+    });
+  } catch (err) {
+    const message = getErrorMessage(err);
+    state.skillsError = message;
+    setSkillMessage(state, skillKey, {
+      kind: "error",
+      message,
+    });
+  } finally {
+    state.skillsBusyKey = null;
+  }
+}
+
+export async function saveSkillProxy(state: SkillsState, skillKey: string) {
+  if (!state.client || !state.connected) {
+    return;
+  }
+  state.skillsBusyKey = skillKey;
+  state.skillsError = null;
+  try {
+    const proxy = state.skillEdits[`${skillKey}:proxy`] ?? "";
+    await state.client.request("skills.update", { skillKey, proxy });
+    await loadSkills(state);
+    setSkillMessage(state, skillKey, {
+      kind: "success",
+      message: "Proxy saved",
+    });
+  } catch (err) {
+    const message = getErrorMessage(err);
+    state.skillsError = message;
+    setSkillMessage(state, skillKey, {
+      kind: "error",
+      message,
+    });
+  } finally {
+    state.skillsBusyKey = null;
+  }
+}
+
 export async function installSkill(
   state: SkillsState,
   skillKey: string,

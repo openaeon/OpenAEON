@@ -46,6 +46,8 @@ export type SkillStatusEntry = {
   missing: Requirements;
   configChecks: SkillStatusConfigCheck[];
   install: SkillInstallOption[];
+  baseUrl?: string;
+  proxy?: string;
 };
 
 export type SkillStatusReport = {
@@ -228,6 +230,8 @@ function buildSkillStatus(
     missing,
     configChecks,
     install: normalizeInstallOptions(entry, prefs ?? resolveSkillsInstallPreferences(config)),
+    baseUrl: skillConfig?.baseUrl,
+    proxy: skillConfig?.proxy,
   };
 }
 

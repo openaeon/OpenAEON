@@ -42,9 +42,11 @@ export class Button extends Root {
   render() {
     return html`<button
       class=${classMap(this.theme.components.Button)}
-      style=${this.theme.additionalStyles?.Button
-        ? styleMap(this.theme.additionalStyles?.Button)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Button
+          ? styleMap(this.theme.additionalStyles?.Button)
+          : nothing
+      }
       @click=${() => {
         if (!this.action) {
           return;

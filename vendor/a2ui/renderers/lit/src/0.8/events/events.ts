@@ -23,22 +23,21 @@ const eventInit = {
   composed: true,
 };
 
-type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> =
-  {
-    [K in keyof T]: T[K] extends BaseEventDetail<infer EventType>
-      ? EventType extends K
-        ? T[K]
-        : never
-      : never;
-  };
+type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> = {
+  [K in keyof T]: T[K] extends BaseEventDetail<infer EventType>
+    ? EventType extends K
+      ? T[K]
+      : never
+    : never;
+};
 
 export type StateEventDetailMap = EnforceEventTypeMatch<{
   "a2ui.action": A2UI.A2UIAction;
 }>;
 
-export class StateEvent<
-  T extends keyof StateEventDetailMap
-> extends CustomEvent<StateEventDetailMap[T]> {
+export class StateEvent<T extends keyof StateEventDetailMap> extends CustomEvent<
+  StateEventDetailMap[T]
+> {
   static eventName = "a2uiaction";
 
   constructor(readonly payload: StateEventDetailMap[T]) {

@@ -340,7 +340,8 @@ async function resolveProviderExecutionContext(params: {
     ...params.entry.headers,
   };
   const headers = Object.keys(mergedHeaders).length > 0 ? mergedHeaders : undefined;
-  return { apiKeys, baseUrl, headers };
+  const proxy = params.entry.proxy ?? params.config?.proxy ?? providerConfig?.proxy;
+  return { apiKeys, baseUrl, headers, proxy };
 }
 
 export function formatDecisionSummary(decision: MediaUnderstandingDecision): string {
@@ -588,9 +589,24 @@ export async function runCliEntry(params: {
     if (shouldLogVerbose()) {
       logVerbose(`Media understanding via CLI: ${argv.join(" ")}`);
     }
+    const {
+      apiKeys: _keys,
+      baseUrl,
+      proxy,
+    } = await resolveProviderExecutionContext({
+      providerId: normalizeMediaProviderId(entry.provider ?? "openai"), // Default to openai for env resolution if missing
+      cfg,
+      entry,
+      config: params.config,
+    });
     const { stdout } = await runExec(argv[0], argv.slice(1), {
       timeoutMs,
       maxBuffer: CLI_OUTPUT_MAX_BUFFER,
+      env: {
+        ...process.env,
+        ...(baseUrl ? { OPENAI_BASE_URL: baseUrl } : {}),
+        ...(proxy ? { HTTPS_PROXY: proxy, https_proxy: proxy } : {}),
+      },
     });
     const resolved = await resolveCliOutput({
       command,

@@ -32,7 +32,10 @@ describe("Logic Refinement Tool", () => {
     vi.mocked(fs.readFile).mockResolvedValue(mockContent);
 
     const tool = createLogicRefinementTool();
-    const result = await tool.execute("test-call", { action: "audit", peanoRange: [0.0, 0.4] }) as any;
+    const result = (await tool.execute("test-call", {
+      action: "audit",
+      peanoRange: [0.0, 0.4],
+    })) as any;
 
     expect(result.data.findings.totalAxioms).toBe(1);
     expect(result.data.findings.redundancies).toHaveLength(0);
@@ -48,7 +51,7 @@ describe("Logic Refinement Tool", () => {
     vi.mocked(fs.readFile).mockResolvedValue(mockContent);
 
     const tool = createLogicRefinementTool();
-    const result = await tool.execute("test-call", { action: "audit" }) as any;
+    const result = (await tool.execute("test-call", { action: "audit" })) as any;
 
     expect(result.data.findings.totalAxioms).toBe(2);
   });

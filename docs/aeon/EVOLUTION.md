@@ -4,6 +4,6 @@ This document records the autonomous and manual evolutionary milestones of the A
 
 ## Evolution History
 
-| Timestamp | Event Type | Description | Findings / Mutations |
-|-----------|------------|-------------|----------------------|
+| Timestamp  | Event Type     | Description                           | Findings / Mutations                                     |
+| ---------- | -------------- | ------------------------------------- | -------------------------------------------------------- |
 | 2026-03-13 | INITIALIZATION | AEON Evolution Loop v1.2 established. | Memory distillation and Peano-aware auditing integrated. |

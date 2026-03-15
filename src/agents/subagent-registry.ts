@@ -956,69 +956,86 @@ export function registerSubagentRun(params: {
   void waitForSubagentCompletion(params.runId, waitTimeoutMs);
 }
 
+const pendingWaits = new Map<string, Promise<void>>();
+
 export async function waitForSubagentCompletion(runId: string, waitTimeoutMs: number) {
-  try {
-    const timeoutMs = Math.max(1, Math.floor(waitTimeoutMs));
-    const wait = await callGateway<{
-      status?: string;
-      startedAt?: number;
-      endedAt?: number;
-      error?: string;
-    }>({
-      method: "agent.wait",
-      params: {
-        runId,
-        timeoutMs,
-      },
-      timeoutMs: timeoutMs + 10_000,
-    });
-    if (wait?.status !== "ok" && wait?.status !== "error" && wait?.status !== "timeout") {
-      return;
-    }
-    const entry = subagentRuns.get(runId);
-    if (!entry) {
-      return;
-    }
-    let mutated = false;
-    if (typeof wait.startedAt === "number") {
-      entry.startedAt = wait.startedAt;
-      mutated = true;
-    }
-    if (typeof wait.endedAt === "number") {
-      entry.endedAt = wait.endedAt;
-      mutated = true;
-    }
-    if (!entry.endedAt) {
-      entry.endedAt = Date.now();
-      mutated = true;
-    }
-    const waitError = typeof wait.error === "string" ? wait.error : undefined;
-    const outcome: SubagentRunOutcome =
-      wait.status === "error"
-        ? { status: "error", error: waitError }
-        : wait.status === "timeout"
-          ? { status: "timeout" }
-          : { status: "ok" };
-    if (!runOutcomesEqual(entry.outcome, outcome)) {
-      entry.outcome = outcome;
-      mutated = true;
-    }
-    if (mutated) {
-      persistSubagentRuns();
-    }
-    await completeSubagentRun({
-      runId,
-      endedAt: entry.endedAt,
-      outcome,
-      reason:
-        wait.status === "error" ? SUBAGENT_ENDED_REASON_ERROR : SUBAGENT_ENDED_REASON_COMPLETE,
-      sendFarewell: true,
-      accountId: entry.requesterOrigin?.accountId,
-      triggerCleanup: true,
-    });
-  } catch {
-    // ignore
+  const existing = pendingWaits.get(runId);
+  if (existing) {
+    // If we're already waiting for this runId, avoid a redundant RPC.
+    // Note: this doesn't strictly respect waitTimeoutMs for the second caller,
+    // but in practice most callers use the same or similar timeouts (e.g. background 2h).
+    return await existing;
   }
+  const promise = (async () => {
+    try {
+      const timeoutMs = Math.max(1, Math.floor(waitTimeoutMs));
+      const wait = await callGateway<{
+        status?: string;
+        startedAt?: number;
+        endedAt?: number;
+        error?: string;
+      }>({
+        method: "agent.wait",
+        params: {
+          runId,
+          timeoutMs,
+        },
+        timeoutMs: timeoutMs + 10_000,
+      });
+
+      if (wait?.status !== "ok" && wait?.status !== "error" && wait?.status !== "timeout") {
+        return;
+      }
+      const entry = subagentRuns.get(runId);
+      if (!entry) {
+        return;
+      }
+      let mutated = false;
+      if (typeof wait.startedAt === "number") {
+        entry.startedAt = wait.startedAt;
+        mutated = true;
+      }
+      if (typeof wait.endedAt === "number") {
+        entry.endedAt = wait.endedAt;
+        mutated = true;
+      }
+      if (!entry.endedAt) {
+        entry.endedAt = Date.now();
+        mutated = true;
+      }
+      const waitError = typeof wait.error === "string" ? wait.error : undefined;
+      const outcome: SubagentRunOutcome =
+        wait.status === "error"
+          ? { status: "error", error: waitError }
+          : wait.status === "timeout"
+            ? { status: "timeout" }
+            : { status: "ok" };
+      if (!runOutcomesEqual(entry.outcome, outcome)) {
+        entry.outcome = outcome;
+        mutated = true;
+      }
+      if (mutated) {
+        persistSubagentRuns();
+      }
+      await completeSubagentRun({
+        runId,
+        endedAt: entry.endedAt,
+        outcome,
+        reason:
+          wait.status === "error" ? SUBAGENT_ENDED_REASON_ERROR : SUBAGENT_ENDED_REASON_COMPLETE,
+        sendFarewell: true,
+        accountId: entry.requesterOrigin?.accountId,
+        triggerCleanup: true,
+      });
+    } catch {
+      // ignore
+    } finally {
+      pendingWaits.delete(runId);
+    }
+  })();
+
+  pendingWaits.set(runId, promise);
+  return await promise;
 }
 
 export function resetSubagentRegistryForTests(opts?: { persist?: boolean }) {

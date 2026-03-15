@@ -12,11 +12,22 @@ export const AVATAR_CHARACTERS = [
 
 function getKingdomTier(label: string): number {
   const l = label.toLowerCase();
-  if (l.includes("elder") || l.includes("大长老") || l.includes("king") || l.includes("国王")) return 0;
-  if (l.includes("chieftain") || l.includes("酋长") || l.includes("marshal") || l.includes("元帅") || l.includes("priest") || l.includes("祭司")) return 1;
-  if (l.includes("lord") || l.includes("领主") || l.includes("general") || l.includes("将军")) return 2;
+  if (l.includes("elder") || l.includes("大长老") || l.includes("king") || l.includes("国王"))
+    return 0;
+  if (
+    l.includes("chieftain") ||
+    l.includes("酋长") ||
+    l.includes("marshal") ||
+    l.includes("元帅") ||
+    l.includes("priest") ||
+    l.includes("祭司")
+  )
+    return 1;
+  if (l.includes("lord") || l.includes("领主") || l.includes("general") || l.includes("将军"))
+    return 2;
   if (l.includes("warrior") || l.includes("勇士") || l.includes("citizen") || l.includes("公民")) {
-    if (l.includes("recruit") || l.includes("新兵") || l.includes("subject") || l.includes("子民")) return 4;
+    if (l.includes("recruit") || l.includes("新兵") || l.includes("subject") || l.includes("子民"))
+      return 4;
     return 3;
   }
   return 3; // Default to warrior/citizen
@@ -83,12 +94,16 @@ export function renderManagerFigure(busy: boolean, resonant: boolean = false) {
 }
 
 /** Generic 3D CSS Agent Figure */
-export function renderAgentFigure(row: GatewaySessionRow, avatar?: string, resonant: boolean = false) {
+export function renderAgentFigure(
+  row: GatewaySessionRow,
+  avatar?: string,
+  resonant: boolean = false,
+) {
   const isWorking = Boolean(row.outputTokens && row.outputTokens > 0);
   const modelStr = (row.model || "").toLowerCase();
   const labelStr = (row.label || "").toLowerCase();
   const tier = getKingdomTier(row.label || "");
-  
+
   let activity = "coffee";
   if (isWorking) {
     if (
@@ -142,7 +157,9 @@ export function renderAgentFigure(row: GatewaySessionRow, avatar?: string, reson
       }
       
       <!-- Tiered Royal/Status Elements -->
-      ${tier <= 1 ? html`
+      ${
+        tier <= 1
+          ? html`
         <div class="figure__aura figure__aura--tier-${tier}"></div>
         <div class="figure__crown figure__crown--tier-${tier}">
           <div class="crown__point crown__point--l"></div>
@@ -150,9 +167,13 @@ export function renderAgentFigure(row: GatewaySessionRow, avatar?: string, reson
           <div class="crown__point crown__point--r"></div>
           <div class="crown__band"></div>
         </div>
-      ` : tier === 2 ? html`
-        <div class="figure__aura figure__aura--tier-2"></div>
-      ` : nothing}
+      `
+          : tier === 2
+            ? html`
+                <div class="figure__aura figure__aura--tier-2"></div>
+              `
+            : nothing
+      }
 
       <div class="figure__head">
         <div class="figure__face">
@@ -167,7 +188,13 @@ export function renderAgentFigure(row: GatewaySessionRow, avatar?: string, reson
         <div class="figure__body-side figure__body-side--l"></div>
         <div class="figure__body-side figure__body-side--r"></div>
         <div class="figure__body-top"></div>
-        ${tier <= 2 || avatarId === "codex" || avatarId === "gemini" ? html`<div class="figure__badge"></div>` : nothing}
+        ${
+          tier <= 2 || avatarId === "codex" || avatarId === "gemini"
+            ? html`
+                <div class="figure__badge"></div>
+              `
+            : nothing
+        }
       </div>
       ${
         avatarClass === "figure--worker" || avatarId === "molty"

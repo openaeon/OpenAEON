@@ -23,7 +23,22 @@ if (mode !== "lint" && mode !== "format") {
 const lintExts = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const formatExts = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json", ".md", ".mdx"]);
 
+const excludedDirs = [
+  "vendor",
+  "node_modules",
+  "dist",
+  ".gemini",
+  ".artifacts",
+  "docs/zh-CN",
+  "vendor/a2ui/renderers/lit/dist",
+];
+
 const shouldSelect = (filePath) => {
+  const parts = filePath.split(path.sep);
+  if (parts.some((part) => excludedDirs.includes(part))) {
+    return false;
+  }
+
   const ext = path.extname(filePath).toLowerCase();
   if (mode === "lint") {
     return lintExts.has(ext);

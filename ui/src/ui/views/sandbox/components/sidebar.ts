@@ -25,7 +25,9 @@ export function renderTimeline(rows: GatewaySessionRow[]) {
 
   // Helper to render a group of events
   const renderGroup = (title: string, groupEvents: GatewaySessionRow[]) => {
-    if (groupEvents.length === 0) {return nothing;}
+    if (groupEvents.length === 0) {
+      return nothing;
+    }
     return html`
       <div class="timeline-group">
         <div class="timeline-group__title">${title}</div>
@@ -87,7 +89,7 @@ export function renderTaskPlanPanel(
   }
 
   return html`
-    <div class="task-plan ${allDone ? 'task-plan--complete' : ''}">
+    <div class="task-plan ${allDone ? "task-plan--complete" : ""}">
       ${plan.description ? html`<div class="task-plan__desc">${plan.description}</div>` : nothing}
       <div class="task-plan__progress-row">
         <span>${t("sandbox.plan.tasksProgress", { done: String(done), total: String(total) })}</span>
@@ -96,7 +98,7 @@ export function renderTaskPlanPanel(
       <div class="task-plan__bar">
         <div
           class="task-plan__fill"
-          style="width: ${pct}%; background: ${allDone ? '#10b981' : '#818cf8'};"
+          style="width: ${pct}%; background: ${allDone ? "#10b981" : "#818cf8"};"
         ></div>
       </div>
       <div class="task-plan__list">
@@ -111,9 +113,11 @@ export function renderTaskPlanPanel(
           const linked = findLinkedWorker(todo.title);
           return html`<div class="${cls}">
             ${icon} ${todo.title}
-            ${linked
-              ? html`<span class="task-plan__worker-link" title="${t("sandbox.sidebar.linked", { name: linked.label || linked.key })}">🔗</span>`
-              : nothing}
+            ${
+              linked
+                ? html`<span class="task-plan__worker-link" title="${t("sandbox.sidebar.linked", { name: linked.label || linked.key })}">🔗</span>`
+                : nothing
+            }
           </div>`;
         })}
       </div>
@@ -126,8 +130,10 @@ export function renderTaskPlanPanel(
                 <span class="task-plan__celebrate">🎉</span>
               </div>
               <div class="task-plan__confetti">
-                ${Array.from({ length: 20 }, (_, i) =>
-                  html`<span class="confetti-piece" style="--i:${i}; --x:${Math.random() * 100}; --delay:${Math.random() * 2}s; --color:${['#818cf8','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4'][i % 6]}"></span>`,
+                ${Array.from(
+                  { length: 20 },
+                  (_, i) =>
+                    html`<span class="confetti-piece" style="--i:${i}; --x:${Math.random() * 100}; --delay:${Math.random() * 2}s; --color:${["#818cf8", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#06b6d4"][i % 6]}"></span>`,
                 )}
               </div>
             `

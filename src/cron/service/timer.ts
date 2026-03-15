@@ -224,7 +224,7 @@ function emitFailureAlert(
 ) {
   const safeJobName = params.job.name || params.job.id;
   const truncatedError = (params.error?.trim() || "unknown error").slice(0, 200);
-  
+
   // Create a proactive, human-like instruction for the agent to analyze the failure
   const text = [
     `[CRITICAL SYSTEM ALERT] Your scheduled task "${safeJobName}" has failed ${params.consecutiveErrors} consecutive times.`,

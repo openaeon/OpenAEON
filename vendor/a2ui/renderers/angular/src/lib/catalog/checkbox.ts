@@ -14,17 +14,14 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Primitives } from '@a2ui/lit/0.8';
+import { Component, computed, input } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Primitives } from "@a2ui/lit/0.8";
 
 @Component({
-  selector: 'a2ui-checkbox',
+  selector: "a2ui-checkbox",
   template: `
-    <section
-      [class]="theme.components.CheckBox.container"
-      [style]="theme.additionalStyles?.CheckBox"
-    >
+    <section [class]="theme.components.CheckBox.container" [style]="theme.additionalStyles?.CheckBox">
       <input
         autocomplete="off"
         type="checkbox"
@@ -34,9 +31,7 @@ import { Primitives } from '@a2ui/lit/0.8';
         (change)="handleChange($event)"
       />
 
-      <label [htmlFor]="inputId" [class]="theme.components.CheckBox.label">{{
-        resolvedLabel()
-      }}</label>
+      <label [htmlFor]="inputId" [class]="theme.components.CheckBox.label">{{ resolvedLabel() }}</label>
     </section>
   `,
   styles: `
@@ -59,7 +54,7 @@ export class Checkbox extends DynamicComponent {
 
   protected inputChecked = computed(() => super.resolvePrimitive(this.value()) ?? false);
   protected resolvedLabel = computed(() => super.resolvePrimitive(this.label()));
-  protected inputId = super.getUniqueId('a2ui-checkbox');
+  protected inputId = super.getUniqueId("a2ui-checkbox");
 
   protected handleChange(event: Event) {
     const path = this.value()?.path;

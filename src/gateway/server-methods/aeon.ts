@@ -23,20 +23,20 @@ export const aeonHandlers: GatewayRequestHandlers = {
           ? (params.sessionKey as string).trim()
           : undefined;
       const cfg = loadConfig();
-      
+
       // 1. Get real-time system metrics
       const system = await getSystemStatus();
-      
+
       // 2. Count logic gates and measure sizes
       const logicGatesPath = path.join(workspaceDir, "LOGIC_GATES.md");
       const memoryPath = path.join(workspaceDir, "MEMORY.md");
-      
+
       let logicGateCount = 0;
       let logicGateSize = 0;
       let memorySize = 0;
       let memoryUpdatedAt: number | undefined;
       let memoryAxioms: string[] = [];
-      
+
       try {
         const [logicStat, memoryStat] = await Promise.all([
           fs.stat(logicGatesPath).catch(() => null),
@@ -55,9 +55,7 @@ export const aeonHandlers: GatewayRequestHandlers = {
           memoryUpdatedAt = memoryStat.mtimeMs;
           const memoryContent = await fs.readFile(memoryPath, "utf-8");
           const lines = memoryContent.split("\n");
-          const axiomLines = lines.filter((line) =>
-            /\[(AXIOM|VERIFIED|TRUTH)\]/i.test(line),
-          );
+          const axiomLines = lines.filter((line) => /\[(AXIOM|VERIFIED|TRUTH)\]/i.test(line));
           memoryAxioms = axiomLines.slice(-5);
         }
       } catch (err) {
@@ -81,10 +79,10 @@ export const aeonHandlers: GatewayRequestHandlers = {
           neuralDepth = Math.max(neuralDepth, handle.getIterationDepth());
         }
       }
-      
+
       // Saturation: 0-100 based on memory size vs 50KB threshold
       const memorySaturation = Math.min(100, Math.floor((memorySize / 51200) * 100));
-      
+
       // Dynamic Entropy: Base 10 + jitter based on memory size + neural depth
       const cognitiveEntropy = Math.min(100, 10 + Math.floor(memorySaturation / 4) + neuralDepth);
 
@@ -109,10 +107,10 @@ export const aeonHandlers: GatewayRequestHandlers = {
       const compaction = cfg.agents?.defaults?.compaction;
       const autoSealEnabled = !!compaction?.autoSeal;
       const autoSealThreshold = compaction?.autoSealThreshold ?? 95;
-      
+
       if (autoSealEnabled && memorySaturation >= autoSealThreshold) {
         // Trigger background distillation if threshold exceeded
-        distillMemory().catch(e => console.error("Auto-seal failed:", e));
+        distillMemory().catch((e) => console.error("Auto-seal failed:", e));
       }
 
       // 6. Extract Last Seal Time
@@ -127,7 +125,9 @@ export const aeonHandlers: GatewayRequestHandlers = {
             lastSealTime = parseInt(tsMatch[1], 10);
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
 
       let planDigest: string | undefined;
       if (sessionKey && workspaceDir) {
@@ -189,15 +189,15 @@ export const aeonHandlers: GatewayRequestHandlers = {
       // Throttling Logic: If entropy is high, simulate "Deep Thought" by delaying subsequent processing
       const depthDelay = Math.min(2000, neuralDepth * 10);
       if (depthDelay > 500) {
-        await new Promise(resolve => setTimeout(resolve, depthDelay));
+        await new Promise((resolve) => setTimeout(resolve, depthDelay));
       }
     } catch (err) {
       respond(false, undefined, {
         code: "AEON_STATUS_ERROR",
-        message: String(err)
+        message: String(err),
       });
     }
-  }
+  },
 };
 
 /**
@@ -207,16 +207,16 @@ export const aeonHandlers: GatewayRequestHandlers = {
 export function calculatePeanoTraversedPoint(entropy: number) {
   const t = (Date.now() / 10000) % 1; // 0-1 loop
   const res = 8; // Resolution of the "grid"
-  
+
   // Pseudo-Peano space filling logic
   // We use entropy to drift the "scan line" speed and depth
   const phase = t * Math.PI * 2;
   const drift = (entropy / 100) * 0.2;
-  
+
   return {
     x: Math.max(0, Math.min(1, Math.sin(phase) * 0.4 + 0.5 + Math.cos(phase * 2) * drift)),
     y: Math.max(0, Math.min(1, Math.cos(phase * 0.7) * 0.4 + 0.5 + Math.sin(phase * 3) * drift)),
-    z: Math.sin(phase * 0.3) * 0.5 + 0.5
+    z: Math.sin(phase * 0.3) * 0.5 + 0.5,
   };
 }
 
@@ -230,7 +230,7 @@ export function calculateEpiphanyFactor(chaos: number, saturation: number, depth
   const normDepth = Math.min(1, depth / 20);
   const normSaturation = saturation / 100;
 
-  const base = (normChaos * 0.4) + (normDepth * 0.3) + (normSaturation * 0.3);
-  const jitter = (Math.sin(Date.now() / 800) + 1) / 2 * 0.05;
+  const base = normChaos * 0.4 + normDepth * 0.3 + normSaturation * 0.3;
+  const jitter = ((Math.sin(Date.now() / 800) + 1) / 2) * 0.05;
   return Math.max(0, Math.min(1, base + jitter));
 }

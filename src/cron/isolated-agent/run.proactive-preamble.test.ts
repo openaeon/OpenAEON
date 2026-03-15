@@ -47,10 +47,12 @@ describe("runCronIsolatedAgentTurn preamble", () => {
 
     expect(runEmbeddedPiAgentMock).toHaveBeenCalledTimes(1);
     const callArgs = runEmbeddedPiAgentMock.mock.calls[0][0];
-    
+
     // Check that the commandBody/prompt was injected correctly
     expect(callArgs.prompt).toContain("[Scheduled Task Context]");
-    expect(callArgs.prompt).toContain("You are an AI employee executing a scheduled background task.");
+    expect(callArgs.prompt).toContain(
+      "You are an AI employee executing a scheduled background task.",
+    );
     expect(callArgs.prompt).toContain("- Memory-First: If you need state/context");
     expect(callArgs.prompt).toContain("run my test task");
   });

@@ -50,9 +50,7 @@ function generateSummary(
     )} | ${"Tool Error Runs".padEnd(toolErrorRunsWidth)} |`;
     const divider = `|${"-".repeat(promptNameWidth + 2)}|${"-".repeat(
       latencyWidth + 2,
-    )}|${"-".repeat(failedRunsWidth + 2)}|${"-".repeat(
-      toolErrorRunsWidth + 2,
-    )}|`;
+    )}|${"-".repeat(failedRunsWidth + 2)}|${"-".repeat(toolErrorRunsWidth + 2)}|`;
     summary += header;
     summary += `\n${divider}`;
 
@@ -73,16 +71,13 @@ function generateSummary(
       const runs = promptsInModel[promptName];
       const totalRuns = runs.length;
       const errorRuns = runs.filter((r) => r.error).length;
-      const failedRuns = runs.filter(
-        (r) => r.error || r.validationResults.length > 0,
-      ).length;
+      const failedRuns = runs.filter((r) => r.error || r.validationResults.length > 0).length;
       const totalLatency = runs.reduce((acc, r) => acc + r.latency, 0);
       const avgLatency = (totalLatency / totalRuns).toFixed(0);
 
       totalModelFailedRuns += failedRuns;
 
-      const failedRunsStr =
-        failedRuns > 0 ? `${failedRuns} / ${totalRuns}` : "";
+      const failedRunsStr = failedRuns > 0 ? `${failedRuns} / ${totalRuns}` : "";
       const errorRunsStr = errorRuns > 0 ? `${errorRuns} / ${totalRuns}` : "";
 
       summary += `\n| ${promptName.padEnd(
@@ -104,9 +99,7 @@ function generateSummary(
   ).length;
   const modelsWithFailures = [
     ...new Set(
-      results
-        .filter((r) => r.error || r.validationResults.length > 0)
-        .map((r) => r.modelName),
+      results.filter((r) => r.error || r.validationResults.length > 0).map((r) => r.modelName),
     ),
   ].join(", ");
 
@@ -200,9 +193,7 @@ async function main() {
 
   let filteredPrompts = prompts;
   if (argv.prompt) {
-    filteredPrompts = prompts.filter((p) =>
-      p.name.startsWith(argv.prompt as string)
-    );
+    filteredPrompts = prompts.filter((p) => p.name.startsWith(argv.prompt as string));
     if (filteredPrompts.length === 0) {
       console.error(`No prompt found with prefix "${argv.prompt}".`);
       process.exit(1);
@@ -212,22 +203,17 @@ async function main() {
   const generationPromises: Promise<InferenceResult>[] = [];
 
   for (const prompt of filteredPrompts) {
-    const schemaString = fs.readFileSync(
-      path.join(__dirname, prompt.schemaPath),
-      "utf-8"
-    );
+    const schemaString = fs.readFileSync(path.join(__dirname, prompt.schemaPath), "utf-8");
     const schema = JSON.parse(schemaString);
     for (const modelConfig of filteredModels) {
-      const modelDirName = modelConfig.name.replace(/[\/:]/g, "_");
-      const modelOutputDir = outputDir
-        ? path.join(outputDir, modelDirName)
-        : null;
+      const modelDirName = modelConfig.name.replace(/[/:]/g, "_");
+      const modelOutputDir = outputDir ? path.join(outputDir, modelDirName) : null;
       if (modelOutputDir && !fs.existsSync(modelOutputDir)) {
         fs.mkdirSync(modelOutputDir, { recursive: true });
       }
       for (let i = 1; i <= runsPerPrompt; i++) {
         console.log(
-          `Queueing generation for model: ${modelConfig.name}, prompt: ${prompt.name} (run ${i})`
+          `Queueing generation for model: ${modelConfig.name}, prompt: ${prompt.name} (run ${i})`,
         );
         const startTime = Date.now();
         generationPromises.push(
@@ -239,25 +225,16 @@ async function main() {
           })
             .then((component) => {
               if (modelOutputDir) {
-                const inputPath = path.join(
-                  modelOutputDir,
-                  `${prompt.name}.input.txt`
-                );
+                const inputPath = path.join(modelOutputDir, `${prompt.name}.input.txt`);
                 fs.writeFileSync(inputPath, prompt.promptText);
 
-                const outputPath = path.join(
-                  modelOutputDir,
-                  `${prompt.name}.output.json`
-                );
-                fs.writeFileSync(
-                  outputPath,
-                  JSON.stringify(component, null, 2)
-                );
+                const outputPath = path.join(modelOutputDir, `${prompt.name}.output.json`);
+                fs.writeFileSync(outputPath, JSON.stringify(component, null, 2));
               }
               const validationResults = validateSchema(
                 component,
                 prompt.schemaPath,
-                prompt.matchers
+                prompt.matchers,
               );
               return {
                 modelName: modelConfig.name,
@@ -271,25 +248,16 @@ async function main() {
             })
             .catch((error) => {
               if (modelOutputDir) {
-                const inputPath = path.join(
-                  modelOutputDir,
-                  `${prompt.name}.input.txt`
-                );
+                const inputPath = path.join(modelOutputDir, `${prompt.name}.input.txt`);
                 fs.writeFileSync(inputPath, prompt.promptText);
 
-                const errorPath = path.join(
-                  modelOutputDir,
-                  `${prompt.name}.error.json`
-                );
+                const errorPath = path.join(modelOutputDir, `${prompt.name}.error.json`);
                 const errorOutput = {
                   message: error.message,
                   stack: error.stack,
                   ...error,
                 };
-                fs.writeFileSync(
-                  errorPath,
-                  JSON.stringify(errorOutput, null, 2)
-                );
+                fs.writeFileSync(errorPath, JSON.stringify(errorOutput, null, 2));
               }
               return {
                 modelName: modelConfig.name,
@@ -300,7 +268,7 @@ async function main() {
                 validationResults: [],
                 runNumber: i,
               };
-            })
+            }),
         );
       }
     }
@@ -335,9 +303,7 @@ async function main() {
         } else if (hasComponent) {
           if (hasValidationFailures) {
             console.log("Validation Failures:");
-            result.validationResults.forEach((failure) =>
-              console.log(`- ${failure}`)
-            );
+            result.validationResults.forEach((failure) => console.log(`- ${failure}`));
           }
           if (verbose) {
             if (hasValidationFailures) {

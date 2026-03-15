@@ -76,17 +76,21 @@ export class Tabs extends Root {
           titleString = title.literal;
         } else if (title && "path" in title && title.path) {
           if (!this.processor || !this.component) {
-            return html`(no model)`;
+            return html`
+              (no model)
+            `;
           }
 
           const textValue = this.processor.getData(
             this.component,
             title.path,
-            this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+            this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
           );
 
           if (typeof textValue !== "string") {
-            return html`(invalid)`;
+            return html`
+              (invalid)
+            `;
           }
 
           titleString = textValue;
@@ -96,7 +100,7 @@ export class Tabs extends Root {
         if (this.selected === idx) {
           classes = Styles.merge(
             this.theme.components.Tabs.controls.all,
-            this.theme.components.Tabs.controls.selected
+            this.theme.components.Tabs.controls.selected,
           );
         } else {
           classes = { ...this.theme.components.Tabs.controls.all };
@@ -116,15 +120,17 @@ export class Tabs extends Root {
   }
 
   #renderSlot() {
-    return html`<slot name="current"></slot>`;
+    return html`
+      <slot name="current"></slot>
+    `;
   }
 
   render() {
     return html`<section
       class=${classMap(this.theme.components.Tabs.container)}
-      style=${this.theme.additionalStyles?.Tabs
-        ? styleMap(this.theme.additionalStyles?.Tabs)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Tabs ? styleMap(this.theme.additionalStyles?.Tabs) : nothing
+      }
     >
       ${[this.#renderTabs(), this.#renderSlot()]}
     </section>`;

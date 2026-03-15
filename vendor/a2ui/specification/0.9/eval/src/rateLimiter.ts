@@ -47,9 +47,7 @@ export class RateLimiter {
   private cleanUpRecords(state: ModelRateLimitState): void {
     // Use 65 seconds to be safe against clock drift and server bucket alignment
     const minuteAgo = Date.now() - 65 * 1000;
-    state.usageRecords = state.usageRecords.filter(
-      (record) => record.timestamp > minuteAgo
-    );
+    state.usageRecords = state.usageRecords.filter((record) => record.timestamp > minuteAgo);
   }
 
   reportError(modelConfig: ModelConfiguration, error: any): void {
@@ -76,15 +74,12 @@ export class RateLimiter {
       this.modelPauses.set(modelConfig.name, pausedUntil);
 
       logger.verbose(
-        `RateLimiter: Pausing ${modelConfig.name} for ${pauseDuration}ms due to 429 error. Resuming at ${new Date(pausedUntil).toISOString()}`
+        `RateLimiter: Pausing ${modelConfig.name} for ${pauseDuration}ms due to 429 error. Resuming at ${new Date(pausedUntil).toISOString()}`,
       );
     }
   }
 
-  async acquirePermit(
-    modelConfig: ModelConfiguration,
-    tokensCost: number = 0
-  ): Promise<void> {
+  async acquirePermit(modelConfig: ModelConfiguration, tokensCost: number = 0): Promise<void> {
     this._waitingCount++;
     try {
       const { name, requestsPerMinute, tokensPerMinute } = modelConfig;
@@ -100,9 +95,7 @@ export class RateLimiter {
         const pausedUntil = this.modelPauses.get(name);
         if (pausedUntil && pausedUntil > Date.now()) {
           const pauseWait = pausedUntil - Date.now();
-          logger.verbose(
-            `Rate limiting ${name}: Paused by circuit breaker for ${pauseWait}ms`
-          );
+          logger.verbose(`Rate limiting ${name}: Paused by circuit breaker for ${pauseWait}ms`);
           await new Promise((resolve) => setTimeout(resolve, pauseWait));
           // After waiting, loop again to check normal rate limits
           continue;
@@ -120,12 +113,10 @@ export class RateLimiter {
           if (r.isRequest) currentRequests++;
         });
 
-        const effectiveTokensPerMinute = tokensPerMinute
-          ? Math.floor(tokensPerMinute * 0.9)
-          : 0;
+        const effectiveTokensPerMinute = tokensPerMinute ? Math.floor(tokensPerMinute * 0.9) : 0;
 
         logger.debug(
-          `RateLimiter check for ${name}: Cost=${tokensCost}, CurrentTokens=${currentTokens}, Limit=${effectiveTokensPerMinute}, Requests=${currentRequests}, RPM=${requestsPerMinute}`
+          `RateLimiter check for ${name}: Cost=${tokensCost}, CurrentTokens=${currentTokens}, Limit=${effectiveTokensPerMinute}, Requests=${currentRequests}, RPM=${requestsPerMinute}`,
         );
 
         // Check RPM
@@ -133,10 +124,7 @@ export class RateLimiter {
           // Find the oldest REQUEST record
           const oldestRequest = state.usageRecords.find((r) => r.isRequest);
           if (oldestRequest) {
-            rpmWait = Math.max(
-              0,
-              oldestRequest.timestamp + 60 * 1000 - currentNow
-            );
+            rpmWait = Math.max(0, oldestRequest.timestamp + 60 * 1000 - currentNow);
           }
         }
 
@@ -149,16 +137,12 @@ export class RateLimiter {
             // Check if we are ALREADY over limit for the next call
             // We need to shed enough tokens so that (current - shed + cost) <= limit
             // shed >= current + cost - limit
-            let tokensToShed =
-              currentTokens + tokensCost - effectiveTokensPerMinute;
+            let tokensToShed = currentTokens + tokensCost - effectiveTokensPerMinute;
             let cumulativeTokens = 0;
             for (const record of state.usageRecords) {
               cumulativeTokens += record.tokensUsed;
               if (cumulativeTokens >= tokensToShed) {
-                tpmWait = Math.max(
-                  tpmWait,
-                  record.timestamp + 60 * 1000 - currentNow
-                );
+                tpmWait = Math.max(tpmWait, record.timestamp + 60 * 1000 - currentNow);
                 break;
               }
             }
@@ -177,7 +161,7 @@ export class RateLimiter {
         }
 
         logger.verbose(
-          `Rate limiting ${name}: Waiting ${requiredWait}ms (RPM wait: ${rpmWait}ms, TPM wait: ${tpmWait}ms)`
+          `Rate limiting ${name}: Waiting ${requiredWait}ms (RPM wait: ${rpmWait}ms, TPM wait: ${tpmWait}ms)`,
         );
         await new Promise((resolve) => setTimeout(resolve, requiredWait));
       }
@@ -189,7 +173,7 @@ export class RateLimiter {
   recordUsage(
     modelConfig: ModelConfiguration,
     tokensUsed: number,
-    isRequest: boolean = true
+    isRequest: boolean = true,
   ): void {
     if (tokensUsed > 0 || isRequest) {
       const state = this.getModelState(modelConfig.name);

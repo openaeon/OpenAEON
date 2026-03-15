@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { Types } from '@a2ui/lit/0.8';
-import { Renderer } from '../rendering/renderer';
+import { Component, computed, input } from "@angular/core";
+import { Types } from "@a2ui/lit/0.8";
+import { Renderer } from "../rendering/renderer";
 
 @Component({
-  selector: 'a2ui-surface',
+  selector: "a2ui-surface",
   imports: [Renderer],
   template: `
     @let surfaceId = this.surfaceId();
@@ -39,7 +39,7 @@ import { Renderer } from '../rendering/renderer';
     }
   `,
   host: {
-    '[style]': 'styles()',
+    "[style]": "styles()",
   },
 })
 export class Surface {
@@ -63,31 +63,31 @@ export class Surface {
           // and half the range for primary color to white the mixed values have
           // to go up double the amount, i.e., a range from black to primary
           // color needs to fit in 0 -> 50 rather than 0 -> 100.
-          case 'primaryColor': {
-            styles['--p-100'] = '#ffffff';
-            styles['--p-99'] = `color-mix(in srgb, ${value} 2%, white 98%)`;
-            styles['--p-98'] = `color-mix(in srgb, ${value} 4%, white 96%)`;
-            styles['--p-95'] = `color-mix(in srgb, ${value} 10%, white 90%)`;
-            styles['--p-90'] = `color-mix(in srgb, ${value} 20%, white 80%)`;
-            styles['--p-80'] = `color-mix(in srgb, ${value} 40%, white 60%)`;
-            styles['--p-70'] = `color-mix(in srgb, ${value} 60%, white 40%)`;
-            styles['--p-60'] = `color-mix(in srgb, ${value} 80%, white 20%)`;
-            styles['--p-50'] = value;
-            styles['--p-40'] = `color-mix(in srgb, ${value} 80%, black 20%)`;
-            styles['--p-35'] = `color-mix(in srgb, ${value} 70%, black 30%)`;
-            styles['--p-30'] = `color-mix(in srgb, ${value} 60%, black 40%)`;
-            styles['--p-25'] = `color-mix(in srgb, ${value} 50%, black 50%)`;
-            styles['--p-20'] = `color-mix(in srgb, ${value} 40%, black 60%)`;
-            styles['--p-15'] = `color-mix(in srgb, ${value} 30%, black 70%)`;
-            styles['--p-10'] = `color-mix(in srgb, ${value} 20%, black 80%)`;
-            styles['--p-5'] = `color-mix(in srgb, ${value} 10%, black 90%)`;
-            styles['--0'] = '#00000';
+          case "primaryColor": {
+            styles["--p-100"] = "#ffffff";
+            styles["--p-99"] = `color-mix(in srgb, ${value} 2%, white 98%)`;
+            styles["--p-98"] = `color-mix(in srgb, ${value} 4%, white 96%)`;
+            styles["--p-95"] = `color-mix(in srgb, ${value} 10%, white 90%)`;
+            styles["--p-90"] = `color-mix(in srgb, ${value} 20%, white 80%)`;
+            styles["--p-80"] = `color-mix(in srgb, ${value} 40%, white 60%)`;
+            styles["--p-70"] = `color-mix(in srgb, ${value} 60%, white 40%)`;
+            styles["--p-60"] = `color-mix(in srgb, ${value} 80%, white 20%)`;
+            styles["--p-50"] = value;
+            styles["--p-40"] = `color-mix(in srgb, ${value} 80%, black 20%)`;
+            styles["--p-35"] = `color-mix(in srgb, ${value} 70%, black 30%)`;
+            styles["--p-30"] = `color-mix(in srgb, ${value} 60%, black 40%)`;
+            styles["--p-25"] = `color-mix(in srgb, ${value} 50%, black 50%)`;
+            styles["--p-20"] = `color-mix(in srgb, ${value} 40%, black 60%)`;
+            styles["--p-15"] = `color-mix(in srgb, ${value} 30%, black 70%)`;
+            styles["--p-10"] = `color-mix(in srgb, ${value} 20%, black 80%)`;
+            styles["--p-5"] = `color-mix(in srgb, ${value} 10%, black 90%)`;
+            styles["--0"] = "#00000";
             break;
           }
 
-          case 'font': {
-            styles['--font-family'] = value;
-            styles['--font-family-flex'] = value;
+          case "font": {
+            styles["--font-family"] = value;
+            styles["--font-family-flex"] = value;
             break;
           }
         }

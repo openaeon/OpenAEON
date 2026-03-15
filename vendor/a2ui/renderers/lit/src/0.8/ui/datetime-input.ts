@@ -78,7 +78,7 @@ export class DateTimeInput extends Root {
       this.component,
       this.value.path,
       value,
-      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
     );
   }
 
@@ -94,9 +94,11 @@ export class DateTimeInput extends Root {
       <input
         autocomplete="off"
         class=${classMap(this.theme.components.DateTimeInput.element)}
-        style=${this.theme.additionalStyles?.DateTimeInput
-          ? styleMap(this.theme.additionalStyles?.DateTimeInput)
-          : nothing}
+        style=${
+          this.theme.additionalStyles?.DateTimeInput
+            ? styleMap(this.theme.additionalStyles?.DateTimeInput)
+            : nothing
+        }
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
@@ -176,16 +178,20 @@ export class DateTimeInput extends Root {
         return this.#renderField(this.value.literal);
       } else if (this.value && "path" in this.value && this.value.path) {
         if (!this.processor || !this.component) {
-          return html`(no model)`;
+          return html`
+            (no model)
+          `;
         }
 
         const textValue = this.processor.getData(
           this.component,
           this.value.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
         if (typeof textValue !== "string") {
-          return html`(invalid)`;
+          return html`
+            (invalid)
+          `;
         }
 
         return this.#renderField(textValue);

@@ -24,7 +24,7 @@
         "styles": {
           "type": "object",
           "description": "Styling information for the UI.",
-           "additionalProperties": true
+          "additionalProperties": true
         }
       },
       "required": ["root", "surfaceId"]

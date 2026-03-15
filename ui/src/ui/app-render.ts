@@ -69,6 +69,8 @@ import {
   installSkill,
   loadSkills,
   saveSkillApiKey,
+  saveSkillBaseUrl,
+  saveSkillProxy,
   updateSkillEdit,
   updateSkillEnabled,
 } from "./controllers/skills.ts";
@@ -230,11 +232,19 @@ export function renderApp(state: AppViewState) {
       : rawDeliveryToSuggestions;
 
   const cg = state.aeonSystemStatus?.cognitiveState;
-  const peanoCoord = cg?.topo ?? state.aeonSystemStatus?.peanoCoordinate ?? { x: 0.5, y: 0.5, z: 0.5 };
-  const resonanceActive = state.aeonSystemStatus?.resonanceActive ?? (state.aeonSystemStatus?.chaosScore ?? 0) > 4;
+  const peanoCoord = cg?.topo ??
+    state.aeonSystemStatus?.peanoCoordinate ?? { x: 0.5, y: 0.5, z: 0.5 };
+  const resonanceActive =
+    (state.aeonSystemStatus?.resonanceActive ?? (state.aeonSystemStatus?.chaosScore ?? 0) > 4) ||
+    state.chatChaosScore > 4;
+  const chaosScore = Math.max(state.aeonSystemStatus?.chaosScore ?? 0, state.chatChaosScore);
+  const epiphanyFactor = Math.max(
+    state.aeonSystemStatus?.epiphanyFactor ?? 0,
+    state.chatEpiphanyFactor,
+  );
 
   return html`
-    <div class="aeon-cosmos-core" style="${resonanceActive ? "filter: saturate(1.5) contrast(1.1);" : ""}">
+    <div class="aeon-cosmos-core" style="${resonanceActive ? "filter: saturate(1.5) contrast(1.1);" : ""} --aeon-chaos: ${chaosScore}; --aeon-epiphany: ${epiphanyFactor};">
         <div class="aeon-bg-fractal"></div>
         <div class="aeon-particle-field"></div>
         <div class="aeon-neutrino-flux"></div>
@@ -562,7 +572,8 @@ export function renderApp(state: AppViewState) {
                 },
                 onRecruitAgent: () => state.handleRecruitModalOpen(),
                 onRecruitModalClose: () => state.handleRecruitModalClose(),
-                onAvatarSelect: (agentId, avatarId) => state.handleAgentAvatarChange(agentId, avatarId),
+                onAvatarSelect: (agentId, avatarId) =>
+                  state.handleAgentAvatarChange(agentId, avatarId),
               })
             : nothing
         }
@@ -1132,6 +1143,8 @@ export function renderApp(state: AppViewState) {
                 onToggle: (key, enabled) => updateSkillEnabled(state, key, enabled),
                 onEdit: (key, value) => updateSkillEdit(state, key, value),
                 onSaveKey: (key) => saveSkillApiKey(state, key),
+                onSaveBaseUrl: (key) => saveSkillBaseUrl(state, key),
+                onSaveProxy: (key) => saveSkillProxy(state, key),
                 onInstall: (skillKey, name, installId) =>
                   installSkill(state, skillKey, name, installId),
               })
@@ -1307,6 +1320,8 @@ export function renderApp(state: AppViewState) {
                   (r) => r.kind !== "global" && !r.systemSent,
                 ),
                 cognitiveLog: state.aeonSystemStatus?.evolution?.cognitiveLog,
+                chaosScore: state.chatChaosScore,
+                epiphanyFactor: state.chatEpiphanyFactor,
               })
             : nothing
         }

@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { computed, Component, input } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Primitives } from '@a2ui/lit/0.8';
+import { computed, Component, input } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Primitives } from "@a2ui/lit/0.8";
 
 @Component({
-  selector: 'a2ui-datetime-input',
+  selector: "a2ui-datetime-input",
   template: `
     <section [class]="theme.components.DateTimeInput.container">
       <label [for]="inputId" [class]="theme.components.DateTimeInput.label">{{ label() }}</label>
@@ -54,43 +54,43 @@ export class DatetimeInput extends DynamicComponent {
   readonly value = input.required<Primitives.StringValue | null>();
   readonly enableDate = input.required<boolean>();
   readonly enableTime = input.required<boolean>();
-  protected readonly inputId = super.getUniqueId('a2ui-datetime-input');
+  protected readonly inputId = super.getUniqueId("a2ui-datetime-input");
 
   protected inputType = computed(() => {
     const enableDate = this.enableDate();
     const enableTime = this.enableTime();
 
     if (enableDate && enableTime) {
-      return 'datetime-local';
+      return "datetime-local";
     } else if (enableDate) {
-      return 'date';
+      return "date";
     } else if (enableTime) {
-      return 'time';
+      return "time";
     }
 
-    return 'datetime-local';
+    return "datetime-local";
   });
 
   protected label = computed(() => {
     // TODO: this should likely be passed from the model.
     const inputType = this.inputType();
 
-    if (inputType === 'date') {
-      return 'Date';
-    } else if (inputType === 'time') {
-      return 'Time';
+    if (inputType === "date") {
+      return "Date";
+    } else if (inputType === "time") {
+      return "Time";
     }
 
-    return 'Date & Time';
+    return "Date & Time";
   });
 
   protected inputValue = computed(() => {
     const inputType = this.inputType();
-    const parsed = super.resolvePrimitive(this.value()) || '';
+    const parsed = super.resolvePrimitive(this.value()) || "";
     const date = parsed ? new Date(parsed) : null;
 
     if (!date || isNaN(date.getTime())) {
-      return '';
+      return "";
     }
 
     const year = this.padNumber(date.getFullYear());
@@ -102,9 +102,9 @@ export class DatetimeInput extends DynamicComponent {
     // Browsers are picky with what format they allow for the `value` attribute of date/time inputs.
     // We need to parse it out of the provided value. Note that we don't use `toISOString`,
     // because the resulting value is relative to UTC.
-    if (inputType === 'date') {
+    if (inputType === "date") {
       return `${year}-${month}-${day}`;
-    } else if (inputType === 'time') {
+    } else if (inputType === "time") {
       return `${hours}:${minutes}`;
     }
 
@@ -122,6 +122,6 @@ export class DatetimeInput extends DynamicComponent {
   }
 
   private padNumber(value: number) {
-    return value.toString().padStart(2, '0');
+    return value.toString().padStart(2, "0");
   }
 }

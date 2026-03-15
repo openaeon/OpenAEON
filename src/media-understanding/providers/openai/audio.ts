@@ -51,6 +51,7 @@ export async function transcribeOpenAiCompatibleAudio(
     timeoutMs: params.timeoutMs,
     fetchFn,
     allowPrivateNetwork: allowPrivate,
+    proxy: params.proxy,
   });
 
   try {

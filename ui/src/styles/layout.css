@@ -64,7 +64,7 @@
   padding-top: 0;
 }
 
-.shell--chat-focus .content>*+* {
+.shell--chat-focus .content > * + * {
   margin-top: 0;
 }
 
@@ -151,7 +151,9 @@
   border-radius: 12px;
   background: var(--aeon-glass-bg);
   border: 1px solid var(--aeon-glass-border);
-  box-shadow: var(--aeon-glow-cyan), 0 0 0 1px var(--aeon-glass-inner-border);
+  box-shadow:
+    var(--aeon-glow-cyan),
+    0 0 0 1px var(--aeon-glass-inner-border);
   transition: transform 0.3s var(--ease-spring);
 }
 
@@ -530,7 +532,7 @@
   background: transparent;
 }
 
-.content--chat>*+* {
+.content--chat > * + * {
   margin-top: 0;
 }
 
@@ -588,7 +590,7 @@
   gap: 16px;
 }
 
-.content--chat .content-header>div:first-child {
+.content--chat .content-header > div:first-child {
   text-align: left;
 }
 

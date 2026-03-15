@@ -18,7 +18,11 @@ import {
 } from "./embeddings.js";
 import { isFileMissingError, statRegularFile } from "./fs-utils.js";
 import { bm25RankToScore, buildFtsQuery, mergeHybridResults } from "./hybrid.js";
-import { isMemoryPath, normalizeExtraMemoryPaths } from "./internal.js";
+import {
+  ensureDefaultMemoryStructure,
+  isMemoryPath,
+  normalizeExtraMemoryPaths,
+} from "./internal.js";
 import { MemoryManagerEmbeddingOps } from "./manager-embedding-ops.js";
 import { searchKeyword, searchVector } from "./manager-search.js";
 import { extractKeywords } from "./query-expansion.js";
@@ -206,6 +210,11 @@ export class MemoryIndexManager extends MemoryManagerEmbeddingOps implements Mem
     this.ensureWatcher();
     this.ensureSessionListener();
     this.ensureIntervalSync();
+    if (this.sources.has("memory")) {
+      ensureDefaultMemoryStructure(this.workspaceDir).catch((e) =>
+        log.warn(`Failed ensuring memory structure: ${e}`),
+      );
+    }
     const statusOnly = params.purpose === "status";
     this.dirty = this.sources.has("memory") && (statusOnly ? !meta : true);
     this.batch = this.resolveBatchConfig();

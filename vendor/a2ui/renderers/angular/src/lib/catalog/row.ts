@@ -14,17 +14,17 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Renderer } from '../rendering/renderer';
-import { Types } from '@a2ui/lit/0.8';
+import { Component, computed, input } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Renderer } from "../rendering/renderer";
+import { Types } from "@a2ui/lit/0.8";
 
 @Component({
-  selector: 'a2ui-row',
+  selector: "a2ui-row",
   imports: [Renderer],
   host: {
-    '[attr.alignment]': 'alignment()',
-    '[attr.distribution]': 'distribution()',
+    "[attr.alignment]": "alignment()",
+    "[attr.distribution]": "distribution()",
   },
   styles: `
     :host {
@@ -89,8 +89,8 @@ import { Types } from '@a2ui/lit/0.8';
   `,
 })
 export class Row extends DynamicComponent<Types.RowNode> {
-  readonly alignment = input<Types.ResolvedRow['alignment']>('stretch');
-  readonly distribution = input<Types.ResolvedRow['distribution']>('start');
+  readonly alignment = input<Types.ResolvedRow["alignment"]>("stretch");
+  readonly distribution = input<Types.ResolvedRow["distribution"]>("start");
 
   protected readonly classes = computed(() => ({
     ...this.theme.components.Row,

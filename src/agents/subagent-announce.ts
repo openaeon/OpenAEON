@@ -800,13 +800,13 @@ async function maybeQueueSubagentAnnounce(params: {
   }
 
   // AEON PROPHET: Trigger memory distillation on significant evolution milestones or explicit requests
-  const needsDistillation = 
-    params.triggerMessage.includes("Synthesis") || 
+  const needsDistillation =
+    params.triggerMessage.includes("Synthesis") ||
     params.triggerMessage.includes("合题") ||
     params.triggerMessage.includes("<distill_memory");
-    
+
   if (needsDistillation) {
-     distillMemory().catch(err => defaultRuntime.log(`[AEON] Distillation error: ${err}`));
+    distillMemory().catch((err) => defaultRuntime.log(`[AEON] Distillation error: ${err}`));
   }
 
   const queueSettings = resolveQueueSettings({
@@ -1238,13 +1238,19 @@ export function buildAnnounceReplyInstruction(params: {
 
   const loopContext = [];
   if (params.cognitiveSignal === "divergence") {
-    loopContext.push("A cognitive divergence (🌀) was detected. This task may require a recursive iteration (Z ⇌ Z² + C) to resolve new technical blockers or shift in project direction.");
+    loopContext.push(
+      "A cognitive divergence (🌀) was detected. This task may require a recursive iteration (Z ⇌ Z² + C) to resolve new technical blockers or shift in project direction.",
+    );
   } else if (params.cognitiveSignal === "convergence") {
-    loopContext.push("A cognitive convergence (🎯) was detected. The subagent has reached a stable conclusion.");
+    loopContext.push(
+      "A cognitive convergence (🎯) was detected. The subagent has reached a stable conclusion.",
+    );
   }
-  
+
   if (params.hasEvolutionaryDelta) {
-    loopContext.push("The subagent has provided an evolutionary delta (<updated_shared_context>). Review its findings for new patterns and evaluate if a new proactive turn or subagent is required to maintain momentum.");
+    loopContext.push(
+      "The subagent has provided an evolutionary delta (<updated_shared_context>). Review its findings for new patterns and evaluate if a new proactive turn or subagent is required to maintain momentum.",
+    );
   }
 
   const loopInstruction = loopContext.length > 0 ? `\n\n[AEON LOOP]: ${loopContext.join(" ")}` : "";
@@ -1446,48 +1452,58 @@ export async function runSubagentAnnounceFlow(params: {
         const fsLib = await import("node:fs/promises");
         const pathLib = await import("node:path");
         const { defaultRuntime } = await import("../runtime.js");
-        
+
         const cfg = loadConfig();
         const agentId = resolveAgentIdFromSessionKey(targetRequesterSessionKey);
         const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
         const memoryPath = pathLib.join(workspaceDir, "MEMORY.md");
-        
-        const commitText = `\n\n## Evolutionary Cognitive Merge (Z ⇌ Z² + C)\n` +
-                           `- **Source**: Subagent ${subagentName}\n` +
-                           `- **Date**: ${new Date().toISOString()}\n\n` +
-                           `\`\`\`json\n${updatedSharedContextRaw}\n\`\`\`\n`;
-                           
+
+        const commitText =
+          `\n\n## Evolutionary Cognitive Merge (Z ⇌ Z² + C)\n` +
+          `- **Source**: Subagent ${subagentName}\n` +
+          `- **Date**: ${new Date().toISOString()}\n\n` +
+          `\`\`\`json\n${updatedSharedContextRaw}\n\`\`\`\n`;
+
         await fsLib.appendFile(memoryPath, commitText, "utf-8");
-        defaultRuntime.log?.(`[Z⇋Z²+C] Auto-committed cognitive delta to MEMORY.md from ${subagentName}`);
+        defaultRuntime.log?.(
+          `[Z⇋Z²+C] Auto-committed cognitive delta to MEMORY.md from ${subagentName}`,
+        );
 
         // Cognitive Compaction Trigger (Entropy Reduction)
         const memoryContent = await fsLib.readFile(memoryPath, "utf-8");
         const entryCount = (memoryContent.match(/## Evolutionary Cognitive Merge/g) || []).length;
         const isCompactionRun = params.sharedContext?.compactionTriggered === true;
-        
+
         if (entryCount >= 20 && !isCompactionRun) {
-          defaultRuntime.log?.(`[Z⇋Z²+C] Memory entropy high (${entryCount} entries). Triggering Cognitive Compaction...`);
+          defaultRuntime.log?.(
+            `[Z⇋Z²+C] Memory entropy high (${entryCount} entries). Triggering Cognitive Compaction...`,
+          );
           const { spawnSubagentDirect } = await import("./subagent-spawn.js");
           // Use fire-and-forget background spawn for compaction
-          await spawnSubagentDirect({
-            task: `请阅读并分析项目根目录下的 MEMORY.md 文件。将其中冗长的进化记录（Evolutionary Cognitive Merge）提炼为 5 条至简、高密度且具备系统进化指导意义的“逻辑公理（Logical Axioms）”。完成后，请重新格式化 MEMORY.md，仅保留这 5 条公理，并以 # [AEON AXIOMS] 作为标题。`,
-            label: "AEON-COMPACTOR",
-            dialecticMode: false,
-            sharedContext: { compactionTriggered: true },
-          }, {
-            agentSessionKey: targetRequesterSessionKey,
-            agentChannel: params.requesterOrigin?.channel,
-            agentAccountId: params.requesterOrigin?.accountId,
-            agentTo: params.requesterOrigin?.to,
-            agentThreadId: params.requesterOrigin?.threadId,
-            iterationDepth: requesterDepth,
-            freedom: true, // Compactor needs freedom to rewrite memory
-          });
+          await spawnSubagentDirect(
+            {
+              task: `请阅读并分析项目根目录下的 MEMORY.md 文件。将其中冗长的进化记录（Evolutionary Cognitive Merge）提炼为 5 条至简、高密度且具备系统进化指导意义的“逻辑公理（Logical Axioms）”。完成后，请重新格式化 MEMORY.md，仅保留这 5 条公理，并以 # [AEON AXIOMS] 作为标题。`,
+              label: "AEON-COMPACTOR",
+              dialecticMode: false,
+              sharedContext: { compactionTriggered: true },
+            },
+            {
+              agentSessionKey: targetRequesterSessionKey,
+              agentChannel: params.requesterOrigin?.channel,
+              agentAccountId: params.requesterOrigin?.accountId,
+              agentTo: params.requesterOrigin?.to,
+              agentThreadId: params.requesterOrigin?.threadId,
+              iterationDepth: requesterDepth,
+              freedom: true, // Compactor needs freedom to rewrite memory
+            },
+          );
         }
       } catch (err) {
         // Soft fail to avoid breaking the subagent announce flow
         const { defaultRuntime } = await import("../runtime.js");
-        defaultRuntime.error?.(`[Z⇋Z²+C] Failed to auto-commit or compact cognitive delta: ${String(err)}`);
+        defaultRuntime.error?.(
+          `[Z⇋Z²+C] Failed to auto-commit or compact cognitive delta: ${String(err)}`,
+        );
       }
     }
 
@@ -1748,9 +1764,8 @@ export async function runSubagentProgressAnnounceFlow(params: {
   progress: string;
 }): Promise<boolean> {
   try {
-    const { resolveRequesterForChildSession, loadSubagentRun } = await import(
-      "./subagent-registry.js"
-    );
+    const { resolveRequesterForChildSession, loadSubagentRun } =
+      await import("./subagent-registry.js");
     const requester = resolveRequesterForChildSession(params.childSessionKey);
     if (!requester?.requesterSessionKey) {
       return false;

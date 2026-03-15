@@ -121,7 +121,8 @@ function parseNumber(value: string | undefined, fallback: number): number {
 }
 
 function resolveStateDir(): string {
-  const override = process.env.OPENAEON_STATE_DIR?.trim() || process.env.AEONPROPHET_STATE_DIR?.trim();
+  const override =
+    process.env.OPENAEON_STATE_DIR?.trim() || process.env.AEONPROPHET_STATE_DIR?.trim();
   if (override) {
     return override.startsWith("~")
       ? path.resolve(process.env.HOME || "", override.slice(1))

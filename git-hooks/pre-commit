@@ -46,4 +46,12 @@ if [ "${#format_files[@]}" -gt 0 ]; then
   "$RUN_NODE_TOOL" oxfmt --write -- "${format_files[@]}"
 fi
 
-git add -- "${files[@]}"
+# Re-add all files. If a file is ignored, we must use -f to re-add it if it was already staged.
+# However, to avoid errors, we check if the file is ignored first.
+for file in "${files[@]}"; do
+  if git check-ignore -q --no-index "$file"; then
+    git add -f -- "$file"
+  else
+    git add -- "$file"
+  fi
+done

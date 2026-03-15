@@ -51,13 +51,7 @@ export interface Text {
 
 export interface Image {
   url: StringValue;
-  usageHint:
-    | "icon"
-    | "avatar"
-    | "smallFeature"
-    | "mediumFeature"
-    | "largeFeature"
-    | "header";
+  usageHint: "icon" | "avatar" | "smallFeature" | "mediumFeature" | "largeFeature" | "header";
   fit?: "contain" | "cover" | "fill" | "none" | "scale-down";
 }
 

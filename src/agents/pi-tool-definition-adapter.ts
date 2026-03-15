@@ -224,7 +224,6 @@ export function toToolDefinitions(tools: AnyAgentTool[]): ToolDefinition[] {
               : described.message,
           });
 
-
           // Call after_tool_call hook for errors too
           const hookRunner = getGlobalHookRunner();
           if (hookRunner?.hasHooks("after_tool_call")) {

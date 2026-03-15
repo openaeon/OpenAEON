@@ -13,7 +13,9 @@ export const chatSidebarStyles = css`
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    transition:
+      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.4s ease;
   }
 
   :host-context([data-theme="light"]) .chat-sidebar {
@@ -77,13 +79,13 @@ export const chatSidebarStyles = css`
     font-variant-numeric: tabular-nums;
     font-size: 12px;
   }
-  
+
   .flux-bar {
     width: 100%;
     height: 4px;
     border-radius: 2px;
     background: rgba(30, 41, 59, 0.8);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     position: relative;
   }
@@ -95,7 +97,7 @@ export const chatSidebarStyles = css`
     width: 60px;
     flex-shrink: 0;
   }
-  
+
   .flux-fill {
     height: 100%;
     border-radius: inherit;
@@ -107,8 +109,11 @@ export const chatSidebarStyles = css`
   .flux-fill::after {
     content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
     animation: fluxFlow 2s linear infinite;
   }
   .flux-fill--done {
@@ -116,8 +121,12 @@ export const chatSidebarStyles = css`
     box-shadow: 0 0 10px #2dd4bf;
   }
   @keyframes fluxFlow {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
 
   /* ---- Phase Indicators ---- */
@@ -146,7 +155,8 @@ export const chatSidebarStyles = css`
   }
 
   /* ---- Sidebar Panels ---- */
-  .fractal-panel, .fractal-sidebar {
+  .fractal-panel,
+  .fractal-sidebar {
     display: flex;
     flex-direction: column;
     padding: 24px 20px;
@@ -155,8 +165,14 @@ export const chatSidebarStyles = css`
     animation: slideInSidebar 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   @keyframes slideInSidebar {
-    from { transform: translateX(30px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 
   .matrix-header {
@@ -167,7 +183,8 @@ export const chatSidebarStyles = css`
     padding-bottom: 12px;
     margin-bottom: 4px;
   }
-  .aeon-title, .fractal-glitch {
+  .aeon-title,
+  .fractal-glitch {
     font-family: var(--font-mono, monospace);
     font-size: 14px;
     font-weight: 700;
@@ -176,7 +193,7 @@ export const chatSidebarStyles = css`
     text-transform: uppercase;
     text-shadow: 0 0 10px rgba(192, 132, 252, 0.4);
   }
-  
+
   .data-desc {
     font-size: 13px;
     color: #cbd5e1;
@@ -196,7 +213,7 @@ export const chatSidebarStyles = css`
     background: rgba(15, 23, 42, 0.4);
     padding: 16px;
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .data-row {
     display: flex;
@@ -250,10 +267,19 @@ export const chatSidebarStyles = css`
     animation: pulseIcon 2s infinite;
   }
   @keyframes pulseIcon {
-    0%, 100% { opacity: 1; text-shadow: 0 0 10px #e879f9; transform: scale(1); }
-    50% { opacity: 0.6; text-shadow: 0 0 2px #e879f9; transform: scale(0.9); }
+    0%,
+    100% {
+      opacity: 1;
+      text-shadow: 0 0 10px #e879f9;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      text-shadow: 0 0 2px #e879f9;
+      transform: scale(0.9);
+    }
   }
-  
+
   .node-status-icon {
     font-size: 16px;
     color: #64748b;
@@ -276,8 +302,8 @@ export const chatSidebarStyles = css`
     font-family: var(--font-mono, monospace);
     font-size: 11px;
     overflow-wrap: break-word;
-    border-right: 1px solid rgba(255,255,255,0.02);
-    border-bottom: 1px solid rgba(255,255,255,0.02);
+    border-right: 1px solid rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
   }
   .aeon-subtitle {
     color: #2dd4bf;
@@ -301,22 +327,25 @@ export const chatSidebarStyles = css`
   .subagent-list {
     display: flex;
     flex-direction: column;
-    gap: 40px; 
+    gap: 40px;
     position: relative;
-    padding-left: 48px; 
+    padding-left: 48px;
     margin-top: 24px;
     padding-bottom: 40px;
   }
-  
+
   /* The Animated Neural Spine */
   .subagent-list::before {
     content: "";
     position: absolute;
-    top: 0; left: 24px; bottom: 0;
+    top: 0;
+    left: 24px;
+    bottom: 0;
     width: 2px;
-    background: linear-gradient(180deg, 
-      rgba(139, 92, 246, 0.4) 0%, 
-      rgba(16, 185, 129, 0.6) 50%, 
+    background: linear-gradient(
+      180deg,
+      rgba(139, 92, 246, 0.4) 0%,
+      rgba(16, 185, 129, 0.6) 50%,
       rgba(59, 130, 246, 0.4) 100%
     );
     box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
@@ -326,12 +355,14 @@ export const chatSidebarStyles = css`
   /* Fractal Connection Paths (Recursive Bezier Visual) */
   .node-path-svg {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 1;
   }
-  
+
   .fractal-line {
     fill: none;
     stroke: url(#fractal-gradient);
@@ -344,7 +375,9 @@ export const chatSidebarStyles = css`
   }
 
   @keyframes fractalDraw {
-    to { stroke-dashoffset: 0; }
+    to {
+      stroke-dashoffset: 0;
+    }
   }
 
   .node-card {
@@ -361,30 +394,53 @@ export const chatSidebarStyles = css`
   }
 
   @keyframes nodeEnter {
-    from { transform: translateX(20px) scale(0.95); opacity: 0; }
-    to { transform: translateX(0) scale(1); opacity: 1; }
+    from {
+      transform: translateX(20px) scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
   }
 
   /* Recursive Color Indexing based on depth (provided via data-depth) */
-  .node-card[data-depth="1"] { --fractal-accent: #c084fc; --fractal-glow: rgba(192, 132, 252, 0.5); }
-  .node-card[data-depth="2"] { --fractal-accent: #818cf8; --fractal-glow: rgba(129, 140, 248, 0.5); }
-  .node-card[data-depth="3"] { --fractal-accent: #2dd4bf; --fractal-glow: rgba(45, 212, 191, 0.5); }
-  .node-card[data-depth="4"] { --fractal-accent: #f472b6; --fractal-glow: rgba(244, 114, 182, 0.5); }
-  
+  .node-card[data-depth="1"] {
+    --fractal-accent: #c084fc;
+    --fractal-glow: rgba(192, 132, 252, 0.5);
+  }
+  .node-card[data-depth="2"] {
+    --fractal-accent: #818cf8;
+    --fractal-glow: rgba(129, 140, 248, 0.5);
+  }
+  .node-card[data-depth="3"] {
+    --fractal-accent: #2dd4bf;
+    --fractal-glow: rgba(45, 212, 191, 0.5);
+  }
+  .node-card[data-depth="4"] {
+    --fractal-accent: #f472b6;
+    --fractal-glow: rgba(244, 114, 182, 0.5);
+  }
+
   .node-card::before {
     content: "";
     position: absolute;
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, 
-      var(--fractal-accent, #c084fc), 
-      transparent 40%, 
-      transparent 60%, 
+    background: linear-gradient(
+      135deg,
+      var(--fractal-accent, #c084fc),
+      transparent 40%,
+      transparent 60%,
       var(--fractal-accent, #c084fc)
     );
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -398,30 +454,43 @@ export const chatSidebarStyles = css`
   }
 
   @keyframes fractalPulse {
-    0%, 100% { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0,0,0,0); }
-    50% { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 30px var(--fractal-glow, rgba(139, 92, 246, 0.2)); }
+    0%,
+    100% {
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(0, 0, 0, 0);
+    }
+    50% {
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.6),
+        0 0 30px var(--fractal-glow, rgba(139, 92, 246, 0.2));
+    }
   }
 
   /* Connection Portal (Dot) */
   .node-card::after {
     content: "";
     position: absolute;
-    top: 50%; left: -26px;
+    top: 50%;
+    left: -26px;
     transform: translateY(-50%);
-    width: 10px; height: 10px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--fractal-accent, #c084fc);
     box-shadow: 0 0 15px var(--fractal-accent, #c084fc);
     z-index: 3;
     border: 2px solid #080818;
   }
-  
+
   .subagent-card--active.node-card {
     background: rgba(13, 13, 40, 0.9);
     border-color: var(--fractal-accent, #c084fc);
     transform: scale(1.02) translateX(5px);
   }
-  .subagent-card--active.node-card::before { opacity: 1; }
+  .subagent-card--active.node-card::before {
+    opacity: 1;
+  }
 
   .subagent-card__header {
     display: flex;
@@ -434,7 +503,14 @@ export const chatSidebarStyles = css`
     text-shadow: 0 0 10px var(--fractal-accent, #c084fc);
     animation: spinSlow 8s linear infinite;
   }
-  @keyframes spinSlow { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  @keyframes spinSlow {
+    from {
+      transform: rotate(0);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
   .node-name {
     font-family: var(--font-mono, monospace);
@@ -444,7 +520,7 @@ export const chatSidebarStyles = css`
     flex: 1;
     letter-spacing: 0.05em;
   }
-  
+
   .status-badge {
     font-size: 10px;
     padding: 4px 10px;
@@ -468,9 +544,12 @@ export const chatSidebarStyles = css`
     overflow: hidden;
   }
   @media (hover: hover) {
-    .node-card:hover .node-task { -webkit-line-clamp: initial; color: #cbd5e1; }
+    .node-card:hover .node-task {
+      -webkit-line-clamp: initial;
+      color: #cbd5e1;
+    }
   }
-  
+
   .node-meta {
     display: flex;
     flex-wrap: wrap;
@@ -487,10 +566,12 @@ export const chatSidebarStyles = css`
     border: 1px solid rgba(139, 92, 246, 0.2);
     color: #e2e8f0;
   }
-  
+
   .node-pulse {
     position: absolute;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--fractal-accent, #c084fc), transparent);
     animation: scanline 3s ease-in-out infinite;
@@ -499,8 +580,12 @@ export const chatSidebarStyles = css`
     --pulse-color: #8b5cf6;
   }
   @keyframes scanline {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
 
   /* ---- Buttons & Completion ---- */
@@ -540,7 +625,7 @@ export const chatSidebarStyles = css`
     backdrop-filter: blur(8px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chat-tool-card--clickable {
     cursor: pointer;
   }
@@ -557,7 +642,7 @@ export const chatSidebarStyles = css`
     justify-content: space-between;
     margin-bottom: 8px;
   }
-  
+
   .chat-tool-card__title {
     display: flex;
     align-items: center;
@@ -568,13 +653,13 @@ export const chatSidebarStyles = css`
     font-family: var(--font-mono, monospace);
     letter-spacing: 0.05em;
   }
-  
+
   .chat-tool-card__icon {
     font-size: 16px;
     color: #c084fc;
     filter: drop-shadow(0 0 5px rgba(192, 132, 252, 0.5));
   }
-  
+
   .chat-tool-card__detail {
     font-size: 11px;
     color: #94a3b8;
@@ -593,14 +678,14 @@ export const chatSidebarStyles = css`
     gap: 12px;
     margin-top: 10px;
   }
-  
+
   .json-card-group {
     background: rgba(0, 0, 0, 0.25);
     border-radius: 8px;
     padding: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
-  
+
   .json-card-group__title {
     font-size: 10px;
     text-transform: uppercase;
@@ -610,7 +695,7 @@ export const chatSidebarStyles = css`
     margin-bottom: 8px;
     opacity: 0.8;
   }
-  
+
   .json-kv {
     display: flex;
     gap: 12px;
@@ -618,14 +703,14 @@ export const chatSidebarStyles = css`
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     padding: 4px 0;
   }
-  
+
   .json-key {
     color: #818cf8;
     font-family: var(--font-mono, monospace);
     font-weight: 600;
     min-width: 80px;
   }
-  
+
   .json-val {
     color: #e2e8f0;
     flex: 1;

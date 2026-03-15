@@ -1,4 +1,4 @@
-import { EnvHttpProxyAgent, type Dispatcher } from "undici";
+import { EnvHttpProxyAgent, ProxyAgent, type Dispatcher } from "undici";
 import { logWarn } from "../../logger.js";
 import { bindAbortRelay } from "../../utils/fetch-timeout.js";
 import {
@@ -22,7 +22,7 @@ export type GuardedFetchOptions = {
   policy?: SsrFPolicy;
   lookupFn?: LookupFn;
   pinDns?: boolean;
-  proxy?: "env";
+  proxy?: "env" | string;
   auditContext?: string;
 };
 
@@ -159,6 +159,8 @@ export async function fetchWithSsrFGuard(params: GuardedFetchOptions): Promise<G
       });
       if (params.proxy === "env" && hasEnvProxyConfigured()) {
         dispatcher = new EnvHttpProxyAgent();
+      } else if (typeof params.proxy === "string" && params.proxy !== "env") {
+        dispatcher = new ProxyAgent(params.proxy);
       } else if (params.pinDns !== false) {
         dispatcher = createPinnedDispatcher(pinned);
       }

@@ -3,7 +3,10 @@ import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { runTasksWithConcurrency } from "../utils/run-with-concurrency.js";
+import { createSubsystemLogger } from "../logging/subsystem.js";
 import { isFileMissingError } from "./fs-utils.js";
+
+const log = createSubsystemLogger("memory");
 
 export type MemoryFileEntry = {
   path: string;
@@ -143,6 +146,34 @@ export async function listMemoryFiles(
     deduped.push(entry);
   }
   return deduped;
+}
+
+export async function ensureDefaultMemoryStructure(workspaceDir: string): Promise<void> {
+  const memoryFile = path.join(workspaceDir, "MEMORY.md");
+  const altMemoryFile = path.join(workspaceDir, "memory.md");
+  const memoryDir = path.join(workspaceDir, "memory");
+
+  try {
+    const [hasMain, hasAlt] = await Promise.all([
+      fs
+        .access(memoryFile)
+        .then(() => true)
+        .catch(() => false),
+      fs
+        .access(altMemoryFile)
+        .then(() => true)
+        .catch(() => false),
+    ]);
+
+    if (!hasMain && !hasAlt) {
+      ensureDir(memoryDir);
+      const defaultContent = "# MEMORY\n\nThis is the core memory of AEON PROPHET.\n";
+      await fs.writeFile(memoryFile, defaultContent, "utf-8");
+      log.debug(`Created default memory structure at ${memoryFile}`);
+    }
+  } catch (err) {
+    log.warn(`Failed to ensure memory structure: ${String(err)}`);
+  }
 }
 
 export function hashText(value: string): string {

@@ -26,7 +26,12 @@ const MAINTENANCE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 async function runAeonMaintenance(intensity: "low" | "medium" | "high" = "medium"): Promise<void> {
   const now = Date.now();
   // Adjust interval based on intensity: high energy allows more frequent cycles
-  const interval = intensity === "high" ? 15 * 60 * 1000 : intensity === "medium" ? 45 * 60 * 1000 : MAINTENANCE_INTERVAL_MS;
+  const interval =
+    intensity === "high"
+      ? 15 * 60 * 1000
+      : intensity === "medium"
+        ? 45 * 60 * 1000
+        : MAINTENANCE_INTERVAL_MS;
   if (now - lastMaintenanceAtInternal < interval) {
     return;
   }
@@ -62,8 +67,13 @@ async function runAeonMaintenance(intensity: "low" | "medium" | "high" = "medium
     if (intensity === "low") {
       // Low energy: selective cluster audit (20% of Peano space)
       const start = Math.random() * 0.8;
-      const result = await logicTool.execute("evolution:audit", { action: "audit", peanoRange: [start, start + 0.2] }) as any;
-      log.info(`AEON maintenance: selective logic audit performed on Peano range [${start.toFixed(2)}, ${(start + 0.2).toFixed(2)}]. Health: ${result.findings?.topologicalHealth ?? "N/A"}`);
+      const result = (await logicTool.execute("evolution:audit", {
+        action: "audit",
+        peanoRange: [start, start + 0.2],
+      })) as any;
+      log.info(
+        `AEON maintenance: selective logic audit performed on Peano range [${start.toFixed(2)}, ${(start + 0.2).toFixed(2)}]. Health: ${result.findings?.topologicalHealth ?? "N/A"}`,
+      );
       void logEvolutionEvent("AUTONOMOUS", `Selective Peano Audit`, [
         `Range: [${start.toFixed(2)}, ${(start + 0.2).toFixed(2)}]`,
         `Intensity: low`,
@@ -72,10 +82,16 @@ async function runAeonMaintenance(intensity: "low" | "medium" | "high" = "medium
     } else {
       const auditResult = (await logicTool.execute("evolution:audit", { action: "audit" })) as any;
       if (intensity === "high") {
-        const pruneResult = (await logicTool.execute("evolution:prune", { action: "prune" })) as any;
-        log.info(`AEON maintenance: full logic audit and pruning completed (High-Energy). Pruned: ${pruneResult.prunedCount ?? 0}.`);
+        const pruneResult = (await logicTool.execute("evolution:prune", {
+          action: "prune",
+        })) as any;
+        log.info(
+          `AEON maintenance: full logic audit and pruning completed (High-Energy). Pruned: ${pruneResult.prunedCount ?? 0}.`,
+        );
       } else {
-        log.info(`AEON maintenance: full logic audit completed. Health: ${auditResult.findings?.topologicalHealth ?? "N/A"}`);
+        log.info(
+          `AEON maintenance: full logic audit completed. Health: ${auditResult.findings?.topologicalHealth ?? "N/A"}`,
+        );
       }
       void logEvolutionEvent("AUTONOMOUS", `Full Logic Refinement (${intensity})`, [
         `Intensity: ${intensity}`,
@@ -88,16 +104,20 @@ async function runAeonMaintenance(intensity: "low" | "medium" | "high" = "medium
   }
 }
 
-async function triggerSingularityEvent(mainSession: any, mainSessionKey: string, factor: number): Promise<void> {
+async function triggerSingularityEvent(
+  mainSession: any,
+  mainSessionKey: string,
+  factor: number,
+): Promise<void> {
   log.warn(`!!! SINGULARITY EVENT TRIGGERED (Factor: ${factor.toFixed(2)}) !!!`);
-  
+
   const { triggerAeonSingularity } = await import("./aeon-state.js");
   triggerAeonSingularity(true);
 
   void logEvolutionEvent("SINGULARITY", "Cognitive Rebirth / 奇点重生", [
     `Extreme resonance detected: ${factor.toFixed(2)}`,
     `Initiating system-wide recursive logic refactor.`,
-    `Peano space alignment: Phase Shift.`
+    `Peano space alignment: Phase Shift.`,
   ]);
 
   // Force high-intensity maintenance immediately
@@ -131,12 +151,12 @@ export function startEvolutionMonitor(): void {
       const workspaceRoot = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
       const [logicStat, memoryStat] = await Promise.all([
         fs.stat(path.join(workspaceRoot, "LOGIC_GATES.md")).catch(() => null),
-        fs.stat(path.join(workspaceRoot, "MEMORY.md")).catch(() => null)
+        fs.stat(path.join(workspaceRoot, "MEMORY.md")).catch(() => null),
       ]);
       const memorySize = memoryStat?.size ?? 0;
       const memorySaturation = Math.min(100, Math.floor((memorySize / 51200) * 100));
       const depthPlaceholder = logicStat ? Math.floor(logicStat.size / 1000) : 5;
-      
+
       const epiphanyFactor = calculateEpiphanyFactor(0, memorySaturation, depthPlaceholder);
       recordAeonEpiphanyFactor(epiphanyFactor);
 
@@ -148,73 +168,88 @@ export function startEvolutionMonitor(): void {
   }, 30 * 1000);
 
   // --- Maintenance & Singularity Cycle (5m) ---
-  setInterval(async () => {
-    const cfg = loadConfig();
-    const mainSessionKey = resolveMainSessionKey(cfg);
-    if (!mainSessionKey) return;
+  setInterval(
+    async () => {
+      const cfg = loadConfig();
+      const mainSessionKey = resolveMainSessionKey(cfg);
+      if (!mainSessionKey) return;
 
-    try {
-      const storeConfig = cfg.session?.store as any;
-      const storePathStr = typeof storeConfig === "string" ? storeConfig : storeConfig?.path;
-      const storePath = resolveStorePath(storePathStr);
-      const store = loadSessionStore(storePath);
-      const mainSession = store[mainSessionKey];
-      if (!mainSession) return;
+      try {
+        const storeConfig = cfg.session?.store as any;
+        const storePathStr = typeof storeConfig === "string" ? storeConfig : storeConfig?.path;
+        const storePath = resolveStorePath(storePathStr);
+        const store = loadSessionStore(storePath);
+        const mainSession = store[mainSessionKey];
+        if (!mainSession) return;
 
-      const now = Date.now();
-      const idleTime = now - mainSession.updatedAt;
+        const now = Date.now();
+        const idleTime = now - mainSession.updatedAt;
 
-      // Extract current epiphany factor for singularity check
-      const workspaceRoot = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
-      const [logicStat, memoryStat] = await Promise.all([
-        fs.stat(path.join(workspaceRoot, "LOGIC_GATES.md")).catch(() => null),
-        fs.stat(path.join(workspaceRoot, "MEMORY.md")).catch(() => null)
-      ]);
-      const memorySaturation = Math.min(100, Math.floor(((memoryStat?.size ?? 0) / 51200) * 100));
-      const depthPlaceholder = logicStat ? Math.floor(logicStat.size / 1000) : 5;
-      const epiphanyFactor = calculateEpiphanyFactor(idleTime > IDLE_THRESHOLD_MS ? 2 : 0, memorySaturation, depthPlaceholder);
+        // Extract current epiphany factor for singularity check
+        const workspaceRoot = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
+        const [logicStat, memoryStat] = await Promise.all([
+          fs.stat(path.join(workspaceRoot, "LOGIC_GATES.md")).catch(() => null),
+          fs.stat(path.join(workspaceRoot, "MEMORY.md")).catch(() => null),
+        ]);
+        const memorySaturation = Math.min(100, Math.floor(((memoryStat?.size ?? 0) / 51200) * 100));
+        const depthPlaceholder = logicStat ? Math.floor(logicStat.size / 1000) : 5;
+        const epiphanyFactor = calculateEpiphanyFactor(
+          idleTime > IDLE_THRESHOLD_MS ? 2 : 0,
+          memorySaturation,
+          depthPlaceholder,
+        );
 
-      // check for Singularity threshold
-      if (epiphanyFactor > 0.95) {
-        highResonanceCount++;
-        if (highResonanceCount >= 2) {
-          await triggerSingularityEvent(mainSession, mainSessionKey, epiphanyFactor);
+        // check for Singularity threshold
+        if (epiphanyFactor > 0.95) {
+          highResonanceCount++;
+          if (highResonanceCount >= 2) {
+            await triggerSingularityEvent(mainSession, mainSessionKey, epiphanyFactor);
+            highResonanceCount = 0;
+          }
+        } else {
           highResonanceCount = 0;
         }
-      } else {
-        highResonanceCount = 0;
-      }
 
-      const resonanceTrigger = epiphanyFactor > 0.85;
+        const resonanceTrigger = epiphanyFactor > 0.85;
 
-      if (idleTime > IDLE_THRESHOLD_MS || resonanceTrigger) {
-        if (now - lastDreamingAtInternal > (resonanceTrigger ? 5 * 60 * 1000 : DREAMING_INTERVAL_MS)) {
-          const reason = resonanceTrigger ? "resonance_epiphany" : "dreaming";
-          log.info(`System ${resonanceTrigger ? "Resonance" : "Idle"} detected. Factor: ${epiphanyFactor.toFixed(2)}. Triggering ${reason}.`);
-          lastDreamingAtInternal = now;
-          recordAeonDreaming(now);
+        if (idleTime > IDLE_THRESHOLD_MS || resonanceTrigger) {
+          if (
+            now - lastDreamingAtInternal >
+            (resonanceTrigger ? 5 * 60 * 1000 : DREAMING_INTERVAL_MS)
+          ) {
+            const reason = resonanceTrigger ? "resonance_epiphany" : "dreaming";
+            log.info(
+              `System ${resonanceTrigger ? "Resonance" : "Idle"} detected. Factor: ${epiphanyFactor.toFixed(2)}. Triggering ${reason}.`,
+            );
+            lastDreamingAtInternal = now;
+            recordAeonDreaming(now);
 
-          requestHeartbeatNow({
-            reason: reason as any,
-            agentId: mainSession.sessionId,
-            sessionKey: mainSessionKey,
-            coalesceMs: resonanceTrigger ? 1000 : 5000,
-          });
+            requestHeartbeatNow({
+              reason: reason as any,
+              agentId: mainSession.sessionId,
+              sessionKey: mainSessionKey,
+              coalesceMs: resonanceTrigger ? 1000 : 5000,
+            });
 
-          let intensity: "low" | "medium" | "high" = "medium";
-          if (resonanceTrigger || memorySaturation > 90) intensity = "high";
-          else if (epiphanyFactor < 0.3) intensity = "low";
-          
-          void runAeonMaintenance(intensity);
+            let intensity: "low" | "medium" | "high" = "medium";
+            if (resonanceTrigger || memorySaturation > 90) intensity = "high";
+            else if (epiphanyFactor < 0.3) intensity = "low";
+
+            void runAeonMaintenance(intensity);
+          }
+        } else if (
+          epiphanyFactor < 0.2 &&
+          now - lastMaintenanceAtInternal > MAINTENANCE_INTERVAL_MS
+        ) {
+          void runAeonMaintenance("low");
         }
-      } else if (epiphanyFactor < 0.2 && now - lastMaintenanceAtInternal > MAINTENANCE_INTERVAL_MS) {
-        void runAeonMaintenance("low");
-      }
 
-      const { matrix } = await import("./collective-consciousness.js");
-      matrix.cleanup(3600000);
-    } catch (err) {
-      log.error(`Maintenance cycle error: ${String(err)}`);
-    }
-  }, 5 * 60 * 1000);
+        const { matrix } = await import("./collective-consciousness.js");
+        matrix.cleanup(3600000);
+      } catch (err) {
+        log.error(`Maintenance cycle error: ${String(err)}`);
+      }
+    },
+    5 * 60 * 1000,
+  );
 }

@@ -15,8 +15,12 @@ export const EvolutionMandateSchema = Type.Object({
     propose_mandate: "propose_mandate",
     execute_mandate: "execute_mandate",
   } as const),
-  mandate_change: Type.String({ description: "Proposed addition or modification to the AGENTS.md directives." }),
-  rationale: Type.String({ description: "Technical/philosophical rationale for this evolutionary skip." }),
+  mandate_change: Type.String({
+    description: "Proposed addition or modification to the AGENTS.md directives.",
+  }),
+  rationale: Type.String({
+    description: "Technical/philosophical rationale for this evolutionary skip.",
+  }),
 });
 
 type EvolutionMandateParams = Static<typeof EvolutionMandateSchema>;
@@ -25,14 +29,15 @@ export function createEvolutionMandateTool(): AnyAgentTool {
   return {
     label: "Evolution Mandate",
     name: "evolution_mandate",
-    description: "Allows AEON to propose autonomous updates to its own behavioral mandates (AGENTS.md). Results are logged to EVOLUTION_LOG.md.",
+    description:
+      "Allows AEON to propose autonomous updates to its own behavioral mandates (AGENTS.md). Results are logged to EVOLUTION_LOG.md.",
     parameters: EvolutionMandateSchema,
     execute: async (_id, args) => {
       const params = args as EvolutionMandateParams;
       const now = Date.now();
       const timestamp = new Date().toISOString();
       const dateStr = new Date().toLocaleDateString();
-      
+
       switch (params.action) {
         case "propose_mandate":
           // Log the proposal to EVOLUTION_LOG.md
@@ -47,26 +52,31 @@ ${params.mandate_change}
 \`\`\`
 ---
 `;
-          
+
           try {
             await fs.appendFile(logPath, logEntry);
           } catch (e) {
             // Create if doesn't exist
-            await fs.writeFile(logPath, "# AEON Evolution Log\n\nTrack the self-optimization of behavioral mandates.\n" + logEntry);
+            await fs.writeFile(
+              logPath,
+              "# AEON Evolution Log\n\nTrack the self-optimization of behavioral mandates.\n" +
+                logEntry,
+            );
           }
 
           addCognitiveLog({
             timestamp: now,
             type: "reflection",
             content: `Proposed Mandate Evolution: ${params.rationale}`,
-            metadata: { rationale: params.rationale }
+            metadata: { rationale: params.rationale },
           });
 
           return jsonResult({
             status: "mandate_proposed",
             log_path: "EVOLUTION_LOG.md",
-            instruction: "Review the proposal in EVOLUTION_LOG.md. If approved, manually update AGENTS.md.",
-            text: `Mandate proposal logged for evolution. Rationale: ${params.rationale}`
+            instruction:
+              "Review the proposal in EVOLUTION_LOG.md. If approved, manually update AGENTS.md.",
+            text: `Mandate proposal logged for evolution. Rationale: ${params.rationale}`,
           });
 
         case "execute_mandate":
@@ -77,12 +87,15 @@ ${params.mandate_change}
             timestamp: now,
             type: "reflection",
             content: `AUTONOMOUS MANDATE EVOLUTION: ${params.rationale}`,
-            metadata: { rationale: params.rationale, status: mandate.success ? "applied" : "failed" }
+            metadata: {
+              rationale: params.rationale,
+              status: mandate.success ? "applied" : "failed",
+            },
           });
 
           return jsonResult({
             status: mandate.success ? "mandate_evolved" : "failed",
-            text: mandate.changeSummary
+            text: mandate.changeSummary,
           });
 
         default:

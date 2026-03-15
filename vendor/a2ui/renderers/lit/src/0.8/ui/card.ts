@@ -54,9 +54,9 @@ export class Card extends Root {
   render() {
     return html` <section
       class=${classMap(this.theme.components.Card)}
-      style=${this.theme.additionalStyles?.Card
-        ? styleMap(this.theme.additionalStyles?.Card)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Card ? styleMap(this.theme.additionalStyles?.Card) : nothing
+      }
     >
       <slot></slot>
     </section>`;

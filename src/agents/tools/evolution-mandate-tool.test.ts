@@ -20,16 +20,16 @@ describe("Evolution Mandate Tool", () => {
     // Mock successful append
     vi.mocked(fs.appendFile).mockResolvedValue(undefined);
 
-    const result = await tool.execute("test-call", {
+    const result = (await tool.execute("test-call", {
       action: "propose_mandate",
       mandate_change: proposal,
       rationale: rationale,
-    }) as any;
+    })) as any;
 
     expect(fs.appendFile).toHaveBeenCalled();
     const callArgs = vi.mocked(fs.appendFile).mock.calls[0];
     const logContent = callArgs[1] as string;
-    
+
     expect(logContent).toContain(proposal);
     expect(logContent).toContain(rationale);
     expect(addCognitiveLog).toHaveBeenCalled();
@@ -38,7 +38,7 @@ describe("Evolution Mandate Tool", () => {
 
   it("should create EVOLUTION_LOG.md if it does not exist", async () => {
     const tool = createEvolutionMandateTool();
-    
+
     // Mock append failure (ENOENT) and then successful write
     vi.mocked(fs.appendFile).mockRejectedValue(new Error("ENOENT"));
     vi.mocked(fs.writeFile).mockResolvedValue(undefined);

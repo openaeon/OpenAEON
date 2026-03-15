@@ -17,6 +17,8 @@ export function handleAgentStart(ctx: EmbeddedPiSubscribeContext) {
     data: {
       phase: "start",
       startedAt: Date.now(),
+      chaosScore: ctx.state.chaosScore,
+      iterationDepth: ctx.state.iterationDepth,
     },
   });
   void ctx.params.onAgentEvent?.({

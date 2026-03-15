@@ -15,12 +15,14 @@ export function renderEmptyState(props: ChatProps) {
       <p class="chat-empty-subtitle">${t("chat.emptySubtitle")}</p>
       
       <div class="chat-sensory-nodes">
-        ${[1, 2, 3, 4, 5, 6].map(i => html`
+        ${[1, 2, 3, 4, 5, 6].map(
+          (i) => html`
           <div class="sensory-node">
-            <span class="sensory-node-icon">${["∿", "⋈", "⧖", "⚛", "⌬", "⎇"][i-1]}</span>
+            <span class="sensory-node-icon">${["∿", "⋈", "⧖", "⚛", "⌬", "⎇"][i - 1]}</span>
             <span class="sensory-node-text">${t(`chat.emptyAction${i}` as any)}</span>
           </div>
-        `)}
+        `,
+        )}
       </div>
 
       <div class="chat-usage-examples">

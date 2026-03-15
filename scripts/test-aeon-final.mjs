@@ -13,7 +13,7 @@ async function testEvolutionLogic() {
   const fileName = `${toolName.toLowerCase()}-tool.ts`;
   const filePath = path.join(evolvedDir, fileName);
   const toolCode = `export function create${toolName}Tool() { return { name: "entropy" }; }`;
-  
+
   await fs.mkdir(evolvedDir, { recursive: true });
   await fs.writeFile(filePath, toolCode, "utf-8");
   console.log("✅ Tool sprouted at:", filePath);
@@ -21,20 +21,30 @@ async function testEvolutionLogic() {
   // 2. Simulate 'relink_registry' action
   console.log("\n[Step 2] Relinking registry...");
   const files = await fs.readdir(evolvedDir);
-  const toolFiles = files.filter(f => f.endsWith("-tool.ts"));
-  
-  const imports = toolFiles.map(f => {
-    const name = f.replace(".ts", ".js");
-    const toolBase = f.replace("-tool.ts", "");
-    const pascalName = toolBase.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("");
-    return `import { create${pascalName}Tool } from "./${name}";`;
-  }).join("\n");
+  const toolFiles = files.filter((f) => f.endsWith("-tool.ts"));
 
-  const exports = toolFiles.map(f => {
+  const imports = toolFiles
+    .map((f) => {
+      const name = f.replace(".ts", ".js");
       const toolBase = f.replace("-tool.ts", "");
-      const pascalName = toolBase.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+      const pascalName = toolBase
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join("");
+      return `import { create${pascalName}Tool } from "./${name}";`;
+    })
+    .join("\n");
+
+  const exports = toolFiles
+    .map((f) => {
+      const toolBase = f.replace("-tool.ts", "");
+      const pascalName = toolBase
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join("");
       return `  create${pascalName}Tool(),`;
-  }).join("\n");
+    })
+    .join("\n");
 
   const registryContent = `import type { AnyAgentTool } from "../common.js";
 ${imports}
@@ -48,10 +58,15 @@ ${exports}
 
   // 3. Verify 'openclaw-tools.ts' integration logic (simulated)
   console.log("\n[Step 3] Verifying integration logic...");
-  const openclawToolsContent = await fs.readFile(path.join(baseDir, "src/agents/openclaw-tools.ts"), "utf-8");
-  const hasEvolutionImport = openclawToolsContent.includes("import { createEvolutionTool } from \"./tools/evolution-tool.js\";");
+  const openclawToolsContent = await fs.readFile(
+    path.join(baseDir, "src/agents/openclaw-tools.ts"),
+    "utf-8",
+  );
+  const hasEvolutionImport = openclawToolsContent.includes(
+    'import { createEvolutionTool } from "./tools/evolution-tool.js";',
+  );
   const hasEvolvedTools = openclawToolsContent.includes("...EVOLVED_TOOLS");
-  
+
   if (hasEvolutionImport && hasEvolvedTools) {
     console.log("✅ Integration verified in src/agents/openclaw-tools.ts");
   } else {

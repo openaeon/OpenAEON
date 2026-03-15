@@ -46,7 +46,7 @@ export function renderSubagentSidebar(props: ChatLayoutProps) {
           const statusClass = isWorking ? "subagent-card--active" : "subagent-card--idle";
           const statusText = isWorking ? t("chat.sidebarWorking") : t("chat.sidebarIdle");
           const statusIcon = isWorking ? "∿" : "⚬";
-          
+
           // Simulated or actual recursion depth for visual branching
           // If the backend provides iterationDepth, we use it; fallback to index-based for visual variety
           const depth = (row as any).iterationDepth ?? (idx % 4) + 1;
@@ -64,7 +64,13 @@ export function renderSubagentSidebar(props: ChatLayoutProps) {
                 ${row.model ? html`<span class="subagent-card__chip data-chip">🤖 ${row.model}</span>` : nothing}
                 ${row.outputTokens ? html`<span class="subagent-card__chip data-chip">⚡ ${tokens} tok</span>` : nothing}
               </div>
-              ${isWorking ? html`<div class="subagent-card__pulse node-pulse"></div>` : nothing}
+              ${
+                isWorking
+                  ? html`
+                      <div class="subagent-card__pulse node-pulse"></div>
+                    `
+                  : nothing
+              }
             </div>
           `;
         })}

@@ -27,7 +27,7 @@ const consoleTransport = new winston.transports.Console({
       // Clear the current line (where progress bar might be) before logging
       // \r clears the line, \x1b[K clears from cursor to end of line
       return `\r\x1b[K${timestamp} [${level}]: ${message}`;
-    })
+    }),
   ),
 });
 
@@ -38,7 +38,7 @@ export const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.printf(({ timestamp, level, message }) => {
       return `${timestamp} [${level}]: ${message}`;
-    })
+    }),
   ),
   transports: [consoleTransport],
 });
@@ -59,10 +59,7 @@ export function setupLogger(outputDir: string | undefined, logLevel: string) {
     fileTransport = new winston.transports.File({
       filename: path.join(outputDir, "output.log"),
       level: "debug", // Always capture everything in the file
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      ),
+      format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
     });
 
     logger.add(fileTransport);

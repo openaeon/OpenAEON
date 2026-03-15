@@ -57,6 +57,8 @@ export type ModelProviderConfig = {
   injectNumCtxForOpenAICompat?: boolean;
   headers?: Record<string, string>;
   authHeader?: boolean;
+  /** Optional proxy URL for this provider. */
+  proxy?: string;
   models: ModelDefinitionConfig[];
 };
 

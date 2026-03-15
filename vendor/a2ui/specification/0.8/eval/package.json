@@ -1,6 +1,10 @@
 {
   "name": "a2ui_genkit_eval",
   "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -14,10 +18,13 @@
     "genkit:dev": "genkit start -- tsx --watch src/dev.ts",
     "format": "prettier --write src/**/*.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "dependencies": {
+    "@genkit-ai/compat-oai": "^1.19.2",
+    "@genkit-ai/google-genai": "^1.19.3",
+    "@genkit-ai/vertexai": "^1.19.3",
+    "genkit": "^1.19.2",
+    "genkitx-anthropic": "^0.25.0"
+  },
   "devDependencies": {
     "@types/yargs": "^17.0.34",
     "dotenv-cli": "^10.0.0",
@@ -25,12 +32,5 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "yargs": "^18.0.0"
-  },
-  "dependencies": {
-    "@genkit-ai/compat-oai": "^1.19.2",
-    "@genkit-ai/google-genai": "^1.19.3",
-    "@genkit-ai/vertexai": "^1.19.3",
-    "genkit": "^1.19.2",
-    "genkitx-anthropic": "^0.25.0"
   }
 }

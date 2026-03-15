@@ -232,13 +232,22 @@ img.chat-avatar {
   inset: 0;
   border-radius: inherit;
   padding: 1.2px;
-  background: var(--bubble-grad, linear-gradient(var(--neural-angle, 135deg),
-        rgba(139, 92, 246, 0.5),
-        rgba(59, 130, 246, 0.2) 40%,
-        rgba(14, 165, 233, 0.5) 60%,
-        rgba(139, 92, 246, 0.5)));
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: var(
+    --bubble-grad,
+    linear-gradient(
+      var(--neural-angle, 135deg),
+      rgba(139, 92, 246, 0.5),
+      rgba(59, 130, 246, 0.2) 40%,
+      rgba(14, 165, 233, 0.5) 60%,
+      rgba(139, 92, 246, 0.5)
+    )
+  );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -265,15 +274,25 @@ img.chat-avatar {
 }
 
 .chat-group.user .chat-bubble::before {
-  background: var(--user-bubble-grad, linear-gradient(135deg, rgba(14, 165, 233, 0.6), rgba(56, 189, 248, 0.3)));
+  background: var(
+    --user-bubble-grad,
+    linear-gradient(135deg, rgba(14, 165, 233, 0.6), rgba(56, 189, 248, 0.3))
+  );
 }
 
 /* Light theme overrides */
 :root[data-theme="light"] .chat-bubble {
   --bubble-bg: rgba(255, 255, 255, 0.65);
   --bubble-text: #1e293b;
-  --bubble-grad: linear-gradient(135deg, rgba(14, 165, 233, 0.4), rgba(168, 85, 247, 0.4), rgba(236, 72, 153, 0.3));
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.05), inset 0 0 20px rgba(255, 255, 255, 0.8);
+  --bubble-grad: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.4),
+    rgba(168, 85, 247, 0.4),
+    rgba(236, 72, 153, 0.3)
+  );
+  box-shadow:
+    0 4px 12px rgba(99, 102, 241, 0.05),
+    inset 0 0 20px rgba(255, 255, 255, 0.8);
 }
 
 :root[data-theme="light"] .chat-group.user .chat-bubble {
@@ -305,12 +324,25 @@ img.chat-avatar {
 }
 
 .chat-bubble:hover::before {
-  background: var(--bubble-hover-grad, linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(139, 92, 246, 0.6), rgba(59, 130, 246, 0.4)));
+  background: var(
+    --bubble-hover-grad,
+    linear-gradient(
+      135deg,
+      rgba(0, 240, 255, 0.5),
+      rgba(139, 92, 246, 0.6),
+      rgba(59, 130, 246, 0.4)
+    )
+  );
 }
 
 :root[data-theme="light"] .chat-bubble:hover {
   --bubble-hover-bg: rgba(255, 255, 255, 1);
-  --bubble-hover-grad: linear-gradient(135deg, rgba(14, 165, 233, 0.4), rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.3));
+  --bubble-hover-grad: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.4),
+    rgba(139, 92, 246, 0.5),
+    rgba(59, 130, 246, 0.3)
+  );
 }
 
 .chat-group.user .chat-bubble:hover {
@@ -424,7 +456,6 @@ img.chat-avatar {
 }
 
 @keyframes streaming-pulse {
-
   0%,
   100% {
     border-left-color: #3b82f6;
@@ -488,7 +519,6 @@ img.chat-avatar {
 }
 
 @keyframes reading-bounce {
-
   0%,
   80%,
   100% {

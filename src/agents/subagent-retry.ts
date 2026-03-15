@@ -49,12 +49,11 @@ export function resolveRetryPolicy(cfg?: ReturnType<typeof loadConfig>): RetryPo
         : DEFAULT_RETRY_POLICY.maxRetries,
     retryOnStatus: Array.isArray(raw.retryOnStatus)
       ? (raw.retryOnStatus.filter(
-          (s: unknown) =>
-            typeof s === "string" && ["success", "partial", "failed"].includes(s),
+          (s: unknown) => typeof s === "string" && ["success", "partial", "failed"].includes(s),
         ) as TaskResult["status"][])
       : DEFAULT_RETRY_POLICY.retryOnStatus,
     modelFallback: Array.isArray(raw.modelFallback)
-      ? raw.modelFallback.filter((m: unknown) => typeof m === "string" && m.trim()) as string[]
+      ? (raw.modelFallback.filter((m: unknown) => typeof m === "string" && m.trim()) as string[])
       : undefined,
   };
 }
@@ -92,9 +91,7 @@ export function shouldRetrySubagentRun(params: {
 
   // Also retry on lifecycle errors/timeouts even without a task_result.
   if (!taskResult && (outcome?.status === "error" || outcome?.status === "timeout")) {
-    log.info(
-      `[retry] run ${entry.runId} outcome="${outcome.status}" (no task_result), retrying`,
-    );
+    log.info(`[retry] run ${entry.runId} outcome="${outcome.status}" (no task_result), retrying`);
     return true;
   }
 
@@ -142,8 +139,7 @@ export async function retrySubagentRun(params: {
     },
   };
 
-  const targetAgentId =
-    originalEntry.childSessionKey.split(":")[1] ?? "main";
+  const targetAgentId = originalEntry.childSessionKey.split(":")[1] ?? "main";
   const childSessionKey = `agent:${targetAgentId}:subagent:${crypto.randomUUID()}`;
   const requesterOrigin = normalizeDeliveryContext(originalEntry.requesterOrigin);
 
@@ -208,10 +204,7 @@ export async function retrySubagentRun(params: {
         channel: requesterOrigin?.channel,
         to: requesterOrigin?.to ?? undefined,
         accountId: requesterOrigin?.accountId ?? undefined,
-        threadId:
-          requesterOrigin?.threadId != null
-            ? String(requesterOrigin.threadId)
-            : undefined,
+        threadId: requesterOrigin?.threadId != null ? String(requesterOrigin.threadId) : undefined,
         idempotencyKey: childIdem,
         deliver: false,
         lane: AGENT_LANE_SUBAGENT,

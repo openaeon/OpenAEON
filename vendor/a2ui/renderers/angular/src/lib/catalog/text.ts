@@ -14,10 +14,10 @@
  limitations under the License.
  */
 
-import { Component, computed, inject, input, ViewEncapsulation } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Primitives, Styles, Types } from '@a2ui/lit/0.8';
-import { MarkdownRenderer } from '../data/markdown';
+import { Component, computed, inject, input, ViewEncapsulation } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Primitives, Styles, Types } from "@a2ui/lit/0.8";
+import { MarkdownRenderer } from "../data/markdown";
 
 interface HintedStyles {
   h1: Record<string, string>;
@@ -30,13 +30,9 @@ interface HintedStyles {
 }
 
 @Component({
-  selector: 'a2ui-text',
+  selector: "a2ui-text",
   template: `
-    <section
-      [class]="classes()"
-      [style]="additionalStyles()"
-      [innerHTML]="resolvedText()"
-    ></section>
+    <section [class]="classes()" [style]="additionalStyles()" [innerHTML]="resolvedText()"></section>
   `,
   encapsulation: ViewEncapsulation.None,
   styles: `
@@ -58,33 +54,33 @@ interface HintedStyles {
 export class Text extends DynamicComponent {
   private markdownRenderer = inject(MarkdownRenderer);
   readonly text = input.required<Primitives.StringValue | null>();
-  readonly usageHint = input.required<Types.ResolvedText['usageHint'] | null>();
+  readonly usageHint = input.required<Types.ResolvedText["usageHint"] | null>();
 
   protected resolvedText = computed(() => {
     const usageHint = this.usageHint();
     let value = super.resolvePrimitive(this.text());
 
     if (value == null) {
-      return '(empty)';
+      return "(empty)";
     }
 
     switch (usageHint) {
-      case 'h1':
+      case "h1":
         value = `# ${value}`;
         break;
-      case 'h2':
+      case "h2":
         value = `## ${value}`;
         break;
-      case 'h3':
+      case "h3":
         value = `### ${value}`;
         break;
-      case 'h4':
+      case "h4":
         value = `#### ${value}`;
         break;
-      case 'h5':
+      case "h5":
         value = `##### ${value}`;
         break;
-      case 'caption':
+      case "caption":
         value = `*${value}*`;
         break;
       default:
@@ -94,7 +90,7 @@ export class Text extends DynamicComponent {
 
     return this.markdownRenderer.render(
       value,
-      Styles.appendToAll(this.theme.markdown, ['ol', 'ul', 'li'], {}),
+      Styles.appendToAll(this.theme.markdown, ["ol", "ul", "li"], {}),
     );
   });
 
@@ -118,7 +114,7 @@ export class Text extends DynamicComponent {
     let additionalStyles: Record<string, string> = {};
 
     if (this.areHintedStyles(styles)) {
-      additionalStyles = styles[usageHint ?? 'body'];
+      additionalStyles = styles[usageHint ?? "body"];
     } else {
       additionalStyles = styles;
     }
@@ -127,11 +123,11 @@ export class Text extends DynamicComponent {
   });
 
   private areHintedStyles(styles: unknown): styles is HintedStyles {
-    if (typeof styles !== 'object' || !styles || Array.isArray(styles)) {
+    if (typeof styles !== "object" || !styles || Array.isArray(styles)) {
       return false;
     }
 
-    const expected = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'caption', 'body'];
+    const expected = ["h1", "h2", "h3", "h4", "h5", "h6", "caption", "body"];
     return expected.every((v) => v in styles);
   }
 }

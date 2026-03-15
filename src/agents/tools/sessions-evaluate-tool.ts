@@ -5,11 +5,27 @@ import type { AnyAgentTool } from "./common.js";
 import { jsonResult, readStringParam } from "./common.js";
 
 const SessionsEvaluateToolSchema = Type.Object({
-  originalTask: Type.String({ description: "The original task goal that was given to the worker agent." }),
-  workerResult: Type.String({ description: "The result output by the worker agent that needs evaluation." }),
-  context: Type.Optional(Type.String({ description: "Any additional context required for the evaluation (e.g. error logs, git diffs)." })),
-  agentId: Type.Optional(Type.String({ description: "The ID of the specialized reflector agent (default uses standard reasoning model)." })),
-  model: Type.Optional(Type.String({ description: "Model override, ideally a strong reasoning model (e.g. R1)." })),
+  originalTask: Type.String({
+    description: "The original task goal that was given to the worker agent.",
+  }),
+  workerResult: Type.String({
+    description: "The result output by the worker agent that needs evaluation.",
+  }),
+  context: Type.Optional(
+    Type.String({
+      description:
+        "Any additional context required for the evaluation (e.g. error logs, git diffs).",
+    }),
+  ),
+  agentId: Type.Optional(
+    Type.String({
+      description:
+        "The ID of the specialized reflector agent (default uses standard reasoning model).",
+    }),
+  ),
+  model: Type.Optional(
+    Type.String({ description: "Model override, ideally a strong reasoning model (e.g. R1)." }),
+  ),
   runTimeoutSeconds: Type.Optional(Type.Number({ minimum: 0 })),
 });
 
@@ -24,7 +40,7 @@ export function createSessionsEvaluateTool(opts?: {
     label: "Evaluate",
     name: "sessions_evaluate",
     description:
-      'Spawn a specialized Reflector Agent (Critic) to evaluate the result of another agent against its original goal. Used to implement the Z² step in the Cognitive Loop (Z⇌Z²+C).',
+      "Spawn a specialized Reflector Agent (Critic) to evaluate the result of another agent against its original goal. Used to implement the Z² step in the Cognitive Loop (Z⇌Z²+C).",
     parameters: SessionsEvaluateToolSchema,
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
@@ -32,11 +48,12 @@ export function createSessionsEvaluateTool(opts?: {
       const originalTask = readStringParam(params, "originalTask", { required: true });
       const workerResult = readStringParam(params, "workerResult", { required: true });
       const context = readStringParam(params, "context") || "None provided.";
-      
+
       const requestedAgentId = readStringParam(params, "agentId");
       const modelOverride = readStringParam(params, "model");
-      
-      const timeoutSecondsCandidate = typeof params.runTimeoutSeconds === "number" ? params.runTimeoutSeconds : undefined;
+
+      const timeoutSecondsCandidate =
+        typeof params.runTimeoutSeconds === "number" ? params.runTimeoutSeconds : undefined;
       const runTimeoutSeconds =
         typeof timeoutSecondsCandidate === "number" && Number.isFinite(timeoutSecondsCandidate)
           ? Math.max(0, Math.floor(timeoutSecondsCandidate))

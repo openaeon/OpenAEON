@@ -22,8 +22,10 @@ export function resolveAgentTimeoutMs(opts: {
   const clampTimeoutMs = (valueMs: number) =>
     Math.min(Math.max(valueMs, minMs), MAX_SAFE_TIMEOUT_MS);
   const defaultMs = clampTimeoutMs(resolveAgentTimeoutSeconds(opts.cfg) * 1000);
-  // Use the maximum timer-safe timeout to represent "no timeout" when explicitly set to 0.
-  const NO_TIMEOUT_MS = MAX_SAFE_TIMEOUT_MS;
+  // Use a sensible 2-hour default for "no timeout" to avoid 24-day hangs in background waiters.
+  // Explicitly configured timeouts or larger request-level overrides are still respected
+  // up to MAX_SAFE_TIMEOUT_MS.
+  const NO_TIMEOUT_MS = 7200 * 1000;
   const overrideMs = normalizeNumber(opts.overrideMs);
   if (overrideMs !== undefined) {
     if (overrideMs === 0) {

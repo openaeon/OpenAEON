@@ -1,4 +1,3 @@
-
 /*
  Copyright 2025 Google LLC
 
@@ -39,7 +38,7 @@ export const evaluationFlow = ai.defineFlow(
           z.object({
             issue: z.string(),
             severity: z.enum(["minor", "significant", "critical"]),
-          })
+          }),
         )
         .optional(),
       evalPrompt: z.string().optional(),
@@ -51,9 +50,7 @@ export const evaluationFlow = ai.defineFlow(
       .join("\n\n");
 
     const EvalResultSchema = z.object({
-      pass: z
-        .boolean()
-        .describe("Whether the generated UI meets the requirements"),
+      pass: z.boolean().describe("Whether the generated UI meets the requirements"),
       reason: z.string().describe("Summary of the reason for a failure."),
       issues: z
         .array(
@@ -62,7 +59,7 @@ export const evaluationFlow = ai.defineFlow(
             severity: z
               .enum(["minor", "significant", "critical"])
               .describe("Severity of the issue"),
-          })
+          }),
         )
         .describe("List of specific issues found."),
     });
@@ -189,5 +186,5 @@ Return a JSON object with the following schema:
       }
       throw e; // Re-throw to let the retry logic handle it
     }
-  }
+  },
 );

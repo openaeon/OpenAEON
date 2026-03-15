@@ -15,7 +15,10 @@ export const chatLayoutStyles = css`
     flex: 1;
     height: 100%;
     overflow: hidden;
-    background: var(--fractal-bg, radial-gradient(circle at 10% 20%, rgba(15, 23, 42, 1) 0%, rgba(5, 5, 15, 1) 100%));
+    background: var(
+      --fractal-bg,
+      radial-gradient(circle at 10% 20%, rgba(15, 23, 42, 1) 0%, rgba(5, 5, 15, 1) 100%)
+    );
     border-radius: var(--radius-lg);
     box-shadow: var(--fractal-shadow, inset 0 0 100px rgba(0, 0, 0, 0.5));
     position: relative;
@@ -23,7 +26,7 @@ export const chatLayoutStyles = css`
     /* Remove base border to avoid red/gray conflicting lines */
     border: none;
   }
-  
+
   /* Apply glowing animated gradient border via mask to chat container */
   .chat::before {
     content: "";
@@ -31,9 +34,16 @@ export const chatLayoutStyles = css`
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: var(--chat-border-glow, linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(139, 92, 246, 0.2), rgba(225, 29, 72, 0.4)));
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: var(
+      --chat-border-glow,
+      linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(139, 92, 246, 0.2), rgba(225, 29, 72, 0.4))
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -41,8 +51,18 @@ export const chatLayoutStyles = css`
   }
 
   :host-context([data-theme="light"]) .chat {
-    --chat-border-glow: linear-gradient(135deg, rgba(14, 165, 233, 0.5), rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
-    --fractal-bg: radial-gradient(circle at 10% 20%, #ffffff 0%, #f8fafc 50%, rgba(224, 231, 255, 0.6) 100%);
+    --chat-border-glow: linear-gradient(
+      135deg,
+      rgba(14, 165, 233, 0.5),
+      rgba(168, 85, 247, 0.3),
+      rgba(236, 72, 153, 0.3)
+    );
+    --fractal-bg: radial-gradient(
+      circle at 10% 20%,
+      #ffffff 0%,
+      #f8fafc 50%,
+      rgba(224, 231, 255, 0.6) 100%
+    );
     --fractal-shadow: inset 0 0 60px rgba(255, 255, 255, 0.9);
   }
 
@@ -50,16 +70,23 @@ export const chatLayoutStyles = css`
   .chat::before {
     content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--fractal-glow, radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%));
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(
+      --fractal-glow,
+      radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%)
+    );
     pointer-events: none;
     z-index: 0;
   }
 
   :host-context([data-theme="light"]) .chat::before {
-    --fractal-glow: radial-gradient(ellipse at 80% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
-                    radial-gradient(ellipse at 20% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+    --fractal-glow:
+      radial-gradient(ellipse at 80% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
   }
 
   .chat-split-container {
@@ -76,7 +103,7 @@ export const chatLayoutStyles = css`
     flex: 1;
     min-width: 0;
     position: relative;
-    
+
     /* Floating Glass Card */
     background: var(--glass-bg, rgba(15, 23, 42, 0.6));
     backdrop-filter: blur(24px);
@@ -163,7 +190,13 @@ export const chatLayoutStyles = css`
     transform-origin: bottom left;
   }
   @keyframes messagePop {
-    0% { opacity: 0; transform: translateY(12px) scale(0.98); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
+    0% {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 `;

@@ -94,9 +94,9 @@ export class Row extends Root {
   render() {
     return html`<section
       class=${classMap(this.theme.components.Row)}
-      style=${this.theme.additionalStyles?.Row
-        ? styleMap(this.theme.additionalStyles?.Row)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Row ? styleMap(this.theme.additionalStyles?.Row) : nothing
+      }
     >
       <slot></slot>
     </section>`;

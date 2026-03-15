@@ -54,8 +54,8 @@ vi.mock("../markdown/code-spans.js", () => ({
 }));
 
 function createMockCtx(overrides: any = {}) {
-  const state: any = { 
-    deltaBuffer: "", 
+  const state: any = {
+    deltaBuffer: "",
     lastAnnouncedProgress: undefined,
     partialBlockState: { thinking: false, final: false, inlineCode: {} },
     shouldEmitPartialReplies: true,
@@ -69,8 +69,8 @@ function createMockCtx(overrides: any = {}) {
     Object.assign(state, overrides.state);
   }
   return {
-    params: { 
-      runId: "run-1", 
+    params: {
+      runId: "run-1",
       session: { id: "session-1" },
       onAgentEvent: vi.fn(),
     },
@@ -81,12 +81,11 @@ function createMockCtx(overrides: any = {}) {
     consumePartialReplyDirectives: vi.fn((t) => ({ text: t })),
     recordAssistantUsage: vi.fn(),
     flushBlockReplyBuffer: vi.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
 describe("Subagent Progress Monitoring", () => {
-  
   describe("runSubagentProgressAnnounceFlow (Delivery Logic)", () => {
     let runSubagentProgressAnnounceFlow: any;
 
@@ -131,7 +130,8 @@ describe("Subagent Progress Monitoring", () => {
 
     it("triggers announcement when <execution_progress> tag is completed", async () => {
       const ctx = createMockCtx();
-      const delta = "Thinking... <execution_progress>Found 5 files</execution_progress> continuing.";
+      const delta =
+        "Thinking... <execution_progress>Found 5 files</execution_progress> continuing.";
       ctx.state.deltaBuffer = delta;
 
       await handleMessageUpdate(ctx, {

@@ -39,15 +39,19 @@ export function renderStickyPlanBar(props: ChatLayoutProps) {
           style="width: ${pct}%"
         ></div>
       </div>
-      ${allDone
-        ? html`
+      ${
+        allDone
+          ? html`
             <div class="chat-plan-confetti matrix-particles">
-              ${Array.from({ length: 12 }, (_, i) =>
-                html`<span class="chat-confetti-piece matrix-particle" style="--i:${i}; --x:${Math.random() * 100}; --delay:${Math.random() * 2}s; --color:${["#818cf8", "#10b981", "#c084fc", "#3b82f6", "#2dd4bf", "#6366f1"][i % 6]}"></span>`,
+              ${Array.from(
+                { length: 12 },
+                (_, i) =>
+                  html`<span class="chat-confetti-piece matrix-particle" style="--i:${i}; --x:${Math.random() * 100}; --delay:${Math.random() * 2}s; --color:${["#818cf8", "#10b981", "#c084fc", "#3b82f6", "#2dd4bf", "#6366f1"][i % 6]}"></span>`,
               )}
             </div>
           `
-        : nothing}
+          : nothing
+      }
     </div>
   `;
 }
@@ -90,21 +94,24 @@ export function renderPlanSidebar(props: ChatLayoutProps) {
                 <span class="plan-sidebar-todo-icon node-status-icon">${todo.status === "done" ? "❖" : todo.status === "in_progress" ? "∿" : "⚬"}</span>
                 <span class="plan-sidebar-todo-text node-text">${todo.title}</span>
               </div>
-              ${todo.status === "done" && todo.result
-                ? html`
+              ${
+                todo.status === "done" && todo.result
+                  ? html`
                     <div class="plan-sidebar-todo-result matrix-node-result">
                       <div class="plan-sidebar-todo-result-title aeon-subtitle">${t("chat.sidebarResultTitle")}</div>
                       <div class="plan-sidebar-todo-result-content data-text">${todo.result}</div>
                     </div>
                   `
-                : nothing}
+                  : nothing
+              }
             </div>
           `,
         )}
       </div>
 
-      ${isPlanning && props.onApprovePlan
-        ? html`
+      ${
+        isPlanning && props.onApprovePlan
+          ? html`
             <div class="plan-sidebar-actions matrix-actions">
               <button
                 class="plan-sidebar-approve-btn neon-btn neon-btn--primary"
@@ -114,13 +121,14 @@ export function renderPlanSidebar(props: ChatLayoutProps) {
               </button>
             </div>
           `
-        : done === total && total > 0
-          ? html`
+          : done === total && total > 0
+            ? html`
               <div class="plan-sidebar-actions plan-sidebar-complete matrix-complete">
                 ${t("sandbox.plan.allDone")}
               </div>
             `
-          : nothing}
+            : nothing
+      }
     </div>
   `;
 }

@@ -78,7 +78,9 @@ export async function withTargetLock<T>(
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => {
-      reject(new Error(`withTargetLock: operation on ${key} timed out after ${QUEUE_TIMEOUT_MS}ms`));
+      reject(
+        new Error(`withTargetLock: operation on ${key} timed out after ${QUEUE_TIMEOUT_MS}ms`),
+      );
     }, QUEUE_TIMEOUT_MS);
   });
 

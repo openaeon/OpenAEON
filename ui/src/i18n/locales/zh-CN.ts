@@ -163,7 +163,8 @@ export const zh_CN: TranslationMap = {
     manualCmdAudit: "逻辑审计: `/aeon audit [Range]` — 在指定的 Peano 曲线区间内查找逻辑矛盾点。",
     manualCmdDistill: "记忆蒸馏: `DISTILL` — 将短期内存中的对话精华固化为长期公理。",
     manualCmdRefine: "逻辑精炼: `REFINE` — 移除陈旧或低置信度的逻辑门，降低认知熵。",
-    manualResonance: "共振现象: 当 `epiphanyFactor` > 0.8 时，系统进入高频进化状态，此时执行操作奖励更高。",
+    manualResonance:
+      "共振现象: 当 `epiphanyFactor` > 0.8 时，系统进入高频进化状态，此时执行操作奖励更高。",
     memoryGraph: "长期记忆知识图谱",
   },
   languages: {
@@ -427,29 +428,29 @@ export const zh_CN: TranslationMap = {
       saveChanges: "保存更改",
       saving: "保存中...",
       selectFileHint: "从列表中选择一个知识库文件以查看或编辑其内容。",
-      promptNewFile: "输入新文件名 (例如: guide.md):"
-    }
+      promptNewFile: "输入新文件名 (例如: guide.md):",
+    },
   },
   sandbox: {
     relativeTime: {
       secondsAgo: "{seconds} 秒前",
       minutesAgo: "{minutes} 分钟前",
-      hoursAgo: "{hours} 小时前"
+      hoursAgo: "{hours} 小时前",
     },
     status: {
       snapping: "🔥 疯狂挥舞双钳中!",
       stuck: "💥 钳子卡住了!",
-      beach: "🏖️ 沙滩摸鱼中"
+      beach: "🏖️ 沙滩摸鱼中",
     },
     timeline: {
       waiting: "等待事件中...",
       today: "今天",
-      older: "昨天及更早"
+      older: "昨天及更早",
     },
     plan: {
       resting: "龙虾长老正在小憩。目前没有活跃的蓝图需要构建。",
       tasksProgress: "{done}/{total} 个任务",
-      allDone: "所有任务已完成！"
+      allDone: "所有任务已完成！",
     },
     card: {
       progress: "进度",
@@ -466,12 +467,12 @@ export const zh_CN: TranslationMap = {
       planning: "📋 正在计划/委派",
       verifying: "✅ 正在验证",
       executingTools: "⚙️ 正在执行工具",
-      synthesizing: "🤔 正在总结"
+      synthesizing: "🤔 正在总结",
     },
     health: {
       excellent: "优",
       degraded: "降级",
-      critical: "危机"
+      critical: "危机",
     },
     zones: {
       hq: "👑 龙虾大长老总部",
@@ -480,7 +481,7 @@ export const zh_CN: TranslationMap = {
       citadel: "龙虾大长老 (Citadel/Admin)",
       logistics: "物资酋长 (Logistics Hub)",
       comms: "通讯领主 (Comms Array)",
-      cluster: "集群守卫 (Compute Cluster)"
+      cluster: "集群守卫 (Compute Cluster)",
     },
     header: {
       title: "🦀 龙虾智能体王国沙盒 (Lobster Kingdom)",
@@ -491,7 +492,7 @@ export const zh_CN: TranslationMap = {
       forceRestartTitle: "重置王国流水线",
       forceRestart: "重启流水线",
       recruit: "招募新公民",
-      tokensHint: "此领地使用的总 Token 数"
+      tokensHint: "此领地使用的总 Token 数",
     },
     sidebar: {
       blueprints: "📋 帝国蓝图",
@@ -502,14 +503,14 @@ export const zh_CN: TranslationMap = {
       orchestrating: "正在编排计划...",
       noWorkers: "目前没有活跃的龙虾工人。",
       history: "委派历史",
-      linked: "已关联: {name}"
+      linked: "已关联: {name}",
     },
     stage: {
       managerHover: "监视办公室",
       managerLabel: "👑 经理",
       quiet: "龙虾帝国目前很安静。",
       runComplex: "运行复杂的任务以查看龙虾工人的运作。",
-      waiting: "等待指令"
+      waiting: "等待指令",
     },
     browserPreview: {
       title: "🌐 浏览器实时预览",
@@ -518,6 +519,6 @@ export const zh_CN: TranslationMap = {
       collapse: "折叠预览",
       expand: "展开预览",
       lastUpdated: "更新于 {time}",
-    }
-  }
+    },
+  },
 };

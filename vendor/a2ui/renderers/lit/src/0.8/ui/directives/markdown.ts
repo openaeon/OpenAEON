@@ -15,12 +15,7 @@
  */
 
 import { noChange } from "lit";
-import {
-  Directive,
-  DirectiveParameters,
-  Part,
-  directive,
-} from "lit/directive.js";
+import { Directive, DirectiveParameters, Part, directive } from "lit/directive.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
 import { RenderRule } from "markdown-it/lib/renderer.mjs";
@@ -47,10 +42,7 @@ class MarkdownDirective extends Directive {
   #lastTagClassMap: string | null = null;
 
   update(_part: Part, [value, tagClassMap]: DirectiveParameters<this>) {
-    if (
-      this.#lastValue === value &&
-      JSON.stringify(tagClassMap) === this.#lastTagClassMap
-    ) {
+    if (this.#lastValue === value && JSON.stringify(tagClassMap) === this.#lastTagClassMap) {
       return noChange;
     }
 
@@ -100,13 +92,7 @@ class MarkdownDirective extends Directive {
       }
 
       const key = `${tokenName}_open`;
-      this.#markdownIt.renderer.rules[key] = (
-        tokens,
-        idx,
-        options,
-        _env,
-        self
-      ) => {
+      this.#markdownIt.renderer.rules[key] = (tokens, idx, options, _env, self) => {
         const token = tokens[idx];
         const tokenClasses = tagClassMap[token.tag] ?? [];
         for (const clazz of tokenClasses) {

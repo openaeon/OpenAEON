@@ -17,14 +17,14 @@ name: Editor build
 on:
   push:
     paths:
-      - 'tools/editor/**'
-      - 'renderers/lit/**'
-      - '.github/workflows/editor_build.yml'
+      - "tools/editor/**"
+      - "renderers/lit/**"
+      - ".github/workflows/editor_build.yml"
   pull_request:
     paths:
-      - 'tools/editor/**'
-      - 'renderers/lit/**'
-      - '.github/workflows/editor_build.yml'
+      - "tools/editor/**"
+      - "renderers/lit/**"
+      - ".github/workflows/editor_build.yml"
 
 jobs:
   build:
@@ -36,7 +36,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install lib's deps
         working-directory: ./renderers/lit

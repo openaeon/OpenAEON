@@ -25,7 +25,7 @@ class CollectiveConsciousness {
       key,
       value,
       peano,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     log.debug(`Axiom pulsed into matrix: ${key} at [${peano.x}, ${peano.y}]`);
   }
@@ -63,7 +63,8 @@ class CollectiveConsciousness {
   /**
    * Maintenance: cleanup old axioms.
    */
-  public cleanup(maxAgeMs: number = 3600000) { // Default 1 hour
+  public cleanup(maxAgeMs: number = 3600000) {
+    // Default 1 hour
     const now = Date.now();
     for (const [key, axiom] of this.matrix.entries()) {
       if (now - axiom.timestamp > maxAgeMs) {

@@ -281,7 +281,11 @@ async function cascadeKillChildren(params: {
     if (!childKey || seenChildSessionKeys.has(childKey)) continue;
     seenChildSessionKeys.add(childKey);
     if (!run.endedAt) {
-      const stopResult = await killSubagentRun({ cfg: params.cfg, entry: run, cache: params.cache });
+      const stopResult = await killSubagentRun({
+        cfg: params.cfg,
+        entry: run,
+        cache: params.cache,
+      });
       if (stopResult.killed) {
         killed += 1;
         labels.push(resolveSubagentLabel(run));
@@ -325,7 +329,8 @@ export function createSubagentsTool(opts?: { agentSessionKey?: string }): AnyAge
   return {
     label: "Subagents",
     name: "subagents",
-    description: "List, kill, or steer spawned sub-agents for this requester session. Use this for sub-agent orchestration.",
+    description:
+      "List, kill, or steer spawned sub-agents for this requester session. Use this for sub-agent orchestration.",
     parameters: SubagentsToolSchema,
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
@@ -334,13 +339,19 @@ export function createSubagentsTool(opts?: { agentSessionKey?: string }): AnyAge
       const requester = resolveRequesterKey({ cfg, agentSessionKey: opts?.agentSessionKey });
       const runs = sortSubagentRuns(listSubagentRunsForRequester(requester.requesterSessionKey));
       const recentMinutesRaw = readNumberParam(params, "recentMinutes");
-      const recentMinutes = recentMinutesRaw ? Math.max(1, Math.min(MAX_RECENT_MINUTES, Math.floor(recentMinutesRaw))) : DEFAULT_RECENT_MINUTES;
+      const recentMinutes = recentMinutesRaw
+        ? Math.max(1, Math.min(MAX_RECENT_MINUTES, Math.floor(recentMinutesRaw)))
+        : DEFAULT_RECENT_MINUTES;
       const now = Date.now();
       const recentCutoff = now - recentMinutes * 60_000;
       const cache = new Map<string, Record<string, SessionEntry>>();
 
       const buildListEntry = async (entry: SubagentRunRecord, runtimeMs: number, idx: number) => {
-        const sessionEntry = resolveSessionEntryForKey({ cfg, key: entry.childSessionKey, cache }).entry;
+        const sessionEntry = resolveSessionEntryForKey({
+          cfg,
+          key: entry.childSessionKey,
+          cache,
+        }).entry;
         const totalTokens = resolveTotalTokens(sessionEntry);
         const usageText = formatTokenUsageDisplay(sessionEntry);
         const status = resolveRunStatus(entry);
@@ -352,29 +363,87 @@ export function createSubagentsTool(opts?: { agentSessionKey?: string }): AnyAge
           try {
             const latestOutput = await readLatestSubagentOutput(entry.childSessionKey);
             if (latestOutput) {
-              const progressMatch = latestOutput.match(/<execution_progress>([\s\S]*?)<\/execution_progress>/i);
+              const progressMatch = latestOutput.match(
+                /<execution_progress>([\s\S]*?)<\/execution_progress>/i,
+              );
               if (progressMatch && progressMatch[1].trim()) {
                 progressText = truncateLine(progressMatch[1].trim().replace(/\s+/g, " "), 60);
               } else {
                 const toolMatch = latestOutput.match(/<tool_name>(.*?)(<\/tool_name>| )/i);
-                if (toolMatch && toolMatch[1].trim()) progressText = `Using tool: ${truncateLine(toolMatch[1].trim(), 40)}`;
+                if (toolMatch && toolMatch[1].trim())
+                  progressText = `Using tool: ${truncateLine(toolMatch[1].trim(), 40)}`;
               }
             }
-          } catch { /* Ignore */ }
+          } catch {
+            /* Ignore */
+          }
         }
-        const expandedStatus = status === "running" && progressText ? `running [Progress: ${progressText}]` : status;
+        const expandedStatus =
+          status === "running" && progressText ? `running [Progress: ${progressText}]` : status;
         const line = `${idx}. ${label} (${resolveModelDisplay(sessionEntry, entry.model)}, ${runtime}${usageText ? `, ${usageText}` : ""}) ${expandedStatus}${task.toLowerCase() !== label.toLowerCase() ? ` - ${task}` : ""}`;
-        return { line, view: { index: idx, runId: entry.runId, sessionKey: entry.childSessionKey, label, task, status, progress: progressText || undefined, runtime, runtimeMs, model: resolveModelRef(sessionEntry) || entry.model, totalTokens, startedAt: entry.startedAt, endedAt: entry.endedAt } };
+        return {
+          line,
+          view: {
+            index: idx,
+            runId: entry.runId,
+            sessionKey: entry.childSessionKey,
+            label,
+            task,
+            status,
+            progress: progressText || undefined,
+            runtime,
+            runtimeMs,
+            model: resolveModelRef(sessionEntry) || entry.model,
+            totalTokens,
+            startedAt: entry.startedAt,
+            endedAt: entry.endedAt,
+          },
+        };
       };
 
       const activeRunsFiltered = runs.filter((entry) => !entry.endedAt);
-      const activeEntries = await Promise.all(activeRunsFiltered.map((entry, i) => buildListEntry(entry, now - (entry.startedAt ?? entry.createdAt), i + 1)));
+      const activeEntries = await Promise.all(
+        activeRunsFiltered.map((entry, i) =>
+          buildListEntry(entry, now - (entry.startedAt ?? entry.createdAt), i + 1),
+        ),
+      );
 
       if (action === "list") {
-        const recentEntries = await Promise.all(runs.filter((entry) => !!entry.endedAt && (entry.endedAt ?? 0) >= recentCutoff).map((entry, i) => buildListEntry(entry, (entry.endedAt ?? now) - (entry.startedAt ?? entry.createdAt), activeEntries.length + i + 1)));
-        const listText = buildListText({ active: activeEntries.map(e => ({ line: e.line })), recent: recentEntries.map(e => ({ line: e.line })), recentMinutes });
-        const aeonHint = ["", "---", "AEON LOOP (Proactive Self-Iteration):", "- If a subagent is providing progress updates, you can use `action=steer` to refine its goals in real-time.", "- If a subagent has reached a Divergence (🌀), evaluate if a recursive iteration (Z ⇌ Z² + C) is needed.", "- Use `cron(action=add)` to schedule periodic monitoring sessions for long-running workflows."].join("\n");
-        return jsonResult({ status: "ok", action: "list", requesterSessionKey: requester.requesterSessionKey, callerSessionKey: requester.callerSessionKey, callerIsSubagent: requester.callerIsSubagent, total: runs.length, active: activeEntries.map((entry) => entry.view), recent: recentEntries.map((entry) => entry.view), text: listText + aeonHint });
+        const recentEntries = await Promise.all(
+          runs
+            .filter((entry) => !!entry.endedAt && (entry.endedAt ?? 0) >= recentCutoff)
+            .map((entry, i) =>
+              buildListEntry(
+                entry,
+                (entry.endedAt ?? now) - (entry.startedAt ?? entry.createdAt),
+                activeEntries.length + i + 1,
+              ),
+            ),
+        );
+        const listText = buildListText({
+          active: activeEntries.map((e) => ({ line: e.line })),
+          recent: recentEntries.map((e) => ({ line: e.line })),
+          recentMinutes,
+        });
+        const aeonHint = [
+          "",
+          "---",
+          "AEON LOOP (Proactive Self-Iteration):",
+          "- If a subagent is providing progress updates, you can use `action=steer` to refine its goals in real-time.",
+          "- If a subagent has reached a Divergence (🌀), evaluate if a recursive iteration (Z ⇌ Z² + C) is needed.",
+          "- Use `cron(action=add)` to schedule periodic monitoring sessions for long-running workflows.",
+        ].join("\n");
+        return jsonResult({
+          status: "ok",
+          action: "list",
+          requesterSessionKey: requester.requesterSessionKey,
+          callerSessionKey: requester.callerSessionKey,
+          callerIsSubagent: requester.callerIsSubagent,
+          total: runs.length,
+          active: activeEntries.map((entry) => entry.view),
+          recent: recentEntries.map((entry) => entry.view),
+          text: listText + aeonHint,
+        });
       }
 
       if (action === "kill") {
@@ -390,72 +459,222 @@ export function createSubagentsTool(opts?: { agentSessionKey?: string }): AnyAge
             seenChildSessionKeys.add(childKey);
             if (!entry.endedAt) {
               const stopResult = await killSubagentRun({ cfg, entry, cache: killCache });
-              if (stopResult.killed) { killed += 1; killedLabels.push(resolveSubagentLabel(entry)); }
+              if (stopResult.killed) {
+                killed += 1;
+                killedLabels.push(resolveSubagentLabel(entry));
+              }
             }
-            const cascade = await cascadeKillChildren({ cfg, parentChildSessionKey: childKey, cache: killCache, seenChildSessionKeys });
+            const cascade = await cascadeKillChildren({
+              cfg,
+              parentChildSessionKey: childKey,
+              cache: killCache,
+              seenChildSessionKeys,
+            });
             killed += cascade.killed;
             killedLabels.push(...cascade.labels);
           }
-          return jsonResult({ status: "ok", action: "kill", target: "all", killed, labels: killedLabels, text: killed > 0 ? `killed ${killed} subagent${killed === 1 ? "" : "s"}.` : "no running subagents to kill." });
+          return jsonResult({
+            status: "ok",
+            action: "kill",
+            target: "all",
+            killed,
+            labels: killedLabels,
+            text:
+              killed > 0
+                ? `killed ${killed} subagent${killed === 1 ? "" : "s"}.`
+                : "no running subagents to kill.",
+          });
         }
         const resolved = resolveSubagentTarget(runs, target, { recentMinutes });
-        if (!resolved.entry) return jsonResult({ status: "error", action: "kill", target, error: resolved.error ?? "Unknown subagent target." });
+        if (!resolved.entry)
+          return jsonResult({
+            status: "error",
+            action: "kill",
+            target,
+            error: resolved.error ?? "Unknown subagent target.",
+          });
         const killCache = new Map<string, Record<string, SessionEntry>>();
         const stopResult = await killSubagentRun({ cfg, entry: resolved.entry, cache: killCache });
         const seenChildSessionKeys = new Set<string>();
         const targetChildKey = resolved.entry.childSessionKey?.trim();
         if (targetChildKey) seenChildSessionKeys.add(targetChildKey);
-        const cascade = await cascadeKillChildren({ cfg, parentChildSessionKey: resolved.entry.childSessionKey, cache: killCache, seenChildSessionKeys });
-        if (!stopResult.killed && cascade.killed === 0) return jsonResult({ status: "done", action: "kill", target, runId: resolved.entry.runId, sessionKey: resolved.entry.childSessionKey, text: `${resolveSubagentLabel(resolved.entry)} is already finished.` });
-        const cascadeText = cascade.killed > 0 ? ` (+ ${cascade.killed} descendant${cascade.killed === 1 ? "" : "s"})` : "";
-        return jsonResult({ status: "ok", action: "kill", target, runId: resolved.entry.runId, sessionKey: resolved.entry.childSessionKey, label: resolveSubagentLabel(resolved.entry), cascadeKilled: cascade.killed, cascadeLabels: cascade.killed > 0 ? cascade.labels : undefined, text: stopResult.killed ? `killed ${resolveSubagentLabel(resolved.entry)}${cascadeText}.` : `killed ${cascade.killed} descendant${cascade.killed === 1 ? "" : "s"} of ${resolveSubagentLabel(resolved.entry)}.` });
+        const cascade = await cascadeKillChildren({
+          cfg,
+          parentChildSessionKey: resolved.entry.childSessionKey,
+          cache: killCache,
+          seenChildSessionKeys,
+        });
+        if (!stopResult.killed && cascade.killed === 0)
+          return jsonResult({
+            status: "done",
+            action: "kill",
+            target,
+            runId: resolved.entry.runId,
+            sessionKey: resolved.entry.childSessionKey,
+            text: `${resolveSubagentLabel(resolved.entry)} is already finished.`,
+          });
+        const cascadeText =
+          cascade.killed > 0
+            ? ` (+ ${cascade.killed} descendant${cascade.killed === 1 ? "" : "s"})`
+            : "";
+        return jsonResult({
+          status: "ok",
+          action: "kill",
+          target,
+          runId: resolved.entry.runId,
+          sessionKey: resolved.entry.childSessionKey,
+          label: resolveSubagentLabel(resolved.entry),
+          cascadeKilled: cascade.killed,
+          cascadeLabels: cascade.killed > 0 ? cascade.labels : undefined,
+          text: stopResult.killed
+            ? `killed ${resolveSubagentLabel(resolved.entry)}${cascadeText}.`
+            : `killed ${cascade.killed} descendant${cascade.killed === 1 ? "" : "s"} of ${resolveSubagentLabel(resolved.entry)}.`,
+        });
       }
 
       if (action === "steer") {
         const target = readStringParam(params, "target", { required: true });
         const message = readStringParam(params, "message", { required: true });
-        if (message.length > MAX_STEER_MESSAGE_CHARS) return jsonResult({ status: "error", action: "steer", target, error: `Message too long (${message.length} chars, max ${MAX_STEER_MESSAGE_CHARS}).` });
+        if (message.length > MAX_STEER_MESSAGE_CHARS)
+          return jsonResult({
+            status: "error",
+            action: "steer",
+            target,
+            error: `Message too long (${message.length} chars, max ${MAX_STEER_MESSAGE_CHARS}).`,
+          });
         const resolved = resolveSubagentTarget(runs, target, { recentMinutes });
-        if (!resolved.entry) return jsonResult({ status: "error", action: "steer", target, error: resolved.error ?? "Unknown subagent target." });
-        if (resolved.entry.endedAt) return jsonResult({ status: "done", action: "steer", target, runId: resolved.entry.runId, sessionKey: resolved.entry.childSessionKey, text: `${resolveSubagentLabel(resolved.entry)} is already finished.` });
-        if (requester.callerIsSubagent && requester.callerSessionKey === resolved.entry.childSessionKey) return jsonResult({ status: "forbidden", action: "steer", target, runId: resolved.entry.runId, sessionKey: resolved.entry.childSessionKey, error: "Subagents cannot steer themselves." });
+        if (!resolved.entry)
+          return jsonResult({
+            status: "error",
+            action: "steer",
+            target,
+            error: resolved.error ?? "Unknown subagent target.",
+          });
+        if (resolved.entry.endedAt)
+          return jsonResult({
+            status: "done",
+            action: "steer",
+            target,
+            runId: resolved.entry.runId,
+            sessionKey: resolved.entry.childSessionKey,
+            text: `${resolveSubagentLabel(resolved.entry)} is already finished.`,
+          });
+        if (
+          requester.callerIsSubagent &&
+          requester.callerSessionKey === resolved.entry.childSessionKey
+        )
+          return jsonResult({
+            status: "forbidden",
+            action: "steer",
+            target,
+            runId: resolved.entry.runId,
+            sessionKey: resolved.entry.childSessionKey,
+            error: "Subagents cannot steer themselves.",
+          });
         const rateKey = `${requester.callerSessionKey}:${resolved.entry.childSessionKey}`;
         const lastSentAt = steerRateLimit.get(rateKey) ?? 0;
-        if (now - lastSentAt < STEER_RATE_LIMIT_MS) return jsonResult({ status: "rate_limited", action: "steer", target, runId: resolved.entry.runId, sessionKey: resolved.entry.childSessionKey, error: "Steer rate limit exceeded. Wait a moment before sending another steer." });
+        if (now - lastSentAt < STEER_RATE_LIMIT_MS)
+          return jsonResult({
+            status: "rate_limited",
+            action: "steer",
+            target,
+            runId: resolved.entry.runId,
+            sessionKey: resolved.entry.childSessionKey,
+            error: "Steer rate limit exceeded. Wait a moment before sending another steer.",
+          });
         steerRateLimit.set(rateKey, now);
         markSubagentRunForSteerRestart(resolved.entry.runId);
-        const targetSession = resolveSessionEntryForKey({ cfg, key: resolved.entry.childSessionKey, cache: new Map<string, Record<string, SessionEntry>>() });
-        const sessionId = typeof targetSession.entry?.sessionId === "string" && targetSession.entry.sessionId.trim() ? targetSession.entry.sessionId.trim() : undefined;
+        const targetSession = resolveSessionEntryForKey({
+          cfg,
+          key: resolved.entry.childSessionKey,
+          cache: new Map<string, Record<string, SessionEntry>>(),
+        });
+        const sessionId =
+          typeof targetSession.entry?.sessionId === "string" && targetSession.entry.sessionId.trim()
+            ? targetSession.entry.sessionId.trim()
+            : undefined;
         if (sessionId) abortEmbeddedPiRun(sessionId);
         const cleared = clearSessionQueues([resolved.entry.childSessionKey, sessionId]);
-        try { await callGateway({ method: "agent.wait", params: { runId: resolved.entry.runId, timeoutMs: STEER_ABORT_SETTLE_TIMEOUT_MS }, timeoutMs: STEER_ABORT_SETTLE_TIMEOUT_MS + 2_000 }); } catch { /* Ignore */ }
+        try {
+          await callGateway({
+            method: "agent.wait",
+            params: { runId: resolved.entry.runId, timeoutMs: STEER_ABORT_SETTLE_TIMEOUT_MS },
+            timeoutMs: STEER_ABORT_SETTLE_TIMEOUT_MS + 2_000,
+          });
+        } catch {
+          /* Ignore */
+        }
         const idempotencyKey = crypto.randomUUID();
         let runId: string = idempotencyKey;
         try {
-          const response = await callGateway<{ runId: string }>({ method: "agent", params: { message, sessionKey: resolved.entry.childSessionKey, sessionId, idempotencyKey, deliver: false, channel: INTERNAL_MESSAGE_CHANNEL, lane: AGENT_LANE_SUBAGENT, timeout: 0 }, timeoutMs: 10_000 });
+          const response = await callGateway<{ runId: string }>({
+            method: "agent",
+            params: {
+              message,
+              sessionKey: resolved.entry.childSessionKey,
+              sessionId,
+              idempotencyKey,
+              deliver: false,
+              channel: INTERNAL_MESSAGE_CHANNEL,
+              lane: AGENT_LANE_SUBAGENT,
+              timeout: 0,
+            },
+            timeoutMs: 10_000,
+          });
           if (typeof response?.runId === "string" && response.runId) runId = response.runId;
         } catch (err) {
           clearSubagentRunSteerRestart(resolved.entry.runId);
-          return jsonResult({ status: "error", action: "steer", target, runId, sessionKey: resolved.entry.childSessionKey, sessionId, error: err instanceof Error ? err.message : String(err) });
+          return jsonResult({
+            status: "error",
+            action: "steer",
+            target,
+            runId,
+            sessionKey: resolved.entry.childSessionKey,
+            sessionId,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
-        replaceSubagentRunAfterSteer({ previousRunId: resolved.entry.runId, nextRunId: runId, fallback: resolved.entry, runTimeoutSeconds: resolved.entry.runTimeoutSeconds ?? 0 });
-        return jsonResult({ status: "accepted", action: "steer", target, runId, sessionKey: resolved.entry.childSessionKey, sessionId, mode: "restart", label: resolveSubagentLabel(resolved.entry), text: `steered ${resolveSubagentLabel(resolved.entry)}.` });
+        replaceSubagentRunAfterSteer({
+          previousRunId: resolved.entry.runId,
+          nextRunId: runId,
+          fallback: resolved.entry,
+          runTimeoutSeconds: resolved.entry.runTimeoutSeconds ?? 0,
+        });
+        return jsonResult({
+          status: "accepted",
+          action: "steer",
+          target,
+          runId,
+          sessionKey: resolved.entry.childSessionKey,
+          sessionId,
+          mode: "restart",
+          label: resolveSubagentLabel(resolved.entry),
+          text: `steered ${resolveSubagentLabel(resolved.entry)}.`,
+        });
       }
 
       if (action === "distill") {
         const result = await distillMemory();
         const { status: distillStatus, ...rest } = result;
-        return jsonResult({ status: distillStatus === "error" ? "error" : "ok", action: "distill", ...rest, text: distillStatus === "success" ? `Distilled ${result.axiomsExtracted} axioms.` : `Distillation: ${distillStatus}` });
+        return jsonResult({
+          status: distillStatus === "error" ? "error" : "ok",
+          action: "distill",
+          ...rest,
+          text:
+            distillStatus === "success"
+              ? `Distilled ${result.axiomsExtracted} axioms.`
+              : `Distillation: ${distillStatus}`,
+        });
       }
 
       if (action === "status") {
         const stats = await getSystemStatus();
-        return jsonResult({ 
-          action: "status", 
+        return jsonResult({
+          action: "status",
           cpuLoad: stats.cpuLoad,
           memoryUsagePercent: stats.memoryUsagePercent,
           uptime: stats.uptime,
-          text: `CPU ${stats.cpuLoad[0].toFixed(2)}, Mem ${stats.memoryUsagePercent}%` 
+          text: `CPU ${stats.cpuLoad[0].toFixed(2)}, Mem ${stats.memoryUsagePercent}%`,
         });
       }
 
@@ -464,34 +683,44 @@ export function createSubagentsTool(opts?: { agentSessionKey?: string }): AnyAge
         let logicGateCount = 0;
         try {
           const workspaceRoot = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
-          const gatesContent = await fs.readFile(path.join(workspaceRoot, "LOGIC_GATES.md"), "utf-8");
-          logicGateCount = gatesContent.split("\n").filter(l => l.trim().length > 0).length;
-        } catch { /* Ignore */ }
+          const gatesContent = await fs.readFile(
+            path.join(workspaceRoot, "LOGIC_GATES.md"),
+            "utf-8",
+          );
+          logicGateCount = gatesContent.split("\n").filter((l) => l.trim().length > 0).length;
+        } catch {
+          /* Ignore */
+        }
         const neuralDepth = activeEntries.length || logicGateCount;
         const chaosScore = 10 + Math.floor(stats.memoryUsagePercent / 4) + neuralDepth;
         const recommendations: string[] = [];
         let autoTriggered = false;
-        
+
         if (chaosScore > 50) {
-          recommendations.push("CRITICAL: Logic Entropy High. Multiple active nodes and memory pressure detected. Auto-distilling memory to stabilize cognitive core.");
+          recommendations.push(
+            "CRITICAL: Logic Entropy High. Multiple active nodes and memory pressure detected. Auto-distilling memory to stabilize cognitive core.",
+          );
           await distillMemory();
           autoTriggered = true;
         } else if (chaosScore > 30) {
-          recommendations.push("WARNING: High entropy. Consider logical pruning or result consolidation.");
+          recommendations.push(
+            "WARNING: High entropy. Consider logical pruning or result consolidation.",
+          );
         } else {
-          recommendations.push("System stable. Cognitive load and memory alignment are within nominal parameters.");
+          recommendations.push(
+            "System stable. Cognitive load and memory alignment are within nominal parameters.",
+          );
         }
 
-        return jsonResult({ 
-          auditStatus: "ok", 
-          action: "audit", 
-          chaosScore, 
-          recommendations, 
-          autoTriggered, 
-          text: `[AEON AUDIT] Chaos Score: ${chaosScore}. ${recommendations.join(" ")}` 
+        return jsonResult({
+          auditStatus: "ok",
+          action: "audit",
+          chaosScore,
+          recommendations,
+          autoTriggered,
+          text: `[AEON AUDIT] Chaos Score: ${chaosScore}. ${recommendations.join(" ")}`,
         });
       }
-
 
       return jsonResult({ status: "error", error: "Unsupported action." });
     },

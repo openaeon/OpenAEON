@@ -159,6 +159,8 @@ export const skillsHandlers: GatewayRequestHandlers = {
       skillKey: string;
       enabled?: boolean;
       apiKey?: string;
+      baseUrl?: string;
+      proxy?: string;
       env?: Record<string, string>;
     };
     const cfg = loadConfig();
@@ -174,6 +176,22 @@ export const skillsHandlers: GatewayRequestHandlers = {
         current.apiKey = trimmed;
       } else {
         delete current.apiKey;
+      }
+    }
+    if (typeof p.baseUrl === "string") {
+      const trimmed = p.baseUrl.trim();
+      if (trimmed) {
+        current.baseUrl = trimmed;
+      } else {
+        delete current.baseUrl;
+      }
+    }
+    if (typeof p.proxy === "string") {
+      const trimmed = p.proxy.trim();
+      if (trimmed) {
+        current.proxy = trimmed;
+      } else {
+        delete current.proxy;
       }
     }
     if (p.env && typeof p.env === "object") {

@@ -27,28 +27,29 @@ export type ChatLayoutProps = ChatProps & {
 export class ChatLayout extends LitElement {
   @property({ type: Object }) props!: ChatLayoutProps;
 
-  static styles = [
-    chatLayoutStyles,
-    chatSidebarStyles,
-    chatEmptyStateStyles
-  ];
+  static styles = [chatLayoutStyles, chatSidebarStyles, chatEmptyStateStyles];
 
   render() {
-    if (!this.props) {return nothing;}
+    if (!this.props) {
+      return nothing;
+    }
 
     const toolSidebarOpen = Boolean(this.props.sidebarOpen && this.props.onCloseSidebar);
     const planPhase = this.props?.taskPlan?.phase;
     const hasPlanData = (this.props.taskPlan?.todos?.length ?? 0) > 0;
-    
+
     // Determine active sessions, excluding the main orchestrator agent
     const activeWorkers = (this.props.sandboxSessions ?? []).filter(
       (r) => r.kind !== "global" && !r.systemSent,
     );
-    
+
     // Sidebar conditions
     const hasPlanSidebar = planPhase === "planning" && hasPlanData;
-    const hasSubagentSidebar = activeWorkers.length > 0 || ((planPhase === "execution" || planPhase === "verification" || planPhase === "complete") && hasPlanData);
-    
+    const hasSubagentSidebar =
+      activeWorkers.length > 0 ||
+      ((planPhase === "execution" || planPhase === "verification" || planPhase === "complete") &&
+        hasPlanData);
+
     // Determine if sidebar should be open and what type
     const sidebarOpen = toolSidebarOpen || hasPlanSidebar || hasSubagentSidebar;
     const splitRatio = this.props.splitRatio ?? 0.6;
@@ -117,19 +118,23 @@ export class ChatLayout extends LitElement {
               @resize=${(e: CustomEvent) => this.props.onSplitRatioChange?.(e.detail.splitRatio)}
             ></resizable-divider>
             <div class="chat-sidebar">
-              ${toolSidebarOpen
-                ? renderMarkdownSidebar({
-                    content: this.props.sidebarContent ?? null,
-                    error: this.props.sidebarError ?? null,
-                    onClose: this.props.onCloseSidebar ?? (() => {}),
-                    onViewRawText: () => {
-                      if (!this.props.sidebarContent || !this.props.onOpenSidebar) {return;}
-                      this.props.onOpenSidebar(`\`\`\`\n${this.props.sidebarContent}\n\`\`\``);
-                    },
-                  })
-                : hasSubagentSidebar
-                  ? renderSubagentSidebar(this.props)
-                  : renderPlanSidebar(this.props)}
+              ${
+                toolSidebarOpen
+                  ? renderMarkdownSidebar({
+                      content: this.props.sidebarContent ?? null,
+                      error: this.props.sidebarError ?? null,
+                      onClose: this.props.onCloseSidebar ?? (() => {}),
+                      onViewRawText: () => {
+                        if (!this.props.sidebarContent || !this.props.onOpenSidebar) {
+                          return;
+                        }
+                        this.props.onOpenSidebar(`\`\`\`\n${this.props.sidebarContent}\n\`\`\``);
+                      },
+                    })
+                  : hasSubagentSidebar
+                    ? renderSubagentSidebar(this.props)
+                    : renderPlanSidebar(this.props)
+              }
             </div>
           `
               : nothing

@@ -43,8 +43,7 @@ export const prompts: TestPrompt[] = [
   },
   {
     name: "dogBreedGenerator",
-    description:
-      "A prompt to generate a UI for a dog breed information and generator tool.",
+    description: "A prompt to generate a UI for a dog breed information and generator tool.",
     schemaPath,
     promptText: `Generate a JSON message containing a surfaceUpdate to describe the following UI:
 
@@ -70,18 +69,8 @@ The dog generator is another card which is a form that generates a fictional dog
       new MessageTypeMatcher("surfaceUpdate"),
       new SurfaceUpdateSchemaMatcher("Column"),
       new SurfaceUpdateSchemaMatcher("Image"),
-      new SurfaceUpdateSchemaMatcher(
-        "TextField",
-        "label",
-        "Dog breed name",
-        true
-      ),
-      new SurfaceUpdateSchemaMatcher(
-        "TextField",
-        "label",
-        "Number of legs",
-        true
-      ),
+      new SurfaceUpdateSchemaMatcher("TextField", "label", "Dog breed name", true),
+      new SurfaceUpdateSchemaMatcher("TextField", "label", "Number of legs", true),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Generate"),
     ],
   },
@@ -116,8 +105,7 @@ The dog generator is another card which is a form that generates a fictional dog
   },
   {
     name: "productGalleryData",
-    description:
-      "A DataModelUpdate message to populate the product gallery data.",
+    description: "A DataModelUpdate message to populate the product gallery data.",
     schemaPath,
     promptText: `Generate a JSON message containing a dataModelUpdate to populate the data model for the product gallery. The update should target the path '/products' and include at least two products. Each product in the map should have keys 'id', 'name', and 'imageUrl'. For example:
     {
@@ -143,11 +131,7 @@ The dog generator is another card which is a form that generates a fictional dog
     matchers: [
       new MessageTypeMatcher("surfaceUpdate"),
       new SurfaceUpdateSchemaMatcher("TextField", "label", "name", true),
-      new SurfaceUpdateSchemaMatcher(
-        "CheckBox",
-        "label",
-        "Enable email notifications"
-      ),
+      new SurfaceUpdateSchemaMatcher("CheckBox", "label", "Enable email notifications"),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Delete Account"),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Confirm Deletion"),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Cancel"),
@@ -208,11 +192,7 @@ IMPORTANT: Do not skip any of the classes, orders, or species above. Include eve
 `,
     matchers: [
       new MessageTypeMatcher("surfaceUpdate"),
-      new SurfaceUpdateSchemaMatcher(
-        "Heading",
-        "text",
-        "Simple Animal Explorer"
-      ),
+      new SurfaceUpdateSchemaMatcher("Heading", "text", "Simple Animal Explorer"),
       new SurfaceUpdateSchemaMatcher("TextField", "label", "Search..."),
       new SurfaceUpdateSchemaMatcher("Text", "text", "Class: Mammalia"),
       new SurfaceUpdateSchemaMatcher("Text", "text", "Order: Carnivora"),
@@ -292,11 +272,7 @@ IMPORTANT: Do not skip any of the classes, orders, or species above. Include eve
       new SurfaceUpdateSchemaMatcher("Heading", "text", "Customer Feedback"),
       new SurfaceUpdateSchemaMatcher("MultipleChoice", "options", "Excellent"),
       new SurfaceUpdateSchemaMatcher("CheckBox", "label", "Product Quality"),
-      new SurfaceUpdateSchemaMatcher(
-        "TextField",
-        "label",
-        "Any other comments?"
-      ),
+      new SurfaceUpdateSchemaMatcher("TextField", "label", "Any other comments?"),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Submit Feedback"),
     ],
   },
@@ -387,11 +363,7 @@ IMPORTANT: Do not skip any of the classes, orders, or species above. Include eve
       new MessageTypeMatcher("surfaceUpdate"),
       new SurfaceUpdateSchemaMatcher("Column"),
       new SurfaceUpdateSchemaMatcher("Text", "text", "user123"),
-      new SurfaceUpdateSchemaMatcher(
-        "Text",
-        "text",
-        "Enjoying the beautiful weather today!"
-      ),
+      new SurfaceUpdateSchemaMatcher("Text", "text", "Enjoying the beautiful weather today!"),
       new SurfaceUpdateSchemaMatcher("Image"),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Like"),
       new SurfaceUpdateSchemaMatcher("Button", "label", "Comment"),
@@ -415,11 +387,7 @@ The right side of the row is another 'Column' for product information:
 - A 'Text' component for the product description below the button.`,
     matchers: [
       new MessageTypeMatcher("surfaceUpdate"),
-      new SurfaceUpdateSchemaMatcher(
-        "Heading",
-        "text",
-        "Premium Leather Jacket"
-      ),
+      new SurfaceUpdateSchemaMatcher("Heading", "text", "Premium Leather Jacket"),
       new SurfaceUpdateSchemaMatcher("Text", "text", "$299.99"),
       new SurfaceUpdateSchemaMatcher("Image"),
       new SurfaceUpdateSchemaMatcher("MultipleChoice", "options", "S"),
@@ -468,21 +436,9 @@ Each activity in the inner lists should be a 'Row' containing a 'CheckBox' (to m
     matchers: [
       new MessageTypeMatcher("surfaceUpdate"),
       new SurfaceUpdateSchemaMatcher("Heading", "text", "Paris Adventure"),
-      new SurfaceUpdateSchemaMatcher(
-        "Heading",
-        "text",
-        "Day 1: Arrival & Eiffel Tower"
-      ),
-      new SurfaceUpdateSchemaMatcher(
-        "Heading",
-        "text",
-        "Day 2: Museums & Culture"
-      ),
-      new SurfaceUpdateSchemaMatcher(
-        "Heading",
-        "text",
-        "Day 3: Art & Departure"
-      ),
+      new SurfaceUpdateSchemaMatcher("Heading", "text", "Day 1: Arrival & Eiffel Tower"),
+      new SurfaceUpdateSchemaMatcher("Heading", "text", "Day 2: Museums & Culture"),
+      new SurfaceUpdateSchemaMatcher("Heading", "text", "Day 3: Art & Departure"),
       new SurfaceUpdateSchemaMatcher("Column"),
       new SurfaceUpdateSchemaMatcher("CheckBox"),
       new SurfaceUpdateSchemaMatcher("Text", "text", "Visit the Eiffel Tower"),

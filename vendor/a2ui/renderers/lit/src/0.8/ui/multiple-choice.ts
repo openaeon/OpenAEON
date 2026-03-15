@@ -74,7 +74,7 @@ export class MultipleChoice extends Root {
       this.component,
       this.selections.path,
       value,
-      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
     );
   }
 
@@ -93,7 +93,7 @@ export class MultipleChoice extends Root {
     const selectionValue = this.processor.getData(
       this.component,
       this.selections.path!,
-      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
     );
 
     if (!Array.isArray(selectionValue)) {
@@ -104,11 +104,9 @@ export class MultipleChoice extends Root {
   }
 
   render() {
-    return html`<section class=${classMap(
-      this.theme.components.MultipleChoice.container
-    )}>
+    return html`<section class=${classMap(this.theme.components.MultipleChoice.container)}>
       <label class=${classMap(
-        this.theme.components.MultipleChoice.label
+        this.theme.components.MultipleChoice.label,
       )} for="data">${this.description ?? "Select an item"}</div>
       <select
         name="data"
@@ -132,7 +130,7 @@ export class MultipleChoice extends Root {
             option.label,
             this.component,
             this.processor,
-            this.surfaceId
+            this.surfaceId,
           );
           return html`<option ${option.value}>${label}</option>`;
         })}

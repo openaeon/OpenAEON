@@ -12,7 +12,8 @@ export default defineConfig({
     "warning-filter": "src/infra/warning-filter.ts",
     extensionAPI: "src/extensionAPI.ts",
     "hooks/bundled/boot-md/handler": "src/hooks/bundled/boot-md/handler.ts",
-    "hooks/bundled/bootstrap-extra-files/handler": "src/hooks/bundled/bootstrap-extra-files/handler.ts",
+    "hooks/bundled/bootstrap-extra-files/handler":
+      "src/hooks/bundled/bootstrap-extra-files/handler.ts",
     "hooks/bundled/session-memory/handler": "src/hooks/bundled/session-memory/handler.ts",
     "hooks/bundled/command-logger/handler": "src/hooks/bundled/command-logger/handler.ts",
     "hooks/llm-slug-generator": "src/hooks/llm-slug-generator.ts",

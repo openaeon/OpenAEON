@@ -22,7 +22,7 @@ export type SystemStatus = {
 export async function getSystemStatus(): Promise<SystemStatus> {
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
-  
+
   let processCount: number | undefined;
   if (process.platform !== "win32") {
     try {
@@ -41,6 +41,6 @@ export async function getSystemStatus(): Promise<SystemStatus> {
     memoryUsagePercent: Math.round(((totalMem - freeMem) / totalMem) * 100),
     platform: os.platform(),
     arch: os.arch(),
-    processCount
+    processCount,
   };
 }

@@ -117,6 +117,7 @@ function extractTextContent(content: unknown): string {
       .filter(Boolean)
       .join("\n");
   }
+  logWarn(`openai-compat: extractTextContent: unexpected root content type=${typeof content}`);
   return "";
 }
 
@@ -226,7 +227,13 @@ export async function handleOpenAiHttpRequest(
 
   const agentId = resolveAgentIdForRequest({ req, model });
   const sessionKey = resolveOpenAiSessionKey({ req, agentId, user });
+  logWarn(
+    `openai-compat: request model=${model} messages=${asMessages(payload.messages).length} stream=${stream} sessionKey=${sessionKey}`,
+  );
   const prompt = buildAgentPrompt(payload.messages);
+  logWarn(
+    `openai-compat: resolved prompt textLen=${prompt.message?.length ?? 0} hasExtraSystem=${Boolean(prompt.extraSystemPrompt)}`,
+  );
   if (!prompt.message) {
     sendJson(res, 400, {
       error: {

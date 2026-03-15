@@ -73,13 +73,15 @@ export class Text extends Root {
         textValue = this.text.literal;
       } else if (this.text && "path" in this.text && this.text.path) {
         if (!this.processor || !this.component) {
-          return html`(no model)`;
+          return html`
+            (no model)
+          `;
         }
 
         const value = this.processor.getData(
           this.component,
           this.text.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
 
         if (value !== null && value !== undefined) {
@@ -89,7 +91,9 @@ export class Text extends Root {
     }
 
     if (textValue === null || textValue === undefined) {
-      return html`(empty)`;
+      return html`
+        (empty)
+      `;
     }
 
     let markdownText = textValue;
@@ -118,7 +122,7 @@ export class Text extends Root {
 
     return html`${markdown(
       markdownText,
-      Styles.appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
+      Styles.appendToAll(this.theme.markdown, ["ol", "ul", "li"], {}),
     )}`;
   }
 
@@ -149,14 +153,12 @@ export class Text extends Root {
   render() {
     const classes = Styles.merge(
       this.theme.components.Text.all,
-      this.usageHint ? this.theme.components.Text[this.usageHint] : {}
+      this.usageHint ? this.theme.components.Text[this.usageHint] : {},
     );
 
     return html`<section
       class=${classMap(classes)}
-      style=${this.theme.additionalStyles?.Text
-        ? styleMap(this.#getAdditionalStyles())
-        : nothing}
+      style=${this.theme.additionalStyles?.Text ? styleMap(this.#getAdditionalStyles()) : nothing}
     >
       ${this.#renderText()}
     </section>`;

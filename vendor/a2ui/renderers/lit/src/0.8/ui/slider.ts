@@ -81,7 +81,7 @@ export class Slider extends Root {
       this.component,
       this.value.path,
       value,
-      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+      this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
     );
   }
 
@@ -95,9 +95,11 @@ export class Slider extends Root {
       <input
         autocomplete="off"
         class=${classMap(this.theme.components.Slider.element)}
-        style=${this.theme.additionalStyles?.Slider
-          ? styleMap(this.theme.additionalStyles?.Slider)
-          : nothing}
+        style=${
+          this.theme.additionalStyles?.Slider
+            ? styleMap(this.theme.additionalStyles?.Slider)
+            : nothing
+        }
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
@@ -113,14 +115,11 @@ export class Slider extends Root {
         max=${this.maxValue ?? "0"}
       />
       <span class=${classMap(this.theme.components.Slider.label)}
-        >${this.value
-          ? extractNumberValue(
-              this.value,
-              this.component,
-              this.processor,
-              this.surfaceId
-            )
-          : "0"}</span
+        >${
+          this.value
+            ? extractNumberValue(this.value, this.component, this.processor, this.surfaceId)
+            : "0"
+        }</span
       >
     </section>`;
   }
@@ -133,21 +132,27 @@ export class Slider extends Root {
         return this.#renderField(this.value.literal);
       } else if (this.value && "path" in this.value && this.value.path) {
         if (!this.processor || !this.component) {
-          return html`(no processor)`;
+          return html`
+            (no processor)
+          `;
         }
 
         const textValue = this.processor.getData(
           this.component,
           this.value.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
 
         if (textValue === null) {
-          return html`Invalid value`;
+          return html`
+            Invalid value
+          `;
         }
 
         if (typeof textValue !== "string" && typeof textValue !== "number") {
-          return html`Invalid value`;
+          return html`
+            Invalid value
+          `;
         }
 
         return this.#renderField(textValue);

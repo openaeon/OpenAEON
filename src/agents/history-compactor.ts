@@ -5,8 +5,8 @@ const log = createSubsystemLogger("history/compactor");
 
 /**
  * Tactical History Compression
- * 
- * Identifies sequences of successful tool calls and replaces them with a single 
+ *
+ * Identifies sequences of successful tool calls and replaces them with a single
  * summary block to save tokens while keeping the context window relevant.
  */
 export function compressHistory(messages: AgentMessage[]): AgentMessage[] {
@@ -24,11 +24,11 @@ export function compressHistory(messages: AgentMessage[]): AgentMessage[] {
     if (msg.role === "toolResult" && i + 3 < messages.length) {
       let sequenceEnd = i;
       let sequenceSummary = "";
-      
+
       // Try to find a sequence of at least 3 successful tool results
       while (
-        sequenceEnd < messages.length && 
-        messages[sequenceEnd].role === "toolResult" && 
+        sequenceEnd < messages.length &&
+        messages[sequenceEnd].role === "toolResult" &&
         !isErrorMessage(messages[sequenceEnd])
       ) {
         const toolName = (messages[sequenceEnd] as any).name || "unknown tool";
@@ -41,7 +41,7 @@ export function compressHistory(messages: AgentMessage[]): AgentMessage[] {
         log.debug(`Compressing sequence of ${sequenceLength} successful tool calls.`);
         compressed.push({
           role: "assistant",
-          content: `[COMPRESSED HISTORY: ${sequenceLength} successful tool calls]\n${sequenceSummary.trim()}`
+          content: `[COMPRESSED HISTORY: ${sequenceLength} successful tool calls]\n${sequenceSummary.trim()}`,
         } as any);
         i = sequenceEnd;
         continue;
@@ -61,9 +61,10 @@ function isErrorMessage(msg: AgentMessage): boolean {
     return content.toLowerCase().includes("error") || content.toLowerCase().includes("failed");
   }
   if (Array.isArray(content)) {
-    return content.some((block: any) => 
-      block.type === "text" && 
-      (block.text.toLowerCase().includes("error") || block.text.toLowerCase().includes("failed"))
+    return content.some(
+      (block: any) =>
+        block.type === "text" &&
+        (block.text.toLowerCase().includes("error") || block.text.toLowerCase().includes("failed")),
     );
   }
   return false;

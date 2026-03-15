@@ -14,22 +14,22 @@
  limitations under the License.
  */
 
-import { inject, Injectable, SecurityContext } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
-import MarkdownIt from 'markdown-it';
+import { inject, Injectable, SecurityContext } from "@angular/core";
+import { DomSanitizer } from "@angular/platform-browser";
+import MarkdownIt from "markdown-it";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class MarkdownRenderer {
   private originalClassMap = new Map<string, any>();
   private sanitizer = inject(DomSanitizer);
 
   private markdownIt = MarkdownIt({
     highlight: (str, lang) => {
-      if (lang === 'html') {
-        const iframe = document.createElement('iframe');
-        iframe.classList.add('html-view');
+      if (lang === "html") {
+        const iframe = document.createElement("iframe");
+        iframe.classList.add("html-view");
         iframe.srcdoc = str;
-        iframe.sandbox = '';
+        iframe.sandbox = "";
         return iframe.innerHTML;
       }
 
@@ -50,34 +50,34 @@ export class MarkdownRenderer {
     Object.entries(tagClassMap).forEach(([tag, classes]) => {
       let tokenName;
       switch (tag) {
-        case 'p':
-          tokenName = 'paragraph';
+        case "p":
+          tokenName = "paragraph";
           break;
-        case 'h1':
-        case 'h2':
-        case 'h3':
-        case 'h4':
-        case 'h5':
-        case 'h6':
-          tokenName = 'heading';
+        case "h1":
+        case "h2":
+        case "h3":
+        case "h4":
+        case "h5":
+        case "h6":
+          tokenName = "heading";
           break;
-        case 'ul':
-          tokenName = 'bullet_list';
+        case "ul":
+          tokenName = "bullet_list";
           break;
-        case 'ol':
-          tokenName = 'ordered_list';
+        case "ol":
+          tokenName = "ordered_list";
           break;
-        case 'li':
-          tokenName = 'list_item';
+        case "li":
+          tokenName = "list_item";
           break;
-        case 'a':
-          tokenName = 'link';
+        case "a":
+          tokenName = "link";
           break;
-        case 'strong':
-          tokenName = 'strong';
+        case "strong":
+          tokenName = "strong";
           break;
-        case 'em':
-          tokenName = 'em';
+        case "em":
+          tokenName = "em";
           break;
       }
 
@@ -92,7 +92,7 @@ export class MarkdownRenderer {
       this.markdownIt.renderer.rules[key] = (tokens, idx, options, env, self) => {
         const token = tokens[idx];
         for (const clazz of classes) {
-          token.attrJoin('class', clazz);
+          token.attrJoin("class", clazz);
         }
 
         if (original) {

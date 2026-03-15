@@ -28,7 +28,7 @@ export function renderMemoryGraph(props: MemoryGraphProps) {
     const row = Math.floor(index / rowSize);
     return {
       x: padding + col * ((width - 2 * padding) / (rowSize - 1 || 1)),
-      y: padding + row * 80
+      y: padding + row * 80,
     };
   };
 
@@ -47,8 +47,8 @@ export function renderMemoryGraph(props: MemoryGraphProps) {
             edges,
             (edge) => `${edge.source}-${edge.target}`,
             (edge) => {
-              const srcIdx = nodes.findIndex(n => n.id === edge.source);
-              const tgtIdx = nodes.findIndex(n => n.id === edge.target);
+              const srcIdx = nodes.findIndex((n) => n.id === edge.source);
+              const tgtIdx = nodes.findIndex((n) => n.id === edge.target);
               if (srcIdx === -1 || tgtIdx === -1) return nothing;
               const src = nodePositions[srcIdx];
               const tgt = nodePositions[tgtIdx];
@@ -59,7 +59,7 @@ export function renderMemoryGraph(props: MemoryGraphProps) {
                   class="graph-edge"
                 />
               `;
-            }
+            },
           )}
 
           <!-- Nodes -->
@@ -70,17 +70,24 @@ export function renderMemoryGraph(props: MemoryGraphProps) {
               const pos = nodePositions[i];
               return html`
                 <g class="graph-node-group ${node.type}" transform="translate(${pos.x}, ${pos.y})">
-                  ${node.type === 'axiom' 
-                    ? html`<rect x="-12" y="-12" width="24" height="24" transform="rotate(45)" class="graph-node-shape" />`
-                    : node.type === 'verified'
-                      ? html`<circle r="12" class="graph-node-shape" />`
-                      : html`<rect x="-10" y="-10" width="20" height="20" class="graph-node-shape" />`
+                  ${
+                    node.type === "axiom"
+                      ? html`
+                          <rect x="-12" y="-12" width="24" height="24" transform="rotate(45)" class="graph-node-shape" />
+                        `
+                      : node.type === "verified"
+                        ? html`
+                            <circle r="12" class="graph-node-shape" />
+                          `
+                        : html`
+                            <rect x="-10" y="-10" width="20" height="20" class="graph-node-shape" />
+                          `
                   }
                   <text y="30" text-anchor="middle" class="graph-node-label">${node.content.slice(0, 15)}...</text>
                   <title>${node.content}</title>
                 </g>
               `;
-            }
+            },
           )}
         </svg>
       </div>

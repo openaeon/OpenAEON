@@ -93,8 +93,8 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
               "### Multi-Agent Orchestration Protocol (三阶段 FSM)\n" +
               "When the user gives a COMPLEX multi-step task, follow this 3-phase workflow:\n\n" +
               "#### Phase 1: PLANNING (规划阶段)\n" +
-              '1. Call `write_todos` with action `create_plan` and a description — this creates plan with phase=planning\n' +
-              '2. Call `write_todos` with action `add_todo` for each major step (at least 3-5 steps)\n' +
+              "1. Call `write_todos` with action `create_plan` and a description — this creates plan with phase=planning\n" +
+              "2. Call `write_todos` with action `add_todo` for each major step (at least 3-5 steps)\n" +
               "3. Present the implementation plan to the user as a structured overview\n" +
               '4. Tell the user: "计划已创建，请在侧边栏确认后开始执行"\n' +
               "5. When user sends 批准/approve/开始/确认/执行, IMMEDIATELY proceed to Phase 2\n\n" +
@@ -108,7 +108,7 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
               "After ALL todos are done:\n" +
               '1. Call `write_todos(set_phase, phase="verification")`\n' +
               "2. Synthesize all results into a consolidated report\n" +
-              '3. Call `write_todos(complete_plan)` to finalize\n\n' +
+              "3. Call `write_todos(complete_plan)` to finalize\n\n" +
               "Example:\n" +
               "```\n" +
               '<tool_call id="plan0001" name="write_todos">{"action": "create_plan", "description": "Research task"}</tool_call>\n' +
@@ -153,9 +153,9 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
             } else if (Array.isArray(m.content)) {
               for (const part of m.content) {
                 if (part.type === "text") {
-                  content += (part).text;
+                  content += part.text;
                 } else if (part.type === "thinking") {
-                  content += `<think>\n${(part).thinking}\n</think>\n`;
+                  content += `<think>\n${part.thinking}\n</think>\n`;
                 } else if (part.type === "toolCall") {
                   const tc = part;
                   content += `<tool_call id="${tc.id}" name="${tc.name}">${JSON.stringify(tc.arguments)}</tool_call>`;

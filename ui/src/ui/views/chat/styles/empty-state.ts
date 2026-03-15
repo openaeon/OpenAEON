@@ -25,7 +25,7 @@ export const chatEmptyStateStyles = css`
     justify-content: center;
     filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.4));
   }
-  
+
   .fractal-ring {
     position: absolute;
     border-radius: 50%;
@@ -62,17 +62,30 @@ export const chatEmptyStateStyles = css`
     height: 16px;
     background: #ffffff;
     border-radius: 50%;
-    box-shadow: 0 0 20px 4px #c084fc, 0 0 40px 8px #818cf8;
+    box-shadow:
+      0 0 20px 4px #c084fc,
+      0 0 40px 8px #818cf8;
     animation: pulseEye 3s ease-in-out infinite alternate;
   }
 
   @keyframes spinFractal {
-    100% { transform: rotate(360deg); }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   @keyframes pulseEye {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 30px 8px #c084fc, 0 0 60px 12px #818cf8; }
+    0% {
+      transform: scale(0.9);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 1;
+      box-shadow:
+        0 0 30px 8px #c084fc,
+        0 0 60px 12px #818cf8;
+    }
   }
 
   .aeon-text {
@@ -147,8 +160,10 @@ export const chatEmptyStateStyles = css`
   .sensory-node::after {
     content: "";
     position: absolute;
-    top: 0; left: -100%;
-    width: 40px; height: 100%;
+    top: 0;
+    left: -100%;
+    width: 40px;
+    height: 100%;
     background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.15), transparent);
     animation: nexus-scan 4s infinite linear;
   }
@@ -160,8 +175,12 @@ export const chatEmptyStateStyles = css`
   }
 
   @keyframes nexus-scan {
-    0% { left: -100%; }
-    100% { left: 200%; }
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 200%;
+    }
   }
 
   .chat-usage-examples {

@@ -61,34 +61,42 @@ export class Video extends Root {
         return html`<video controls src=${this.url.literal} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.processor || !this.component) {
-          return html`(no processor)`;
+          return html`
+            (no processor)
+          `;
         }
 
         const videoUrl = this.processor.getData(
           this.component,
           this.url.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
         if (!videoUrl) {
-          return html`Invalid video URL`;
+          return html`
+            Invalid video URL
+          `;
         }
 
         if (typeof videoUrl !== "string") {
-          return html`Invalid video URL`;
+          return html`
+            Invalid video URL
+          `;
         }
         return html`<video controls src=${videoUrl} />`;
       }
     }
 
-    return html`(empty)`;
+    return html`
+      (empty)
+    `;
   }
 
   render() {
     return html`<section
       class=${classMap(this.theme.components.Video)}
-      style=${this.theme.additionalStyles?.Video
-        ? styleMap(this.theme.additionalStyles?.Video)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Video ? styleMap(this.theme.additionalStyles?.Video) : nothing
+      }
     >
       ${this.#renderVideo()}
     </section>`;

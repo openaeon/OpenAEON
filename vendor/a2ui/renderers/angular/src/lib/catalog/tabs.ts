@@ -14,13 +14,13 @@
  limitations under the License.
  */
 
-import { Component, computed, input, signal } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Renderer } from '../rendering/renderer';
-import { Styles, Types } from '@a2ui/lit/0.8';
+import { Component, computed, input, signal } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Renderer } from "../rendering/renderer";
+import { Styles, Types } from "@a2ui/lit/0.8";
 
 @Component({
-  selector: 'a2ui-tabs',
+  selector: "a2ui-tabs",
   imports: [Renderer],
   template: `
     @let tabs = this.tabs();
@@ -39,11 +39,7 @@ import { Styles, Types } from '@a2ui/lit/0.8';
         }
       </div>
 
-      <ng-container
-        a2ui-renderer
-        [surfaceId]="surfaceId()!"
-        [component]="tabs[selectedIndex].child"
-      />
+      <ng-container a2ui-renderer [surfaceId]="surfaceId()!" [component]="tabs[selectedIndex].child" />
     </section>
   `,
   styles: `
@@ -63,9 +59,9 @@ export class Tabs extends DynamicComponent {
     return this.tabs().map((_, index) => {
       return index === selectedIndex
         ? Styles.merge(
-          this.theme.components.Tabs.controls.all,
-          this.theme.components.Tabs.controls.selected,
-        )
+            this.theme.components.Tabs.controls.all,
+            this.theme.components.Tabs.controls.selected,
+          )
         : this.theme.components.Tabs.controls.all;
     });
   });

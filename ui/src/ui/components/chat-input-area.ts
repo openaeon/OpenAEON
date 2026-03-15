@@ -33,16 +33,23 @@ export class ChatInputArea extends LitElement {
       width: 100%;
       position: relative;
     }
-    
+
     .chat-compose::before {
       content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
       padding: 1px;
-      background: var(--input-border-grad, linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(139, 92, 246, 0.6), rgba(225, 29, 72, 0.3)));
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      background: var(
+        --input-border-grad,
+        linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(139, 92, 246, 0.6), rgba(225, 29, 72, 0.3))
+      );
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
       pointer-events: none;
@@ -205,7 +212,9 @@ export class ChatInputArea extends LitElement {
 
   private handlePaste = (e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
-    if (!items) {return;}
+    if (!items) {
+      return;
+    }
 
     const imageItems: DataTransferItem[] = [];
     for (let i = 0; i < items.length; i++) {
@@ -215,13 +224,17 @@ export class ChatInputArea extends LitElement {
       }
     }
 
-    if (imageItems.length === 0) {return;}
+    if (imageItems.length === 0) {
+      return;
+    }
 
     e.preventDefault();
 
     for (const item of imageItems) {
       const file = item.getAsFile();
-      if (!file) {continue;}
+      if (!file) {
+        continue;
+      }
 
       const reader = new FileReader();
       reader.addEventListener("load", () => {

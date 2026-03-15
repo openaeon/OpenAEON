@@ -43,9 +43,7 @@ type CreatePalette<Prefix extends PaletteKeyVals> = {
   [Key in `${Prefix}${ColorShade}`]: string;
 };
 
-export type PaletteKey<Prefix extends PaletteKeyVals> = Array<
-  keyof CreatePalette<Prefix>
->;
+export type PaletteKey<Prefix extends PaletteKeyVals> = Array<keyof CreatePalette<Prefix>>;
 
 export type PaletteKeys = {
   neutral: PaletteKey<"n">;

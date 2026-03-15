@@ -739,7 +739,9 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
             applyContextPruningDefaults(
               applyAgentDefaults(
                 applyToolsDefaults(
-                  applySessionDefaults(applyLoggingDefaults(applyMessageDefaults(validated.config))),
+                  applySessionDefaults(
+                    applyLoggingDefaults(applyMessageDefaults(validated.config)),
+                  ),
                 ),
               ),
             ),

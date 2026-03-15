@@ -380,27 +380,27 @@ export const handleNodeEvent = async (ctx: NodeEventContext, nodeId: string, evt
         }
       }
 
-async function prefixMessageWithTaskPlan(params: {
-  message: string;
-  sessionKey: string;
-  cfg: OPENAEONConfig;
-  logGateway: NodeEventContext["logGateway"];
-}): Promise<string> {
-  const { message, sessionKey, cfg, logGateway } = params;
-  try {
-    const agentId = resolveSessionAgentId({ sessionKey, config: cfg });
-    const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
-    const digest = await loadPlanDigest(workspaceDir, sessionKey);
-    if (digest) {
-      return `${digest}\n\n${message}`;
-    }
-  } catch (err) {
-    logGateway.debug(
-      `node-events: failed to load task plan digest for session ${sessionKey}: ${String(err)}`,
-    );
-  }
-  return message;
-}
+      async function prefixMessageWithTaskPlan(params: {
+        message: string;
+        sessionKey: string;
+        cfg: OPENAEONConfig;
+        logGateway: NodeEventContext["logGateway"];
+      }): Promise<string> {
+        const { message, sessionKey, cfg, logGateway } = params;
+        try {
+          const agentId = resolveSessionAgentId({ sessionKey, config: cfg });
+          const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
+          const digest = await loadPlanDigest(workspaceDir, sessionKey);
+          if (digest) {
+            return `${digest}\n\n${message}`;
+          }
+        } catch (err) {
+          logGateway.debug(
+            `node-events: failed to load task plan digest for session ${sessionKey}: ${String(err)}`,
+          );
+        }
+        return message;
+      }
       if (!message) {
         return;
       }

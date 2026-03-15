@@ -157,10 +157,14 @@ export const en: TranslationMap = {
     distillationRecommended: "💡 SEAL RECOMMENDED: High memory saturation detected",
     manualTitle: "AEON EVOLUTION MANUAL",
     manualSubtitle: "How to drive silicon-life self-evolution",
-    manualCmdAudit: "Logic Audit: `/aeon audit [Range]` — Find logic contradictions within a specified Peano curve interval.",
-    manualCmdDistill: "Memory Distillation: `DISTILL` — Solidify conversational essence from short-term memory into long-term axioms.",
-    manualCmdRefine: "Logic Refinement: `REFINE` — Remove stale or low-confidence logic gates to reduce cognitive entropy.",
-    manualResonance: "Resonance Phenomenon: When `epiphanyFactor` > 0.8, the system enters a high-frequency evolution state with amplified operational rewards.",
+    manualCmdAudit:
+      "Logic Audit: `/aeon audit [Range]` — Find logic contradictions within a specified Peano curve interval.",
+    manualCmdDistill:
+      "Memory Distillation: `DISTILL` — Solidify conversational essence from short-term memory into long-term axioms.",
+    manualCmdRefine:
+      "Logic Refinement: `REFINE` — Remove stale or low-confidence logic gates to reduce cognitive entropy.",
+    manualResonance:
+      "Resonance Phenomenon: When `epiphanyFactor` > 0.8, the system enters a high-frequency evolution state with amplified operational rewards.",
     memoryGraph: "LONG_TERM_MEMORY_GRAPH",
   },
   languages: {
@@ -430,42 +434,42 @@ export const en: TranslationMap = {
       saveChanges: "Save Changes",
       saving: "Saving...",
       selectFileHint: "Select a knowledge file from the list to view or edit its contents.",
-      promptNewFile: "Enter new file name (e.g., guide.md):"
-    }
+      promptNewFile: "Enter new file name (e.g., guide.md):",
+    },
   },
   sandbox: {
     relativeTime: {
       secondsAgo: "{seconds} seconds ago",
       minutesAgo: "{minutes} minutes ago",
-      hoursAgo: "{hours} hours ago"
+      hoursAgo: "{hours} hours ago",
     },
     status: {
       snapping: "🔥 Snapping claws!",
       stuck: "💥 Claws stuck!",
-      beach: "🏖️ Chilling on the beach"
+      beach: "🏖️ Chilling on the beach",
     },
     timeline: {
       waiting: "Waiting for events...",
       today: "Today",
-      older: "Yesterday & Older"
+      older: "Yesterday & Older",
     },
     plan: {
       resting: "Elder lobster is resting. No active blueprints to build.",
       tasksProgress: "{done}/{total} tasks",
-      allDone: "All tasks completed!"
+      allDone: "All tasks completed!",
     },
     card: {
-      progress: "Progress"
+      progress: "Progress",
     },
     health: {
       excellent: "Excellent",
       degraded: "Degraded",
-      critical: "Critical"
+      critical: "Critical",
     },
     zones: {
       hq: "👑 Elder Headquarters",
       dev: "👷 Builder Cave",
-      cafe: "🏖️ Rest Beach"
+      cafe: "🏖️ Rest Beach",
     },
     header: {
       title: "🦞 Lobster Empire Sandbox",
@@ -474,7 +478,7 @@ export const en: TranslationMap = {
       busy: "{count} Busy",
       idle: "{count} Idle",
       forceRestartTitle: "Clear states and restart task pipeline",
-      forceRestart: "Force restart pipeline"
+      forceRestart: "Force restart pipeline",
     },
     sidebar: {
       blueprints: "📋 Empire Blueprints",
@@ -484,14 +488,14 @@ export const en: TranslationMap = {
       online: "Online",
       orchestrating: "Orchestrating plans...",
       noWorkers: "No active lobster workers.",
-      history: "Delegation History"
+      history: "Delegation History",
     },
     stage: {
       managerHover: "Monitoring office",
       managerLabel: "👑 Manager",
       quiet: "The Lobster Empire is currently quiet.",
       runComplex: "Run a complex task to see the lobster workers in action.",
-      waiting: "Waiting for instructions"
+      waiting: "Waiting for instructions",
     },
     browserPreview: {
       title: "🌐 Browser Live Preview",
@@ -500,6 +504,6 @@ export const en: TranslationMap = {
       collapse: "Collapse preview",
       expand: "Expand preview",
       lastUpdated: "Updated {time}",
-    }
-  }
+    },
+  },
 };

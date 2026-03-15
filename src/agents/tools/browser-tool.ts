@@ -294,14 +294,32 @@ export function createBrowserTool(opts?: {
       // error so the LLM can recover instead of seeing a raw schema validation failure.
       if (!params || typeof params !== "object" || !("action" in params)) {
         const validActions = [
-          "status", "start", "stop", "profiles", "tabs", "open", "focus", "close",
-          "snapshot", "screenshot", "navigate", "console", "pdf", "upload", "dialog",
-          "click", "type", "hover", "fill", "press", "act",
+          "status",
+          "start",
+          "stop",
+          "profiles",
+          "tabs",
+          "open",
+          "focus",
+          "close",
+          "snapshot",
+          "screenshot",
+          "navigate",
+          "console",
+          "pdf",
+          "upload",
+          "dialog",
+          "click",
+          "type",
+          "hover",
+          "fill",
+          "press",
+          "act",
         ].join(" | ");
         throw new Error(
           `Missing required parameter 'action'. You must specify which browser operation to perform.\n` +
-          `Valid values: ${validActions}\n` +
-          `Example: { "action": "snapshot" } or { "action": "navigate", "targetUrl": "https://example.com" }`,
+            `Valid values: ${validActions}\n` +
+            `Example: { "action": "snapshot" } or { "action": "navigate", "targetUrl": "https://example.com" }`,
         );
       }
 

@@ -6,17 +6,17 @@ This document serves as a guide for using the Gemini agent within the A2UI repos
 
 The A2UI repository is organized into several key directories:
 
--   `specification/0.8/docs/`: Contains the primary human-readable documentation for the A2UI protocol.
-    -   `a2ui_protocol.md`: The foundational specification document. This is the best place to start to understand the protocol's fundamental goals.
--   `specification/0.8/json/`: Contains the formal JSON schema definitions for the protocol.
-    -   `server_to_client.json`: Defines the schema for messages sent from the server to the client.
-    -   `client_to_server.json`: Defines the schema for event messages sent from the client to the server.
--   `a2a_agents/python/`: Contains Python code relating to server-side integration of A2UI
-    -   `a2ui_extension/`: Python implementation of the A2UI A2A extension.
-    -   `adk/samples/`: Contains demo applications that showcase the A2UI protocol in action using the ADK framework.
--   `web/`: Contains the web-based client implementations (using Lit and Vite) for the samples, including a shared library (`renderers/lit`).
--   `angular/`: Contains an alternative web-based client implementation using Angular.
--   `eval/`: Contains a Genkit-based framework for evaluating LLM performance in generating A2UI responses.
+- `specification/0.8/docs/`: Contains the primary human-readable documentation for the A2UI protocol.
+  - `a2ui_protocol.md`: The foundational specification document. This is the best place to start to understand the protocol's fundamental goals.
+- `specification/0.8/json/`: Contains the formal JSON schema definitions for the protocol.
+  - `server_to_client.json`: Defines the schema for messages sent from the server to the client.
+  - `client_to_server.json`: Defines the schema for event messages sent from the client to the server.
+- `a2a_agents/python/`: Contains Python code relating to server-side integration of A2UI
+  - `a2ui_extension/`: Python implementation of the A2UI A2A extension.
+  - `adk/samples/`: Contains demo applications that showcase the A2UI protocol in action using the ADK framework.
+- `web/`: Contains the web-based client implementations (using Lit and Vite) for the samples, including a shared library (`renderers/lit`).
+- `angular/`: Contains an alternative web-based client implementation using Angular.
+- `eval/`: Contains a Genkit-based framework for evaluating LLM performance in generating A2UI responses.
 
 ## A2UI Specification Overview
 
@@ -26,7 +26,7 @@ The A2UI protocol is a JSONL-based, streaming UI protocol designed to be easily 
 
 The core concepts of the A2UI protocol are detailed in the main specification document. Rather than duplicating the content here, you should refer to the authoritative source:
 
--   **A2UI Protocol Specification**: `@docs/a2ui_protocol.md`
+- **A2UI Protocol Specification**: `@docs/a2ui_protocol.md`
 
 This document covers the design philosophy, architecture, data flow, and core concepts of the protocol.
 
@@ -34,9 +34,9 @@ This document covers the design philosophy, architecture, data flow, and core co
 
 The formal, machine-readable definitions of the protocol are maintained as JSON schemas:
 
--   **Server-to-Client Schema**: `@specification/0.8/json/server_to_client.json`
--   **Server-to-Client Schema, with standard catalog**: `@specification/0.8/json/server_to_client_with_standard_catalog.json`
--   **Client-to-Server Schema**: `@specification/0.8/json/client_to_server.json`
+- **Server-to-Client Schema**: `@specification/0.8/json/server_to_client.json`
+- **Server-to-Client Schema, with standard catalog**: `@specification/0.8/json/server_to_client_with_standard_catalog.json`
+- **Client-to-Server Schema**: `@specification/0.8/json/client_to_server.json`
 
 ## Running the Demos
 
@@ -75,17 +75,17 @@ npm start -- contact
 
 There are three renderers available for A2UI:
 
--   **Web (Lit)**: Located in `renderers/lit`, this is the primary web renderer used by the demos in `web/`.
--   **Angular**: Located in `angular/projects/lib`, this is an alternative web renderer for Angular applications.
--   **Flutter**: The Flutter renderer is in a separate repository: [https://github.com/flutter/genui](https://github.com/flutter/genui)
+- **Web (Lit)**: Located in `renderers/lit`, this is the primary web renderer used by the demos in `web/`.
+- **Angular**: Located in `angular/projects/lib`, this is an alternative web renderer for Angular applications.
+- **Flutter**: The Flutter renderer is in a separate repository: [https://github.com/flutter/genui](https://github.com/flutter/genui)
 
 ## Keeping This Guide Updated
 
 This document is intended to be a living guide for the repository. As the repository evolves, it's important to keep this file up-to-date. When making changes to the repository, please consider the following:
 
--   **New Demos or Clients**: If you add a new demo or client, add it to the "Running the Demos" section.
--   **Specification Changes**: If you make significant changes to the A2UI protocol, ensure that the "A2UI Specification Overview" section is updated to reflect the changes, and that any linked documents are also updated.
--   **Repository Structure Changes**: If you change the directory structure of the repository, update the "Repository Structure" section.
+- **New Demos or Clients**: If you add a new demo or client, add it to the "Running the Demos" section.
+- **Specification Changes**: If you make significant changes to the A2UI protocol, ensure that the "A2UI Specification Overview" section is updated to reflect the changes, and that any linked documents are also updated.
+- **Repository Structure Changes**: If you change the directory structure of the repository, update the "Repository Structure" section.
 
 To get this file back in sync, you can run the following commands:
 

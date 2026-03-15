@@ -78,6 +78,8 @@ export function renderStreamingGroup(
   assistant?: AssistantIdentity,
   thinking?: string,
   showReasoning?: boolean,
+  chaosScore?: number,
+  epiphanyFactor?: number,
 ) {
   const timestamp = new Date(startedAt).toLocaleTimeString([], {
     hour: "numeric",
@@ -103,7 +105,7 @@ export function renderStreamingGroup(
             ],
             timestamp: startedAt,
           },
-          { isStreaming: true, showReasoning: Boolean(showReasoning) },
+          { isStreaming: true, showReasoning: Boolean(showReasoning), chaosScore, epiphanyFactor },
           onOpenSidebar,
         )}
       </div>
@@ -154,9 +156,23 @@ export function renderMessageGroup(
           <span class="chat-group-timestamp">${timestamp}</span>
           ${
             normalizedRole === "user"
-              ? html`<span class="chat-header-icon user-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                </span>`
+              ? html`
+                  <span class="chat-header-icon user-icon">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </span>
+                `
               : nothing
           }
         </div>
@@ -243,7 +259,12 @@ function renderMessageImages(images: ImageBlock[]) {
 
 function renderGroupedMessage(
   message: unknown,
-  opts: { isStreaming: boolean; showReasoning: boolean },
+  opts: {
+    isStreaming: boolean;
+    showReasoning: boolean;
+    chaosScore?: number;
+    epiphanyFactor?: number;
+  },
   onOpenSidebar?: (content: string) => void,
 ) {
   const m = message as Record<string, unknown>;
@@ -264,7 +285,10 @@ function renderGroupedMessage(
   const extractedThinking =
     opts.showReasoning && role === "assistant" ? extractThinkingCached(message) : null;
   const markdownBase = extractedText?.trim() ? extractedText : null;
-  const markdown = isToolResult && (markdownBase?.trim().startsWith("{") || markdownBase?.trim().startsWith("[")) ? null : markdownBase;
+  const markdown =
+    isToolResult && (markdownBase?.trim().startsWith("{") || markdownBase?.trim().startsWith("["))
+      ? null
+      : markdownBase;
   const canCopyMarkdown = role === "assistant" && Boolean(markdown?.trim());
 
   // Active Inference: Extract Expected State
@@ -294,7 +318,12 @@ function renderGroupedMessage(
       ${renderMessageImages(images)}
       ${
         extractedThinking && opts.showReasoning
-          ? html`<chat-thinking .content=${extractedThinking} .isStreaming=${opts.isStreaming}></chat-thinking>`
+          ? html`<chat-thinking
+              .content=${extractedThinking}
+              .isStreaming=${opts.isStreaming}
+              .chaosScore=${opts.chaosScore ?? 0}
+              .epiphanyFactor=${opts.epiphanyFactor ?? 0}
+            ></chat-thinking>`
           : nothing
       }
       ${

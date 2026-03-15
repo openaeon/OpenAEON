@@ -135,7 +135,9 @@ export async function summarizeHistoryAsync<T extends AgentMessage>(
 
   for (let i = olderMessages.length - 1; i >= 0; i--) {
     const msg = olderMessages[i];
-    if (!msg) {continue;}
+    if (!msg) {
+      continue;
+    }
 
     const len = estimateLength(msg);
     if (totalLength + len > MAX_OLD_CHARS_TO_KEEP) {

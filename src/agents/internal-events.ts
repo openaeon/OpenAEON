@@ -70,11 +70,7 @@ function formatTaskCompletionEvent(event: AgentTaskCompletionInternalEvent): str
     lines.push(`summary: ${event.summary}`);
   }
 
-  lines.push(
-    "",
-    "Result (abstracted):",
-    displayResult,
-  );
+  lines.push("", "Result (abstracted):", displayResult);
 
   if (event.statsLine?.trim()) {
     lines.push("", event.statsLine.trim());

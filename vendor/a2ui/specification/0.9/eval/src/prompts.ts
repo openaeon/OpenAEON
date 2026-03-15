@@ -14,7 +14,6 @@
  limitations under the License.
  */
 
-
 export interface TestPrompt {
   name: string;
   description: string;
@@ -29,8 +28,7 @@ export const prompts: TestPrompt[] = [
   },
   {
     name: "dogBreedGenerator",
-    description:
-      "A prompt to generate a UI for a dog breed information and generator tool.",
+    description: "A prompt to generate a UI for a dog breed information and generator tool.",
     promptText: `Use a surfaceId of 'main'. Then, generate a 'createSurface' message followed by 'updateComponents' message to describe the following UI:
 
 A vertical list with:
@@ -63,8 +61,7 @@ The dog generator is another card which is a form that generates a fictional dog
   },
   {
     name: "productGalleryData",
-    description:
-      "An updateDataModel message to populate the product gallery data.",
+    description: "An updateDataModel message to populate the product gallery data.",
     promptText: `Generate a 'createSurface' message with surfaceId 'main', followed by an updateDataModel message to populate the data model for the product gallery. The update should target the path '/products' and include at least two products. Each product in the map should have keys 'id', 'name', and 'imageUrl'. For example:
     {
       "product1": {

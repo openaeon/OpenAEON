@@ -12,15 +12,7 @@
  */
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import {
-  css,
-  html,
-  LitElement,
-  nothing,
-  PropertyValues,
-  render,
-  TemplateResult,
-} from "lit";
+import { css, html, LitElement, nothing, PropertyValues, render, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
@@ -30,10 +22,7 @@ import { Theme, AnyComponentNode, SurfaceID } from "../types/types.js";
 import { themeContext } from "./context/theme.js";
 import { structuralStyles } from "./styles.js";
 import { componentRegistry } from "./component-registry.js";
-type NodeOfType<T extends AnyComponentNode["type"]> = Extract<
-  AnyComponentNode,
-  { type: T }
->;
+type NodeOfType<T extends AnyComponentNode["type"]> = Extract<AnyComponentNode, { type: T }>;
 // This is the base class all the components will inherit
 @customElement("a2ui-root")
 export class Root extends (SignalWatcher(LitElement) as typeof LitElement) {
@@ -105,7 +94,7 @@ export class Root extends (SignalWatcher(LitElement) as typeof LitElement) {
    * Turns the SignalMap into a renderable TemplateResult for Lit.
    */
   private renderComponentTree(
-    components: AnyComponentNode[] | null
+    components: AnyComponentNode[] | null,
   ): TemplateResult | typeof nothing {
     if (!components) {
       return nothing;
@@ -157,8 +146,7 @@ export class Root extends (SignalWatcher(LitElement) as typeof LitElement) {
         }
         case "Card": {
           const node = component as NodeOfType<"Card">;
-          let childComponents: AnyComponentNode[] | null =
-            node.properties.children;
+          let childComponents: AnyComponentNode[] | null = node.properties.children;
           if (!childComponents && node.properties.child) {
             childComponents = [node.properties.child];
           }
@@ -470,6 +458,8 @@ export class Root extends (SignalWatcher(LitElement) as typeof LitElement) {
     return html`${el}`;
   }
   render(): TemplateResult | typeof nothing {
-    return html`<slot></slot>`;
+    return html`
+      <slot></slot>
+    `;
   }
 }

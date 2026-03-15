@@ -1,6 +1,10 @@
 {
   "name": "a2ui_0_9_eval_llm",
   "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -13,19 +17,6 @@
     "start": "genkit start",
     "genkit:dev": "genkit start -- tsx --watch src/dev.ts",
     "format": "prettier --write src/**/*.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "@types/node": "^20.19.25",
-    "@types/yargs": "^17.0.35",
-    "dotenv-cli": "^10.0.0",
-    "prettier": "^3.6.2",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3",
-    "yargs": "^18.0.0"
   },
   "dependencies": {
     "@genkit-ai/ai": "^1.24.0",
@@ -43,5 +34,14 @@
     "js-yaml": "^4.1.1",
     "winston": "^3.18.3",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "@types/yargs": "^17.0.35",
+    "dotenv-cli": "^10.0.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "yargs": "^18.0.0"
   }
 }

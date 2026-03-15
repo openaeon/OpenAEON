@@ -258,6 +258,8 @@ type CompactionHost = ToolStreamHost & {
   compactionClearTimer?: number | null;
   fallbackStatus?: FallbackStatus | null;
   fallbackClearTimer?: number | null;
+  chatChaosScore: number;
+  chatEpiphanyFactor: number;
 };
 
 const COMPACTION_TOAST_DURATION_MS = 5000;
@@ -323,7 +325,26 @@ function resolveAcceptedSession(
 function handleLifecycleFallbackEvent(host: CompactionHost, payload: AgentEventPayload) {
   const data = payload.data ?? {};
   const phase = payload.stream === "fallback" ? "fallback" : toTrimmedString(data.phase);
-  if (payload.stream === "lifecycle" && phase !== "fallback" && phase !== "fallback_cleared") {
+
+  // Update real-time cognitive metrics if present in any lifecycle event
+  if (typeof data.chaosScore === "number") {
+    host.chatChaosScore = data.chaosScore;
+  }
+  if (typeof data.epiphanyFactor === "number") {
+    host.chatEpiphanyFactor = data.epiphanyFactor;
+  }
+
+  const isFallback = phase === "fallback" || phase === "fallback_cleared";
+  const isElevation = phase === "elevation";
+  const isResonance = phase === "resonance";
+
+  if (
+    payload.stream === "lifecycle" &&
+    !isFallback &&
+    !isElevation &&
+    !isResonance &&
+    phase !== "start"
+  ) {
     return;
   }
 

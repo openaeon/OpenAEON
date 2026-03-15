@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { Primitives } from '@a2ui/lit/0.8';
-import { DynamicComponent } from '../rendering/dynamic-component';
+import { Component, computed, input } from "@angular/core";
+import { Primitives } from "@a2ui/lit/0.8";
+import { DynamicComponent } from "../rendering/dynamic-component";
 
 @Component({
-  selector: '[a2ui-slider]',
+  selector: "[a2ui-slider]",
   template: `
     <section [class]="theme.components.Slider.container">
       <label [class]="theme.components.Slider.label" [for]="inputId">
@@ -54,11 +54,11 @@ import { DynamicComponent } from '../rendering/dynamic-component';
 })
 export class Slider extends DynamicComponent {
   readonly value = input.required<Primitives.NumberValue | null>();
-  readonly label = input('');
+  readonly label = input("");
   readonly minValue = input.required<number | undefined>();
   readonly maxValue = input.required<number | undefined>();
 
-  protected readonly inputId = super.getUniqueId('a2ui-slider');
+  protected readonly inputId = super.getUniqueId("a2ui-slider");
   protected resolvedValue = computed(() => super.resolvePrimitive(this.value()) ?? 0);
 
   protected handleInput(event: Event) {

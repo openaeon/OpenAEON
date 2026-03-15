@@ -63,34 +63,42 @@ export class Icon extends Root {
         return render(iconName);
       } else if (this.name && "path" in this.name && this.name.path) {
         if (!this.processor || !this.component) {
-          return html`(no model)`;
+          return html`
+            (no model)
+          `;
         }
 
         const iconName = this.processor.getData(
           this.component,
           this.name.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
         if (!iconName) {
-          return html`Invalid icon name`;
+          return html`
+            Invalid icon name
+          `;
         }
 
         if (typeof iconName !== "string") {
-          return html`Invalid icon name`;
+          return html`
+            Invalid icon name
+          `;
         }
         return render(iconName);
       }
     }
 
-    return html`(empty)`;
+    return html`
+      (empty)
+    `;
   }
 
   render() {
     return html`<section
       class=${classMap(this.theme.components.Icon)}
-      style=${this.theme.additionalStyles?.Icon
-        ? styleMap(this.theme.additionalStyles?.Icon)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Icon ? styleMap(this.theme.additionalStyles?.Icon) : nothing
+      }
     >
       ${this.#renderIcon()}
     </section>`;

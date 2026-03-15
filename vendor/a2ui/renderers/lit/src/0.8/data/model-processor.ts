@@ -76,7 +76,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
       arrayCtor: ArrayConstructor;
       setCtor: SetConstructor;
       objCtor: ObjectConstructor;
-    } = { mapCtor: Map, arrayCtor: Array, setCtor: Set, objCtor: Object }
+    } = { mapCtor: Map, arrayCtor: Array, setCtor: Set, objCtor: Object },
   ) {
     this.#arrayCtor = opts.arrayCtor;
     this.#mapCtor = opts.mapCtor;
@@ -97,24 +97,15 @@ export class A2uiMessageProcessor implements MessageProcessor {
   processMessages(messages: ServerToClientMessage[]): void {
     for (const message of messages) {
       if (message.beginRendering) {
-        this.#handleBeginRendering(
-          message.beginRendering,
-          message.beginRendering.surfaceId
-        );
+        this.#handleBeginRendering(message.beginRendering, message.beginRendering.surfaceId);
       }
 
       if (message.surfaceUpdate) {
-        this.#handleSurfaceUpdate(
-          message.surfaceUpdate,
-          message.surfaceUpdate.surfaceId
-        );
+        this.#handleSurfaceUpdate(message.surfaceUpdate, message.surfaceUpdate.surfaceId);
       }
 
       if (message.dataModelUpdate) {
-        this.#handleDataModelUpdate(
-          message.dataModelUpdate,
-          message.dataModelUpdate.surfaceId
-        );
+        this.#handleDataModelUpdate(message.dataModelUpdate, message.dataModelUpdate.surfaceId);
       }
 
       if (message.deleteSurface) {
@@ -131,7 +122,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
   getData(
     node: AnyComponentNode,
     relativePath: string,
-    surfaceId = A2uiMessageProcessor.DEFAULT_SURFACE_ID
+    surfaceId = A2uiMessageProcessor.DEFAULT_SURFACE_ID,
   ): DataValue | null {
     const surface = this.#getOrCreateSurface(surfaceId);
     if (!surface) return null;
@@ -154,7 +145,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
     node: AnyComponentNode | null,
     relativePath: string,
     value: DataValue,
-    surfaceId = A2uiMessageProcessor.DEFAULT_SURFACE_ID
+    surfaceId = A2uiMessageProcessor.DEFAULT_SURFACE_ID,
   ): void {
     if (!node) {
       console.warn("No component node set");
@@ -210,13 +201,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
         return JSON.parse(value);
       } catch (e) {
         // It looked like JSON but wasn't. Keep the original string.
-        console.warn(
-          `Failed to parse potential JSON string: "${value.substring(
-            0,
-            50
-          )}..."`,
-          e
-        );
+        console.warn(`Failed to parse potential JSON string: "${value.substring(0, 50)}..."`, e);
         return value; // Return original string
       }
     }
@@ -256,10 +241,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
 
   #setDataByPath(root: DataMap, path: string, value: DataValue): void {
     // Check if the incoming value is the special key-value array format.
-    if (
-      Array.isArray(value) &&
-      (value.length === 0 || (isObject(value[0]) && "key" in value[0]))
-    ) {
+    if (Array.isArray(value) && (value.length === 0 || (isObject(value[0]) && "key" in value[0]))) {
       // Check for "set primitive at path" convention:
       // path: "/messages/123", contents: [{ key: ".", valueString: "hi" }]
       if (value.length === 1 && isObject(value[0]) && value[0].key === ".") {
@@ -321,11 +303,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
         target = current[parseInt(segment, 10)];
       }
 
-      if (
-        target === undefined ||
-        typeof target !== "object" ||
-        target === null
-      ) {
+      if (target === undefined || typeof target !== "object" || target === null) {
         target = new this.#mapCtor();
         if (current instanceof this.#mapCtor) {
           current.set(segment, target);
@@ -402,20 +380,14 @@ export class A2uiMessageProcessor implements MessageProcessor {
     return surface;
   }
 
-  #handleBeginRendering(
-    message: BeginRenderingMessage,
-    surfaceId: SurfaceID
-  ): void {
+  #handleBeginRendering(message: BeginRenderingMessage, surfaceId: SurfaceID): void {
     const surface = this.#getOrCreateSurface(surfaceId);
     surface.rootComponentId = message.root;
     surface.styles = message.styles ?? {};
     this.#rebuildComponentTree(surface);
   }
 
-  #handleSurfaceUpdate(
-    message: SurfaceUpdateMessage,
-    surfaceId: SurfaceID
-  ): void {
+  #handleSurfaceUpdate(message: SurfaceUpdateMessage, surfaceId: SurfaceID): void {
     const surface = this.#getOrCreateSurface(surfaceId);
     for (const component of message.components) {
       surface.components.set(component.id, component);
@@ -426,11 +398,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
   #handleDataModelUpdate(message: DataModelUpdate, surfaceId: SurfaceID): void {
     const surface = this.#getOrCreateSurface(surfaceId);
     const path = message.path ?? "/";
-    this.#setDataByPath(
-      surface.dataModel,
-      path,
-      message.contents
-    );
+    this.#setDataByPath(surface.dataModel, path, message.contents);
     this.#rebuildComponentTree(surface);
   }
 
@@ -459,7 +427,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
       surface,
       visited,
       "/",
-      "" // Initial idSuffix.
+      "", // Initial idSuffix.
     );
   }
 
@@ -476,7 +444,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
     surface: Surface,
     visited: Set<string>,
     dataContextPath: string,
-    idSuffix = ""
+    idSuffix = "",
   ): AnyComponentNode | null {
     const fullId = `${baseComponentId}${idSuffix}`; // Construct the full ID
     const { components } = surface;
@@ -494,8 +462,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
     const componentData = components.get(baseComponentId)!;
     const componentProps = componentData.component ?? {};
     const componentType = Object.keys(componentProps)[0];
-    const unresolvedProperties =
-      componentProps[componentType as keyof typeof componentProps];
+    const unresolvedProperties = componentProps[componentType as keyof typeof componentProps];
 
     // Manually build the resolvedProperties object by resolving each value in
     // the component's properties.
@@ -508,7 +475,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
           visited,
           dataContextPath,
           idSuffix,
-          key
+          key,
         );
       }
     }
@@ -727,10 +694,9 @@ export class A2uiMessageProcessor implements MessageProcessor {
     visited: Set<string>,
     dataContextPath: string,
     idSuffix = "",
-    propertyKey: string | null = null
+    propertyKey: string | null = null,
   ): ResolvedValue {
-    const isComponentIdReferenceKey = (key: string) =>
-      key === "child" || key.endsWith("Child");
+    const isComponentIdReferenceKey = (key: string) => key === "child" || key.endsWith("Child");
 
     // 1. If it's a string that matches a component ID, build that node.
     if (
@@ -739,13 +705,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
       isComponentIdReferenceKey(propertyKey) &&
       surface.components.has(value)
     ) {
-      return this.#buildNodeRecursive(
-        value,
-        surface,
-        visited,
-        dataContextPath,
-        idSuffix
-      );
+      return this.#buildNodeRecursive(value, surface, visited, dataContextPath, idSuffix);
     }
 
     // 2. If it's a ComponentArrayReference (e.g., a `children` property),
@@ -753,21 +713,12 @@ export class A2uiMessageProcessor implements MessageProcessor {
     if (isComponentArrayReference(value)) {
       if (value.explicitList) {
         return value.explicitList.map((id) =>
-          this.#buildNodeRecursive(
-            id,
-            surface,
-            visited,
-            dataContextPath,
-            idSuffix
-          )
+          this.#buildNodeRecursive(id, surface, visited, dataContextPath, idSuffix),
         );
       }
 
       if (value.template) {
-        const fullDataPath = this.resolvePath(
-          value.template.dataBinding,
-          dataContextPath
-        );
+        const fullDataPath = this.resolvePath(value.template.dataBinding, dataContextPath);
         const data = this.#getDataByPath(surface.dataModel, fullDataPath);
 
         const template = value.template;
@@ -789,7 +740,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
               surface,
               visited,
               childDataContextPath,
-              newSuffix // new suffix
+              newSuffix, // new suffix
             );
           });
         }
@@ -806,7 +757,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
               surface,
               visited,
               childDataContextPath,
-              newSuffix // new suffix
+              newSuffix, // new suffix
             );
           });
         }
@@ -819,14 +770,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
     // 3. If it's a plain array, resolve each of its items.
     if (Array.isArray(value)) {
       return value.map((item) =>
-        this.#resolvePropertyValue(
-          item,
-          surface,
-          visited,
-          dataContextPath,
-          idSuffix,
-          propertyKey
-        )
+        this.#resolvePropertyValue(item, surface, visited, dataContextPath, idSuffix, propertyKey),
       );
     }
 
@@ -855,7 +799,7 @@ export class A2uiMessageProcessor implements MessageProcessor {
           visited,
           dataContextPath,
           idSuffix,
-          key
+          key,
         );
       }
       return newObj;

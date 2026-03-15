@@ -93,6 +93,8 @@ export type ChatProps = {
   sandboxChatEvents?: Record<string, unknown>;
   sandboxSessions?: GatewaySessionRow[];
   cognitiveLog?: import("../types.ts").CognitiveLogEntry[];
+  chaosScore: number;
+  epiphanyFactor: number;
 };
 
 const COMPACTION_TOAST_DURATION_MS = 5000;
@@ -216,6 +218,8 @@ export function renderChat(props: ChatProps) {
                 assistantIdentity,
                 item.thinking,
                 showReasoning,
+                props.chaosScore,
+                props.epiphanyFactor,
               );
             }
 

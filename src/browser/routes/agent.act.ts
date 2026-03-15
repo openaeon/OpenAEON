@@ -368,7 +368,9 @@ export function registerBrowserAgentActRoutes(
               break;
             }
             const pw = await requirePwAi(res, "batch:navigate");
-            if (!pw) {return;}
+            if (!pw) {
+              return;
+            }
             const navResult = await pw.navigateViaPlaywright({
               cdpUrl,
               targetId: tab.targetId,
@@ -385,7 +387,11 @@ export function registerBrowserAgentActRoutes(
             if (newTargetId !== tab.targetId) {
               tab = await profileCtx.ensureTabAvailable(newTargetId);
             }
-            results.push({ ok: true, kind, result: { url: navResult.url, targetId: tab.targetId } });
+            results.push({
+              ok: true,
+              kind,
+              result: { url: navResult.url, targetId: tab.targetId },
+            });
             continue;
           }
 
@@ -425,7 +431,9 @@ export function registerBrowserAgentActRoutes(
           // ── act (click / type / wait / press / etc.) ──
           if (isActKind(kind)) {
             const pw = await requirePwAi(res, `batch:${kind}`);
-            if (!pw) {return;}
+            if (!pw) {
+              return;
+            }
             const evaluateEnabled = ctx.state().resolved.evaluateEnabled;
 
             if (kind === "evaluate" && !evaluateEnabled) {
@@ -437,45 +445,86 @@ export function registerBrowserAgentActRoutes(
             switch (kind) {
               case "click": {
                 const ref = toStringOrEmpty(step.ref);
-                if (!ref) { results.push({ ok: false, kind, error: "ref is required" }); failedAt = i; break; }
-                await pw.clickViaPlaywright({ cdpUrl, targetId: tab.targetId, ref, doubleClick: toBoolean(step.doubleClick) ?? false });
+                if (!ref) {
+                  results.push({ ok: false, kind, error: "ref is required" });
+                  failedAt = i;
+                  break;
+                }
+                await pw.clickViaPlaywright({
+                  cdpUrl,
+                  targetId: tab.targetId,
+                  ref,
+                  doubleClick: toBoolean(step.doubleClick) ?? false,
+                });
                 break;
               }
               case "type": {
                 const ref = toStringOrEmpty(step.ref);
-                if (!ref || typeof step.text !== "string") { results.push({ ok: false, kind, error: "ref and text are required" }); failedAt = i; break; }
-                await pw.typeViaPlaywright({ cdpUrl, targetId: tab.targetId, ref, text: step.text, submit: toBoolean(step.submit) ?? false, slowly: toBoolean(step.slowly) ?? false });
+                if (!ref || typeof step.text !== "string") {
+                  results.push({ ok: false, kind, error: "ref and text are required" });
+                  failedAt = i;
+                  break;
+                }
+                await pw.typeViaPlaywright({
+                  cdpUrl,
+                  targetId: tab.targetId,
+                  ref,
+                  text: step.text,
+                  submit: toBoolean(step.submit) ?? false,
+                  slowly: toBoolean(step.slowly) ?? false,
+                });
                 break;
               }
               case "press": {
                 const key = toStringOrEmpty(step.key);
-                if (!key) { results.push({ ok: false, kind, error: "key is required" }); failedAt = i; break; }
+                if (!key) {
+                  results.push({ ok: false, kind, error: "key is required" });
+                  failedAt = i;
+                  break;
+                }
                 await pw.pressKeyViaPlaywright({ cdpUrl, targetId: tab.targetId, key });
                 break;
               }
               case "hover": {
                 const ref = toStringOrEmpty(step.ref);
-                if (!ref) { results.push({ ok: false, kind, error: "ref is required" }); failedAt = i; break; }
+                if (!ref) {
+                  results.push({ ok: false, kind, error: "ref is required" });
+                  failedAt = i;
+                  break;
+                }
                 await pw.hoverViaPlaywright({ cdpUrl, targetId: tab.targetId, ref });
                 break;
               }
               case "scrollIntoView": {
                 const ref = toStringOrEmpty(step.ref);
-                if (!ref) { results.push({ ok: false, kind, error: "ref is required" }); failedAt = i; break; }
+                if (!ref) {
+                  results.push({ ok: false, kind, error: "ref is required" });
+                  failedAt = i;
+                  break;
+                }
                 await pw.scrollIntoViewViaPlaywright({ cdpUrl, targetId: tab.targetId, ref });
                 break;
               }
               case "select": {
                 const ref = toStringOrEmpty(step.ref);
                 const values = toStringArray(step.values);
-                if (!ref || !values?.length) { results.push({ ok: false, kind, error: "ref and values are required" }); failedAt = i; break; }
+                if (!ref || !values?.length) {
+                  results.push({ ok: false, kind, error: "ref and values are required" });
+                  failedAt = i;
+                  break;
+                }
                 await pw.selectOptionViaPlaywright({ cdpUrl, targetId: tab.targetId, ref, values });
                 break;
               }
               case "wait": {
                 const timeMs = toNumber(step.timeMs);
                 const loadStateRaw = toStringOrEmpty(step.loadState);
-                const loadState = loadStateRaw === "load" || loadStateRaw === "domcontentloaded" || loadStateRaw === "networkidle" ? loadStateRaw : undefined;
+                const loadState =
+                  loadStateRaw === "load" ||
+                  loadStateRaw === "domcontentloaded" ||
+                  loadStateRaw === "networkidle"
+                    ? loadStateRaw
+                    : undefined;
                 await pw.waitForViaPlaywright({
                   cdpUrl,
                   targetId: tab.targetId,
@@ -493,23 +542,43 @@ export function registerBrowserAgentActRoutes(
               case "fill": {
                 const rawFields = Array.isArray(step.fields) ? step.fields : [];
                 const fields = rawFields
-                  .map((f) => (!f || typeof f !== "object" ? null : normalizeBrowserFormField(f as Record<string, unknown>)))
+                  .map((f) =>
+                    !f || typeof f !== "object"
+                      ? null
+                      : normalizeBrowserFormField(f as Record<string, unknown>),
+                  )
                   .filter((f): f is BrowserFormField => f !== null);
-                if (!fields.length) { results.push({ ok: false, kind, error: "fields are required" }); failedAt = i; break; }
+                if (!fields.length) {
+                  results.push({ ok: false, kind, error: "fields are required" });
+                  failedAt = i;
+                  break;
+                }
                 await pw.fillFormViaPlaywright({ cdpUrl, targetId: tab.targetId, fields });
                 break;
               }
               case "drag": {
                 const startRef = toStringOrEmpty(step.startRef);
                 const endRef = toStringOrEmpty(step.endRef);
-                if (!startRef || !endRef) { results.push({ ok: false, kind, error: "startRef and endRef are required" }); failedAt = i; break; }
+                if (!startRef || !endRef) {
+                  results.push({ ok: false, kind, error: "startRef and endRef are required" });
+                  failedAt = i;
+                  break;
+                }
                 await pw.dragViaPlaywright({ cdpUrl, targetId: tab.targetId, startRef, endRef });
                 break;
               }
               case "evaluate": {
                 const fn = toStringOrEmpty(step.fn);
-                if (!fn) { results.push({ ok: false, kind, error: "fn is required" }); failedAt = i; break; }
-                const result = await pw.evaluateViaPlaywright({ cdpUrl, targetId: tab.targetId, fn });
+                if (!fn) {
+                  results.push({ ok: false, kind, error: "fn is required" });
+                  failedAt = i;
+                  break;
+                }
+                const result = await pw.evaluateViaPlaywright({
+                  cdpUrl,
+                  targetId: tab.targetId,
+                  fn,
+                });
                 results.push({ ok: true, kind, result });
                 continue;
               }
@@ -520,18 +589,33 @@ export function registerBrowserAgentActRoutes(
               case "resize": {
                 const width = toNumber(step.width);
                 const height = toNumber(step.height);
-                if (!width || !height) { results.push({ ok: false, kind, error: "width and height are required" }); failedAt = i; break; }
-                await pw.resizeViewportViaPlaywright({ cdpUrl, targetId: tab.targetId, width, height });
+                if (!width || !height) {
+                  results.push({ ok: false, kind, error: "width and height are required" });
+                  failedAt = i;
+                  break;
+                }
+                await pw.resizeViewportViaPlaywright({
+                  cdpUrl,
+                  targetId: tab.targetId,
+                  width,
+                  height,
+                });
                 break;
               }
             }
 
-            if (failedAt !== undefined) {break;}
+            if (failedAt !== undefined) {
+              break;
+            }
             results.push({ ok: true, kind });
             continue;
           }
 
-          results.push({ ok: false, kind: kind || "unknown", error: `Unsupported step kind: ${JSON.stringify(kind)}` });
+          results.push({
+            ok: false,
+            kind: kind || "unknown",
+            error: `Unsupported step kind: ${JSON.stringify(kind)}`,
+          });
           failedAt = i;
           break;
         } catch (err) {
@@ -547,7 +631,9 @@ export function registerBrowserAgentActRoutes(
         .toReversed()
         .find((r) => r.ok && r.kind === "snapshot");
       const topLevelSnapshot =
-        lastSnapshotResult && "result" in lastSnapshotResult ? lastSnapshotResult.result : undefined;
+        lastSnapshotResult && "result" in lastSnapshotResult
+          ? lastSnapshotResult.result
+          : undefined;
 
       return res.json({
         ok: true,

@@ -653,6 +653,8 @@ export type SkillStatusEntry = {
   };
   configChecks: SkillsStatusConfigCheck[];
   install: SkillInstallOption[];
+  baseUrl?: string;
+  proxy?: string;
 };
 
 export type SkillStatusReport = {
@@ -702,7 +704,7 @@ export type CognitiveLogEntry = {
 
 export type MemoryNode = {
   id: string;
-  type: 'axiom' | 'verified' | 'unverified';
+  type: "axiom" | "verified" | "unverified";
   content: string;
 };
 
@@ -726,7 +728,7 @@ export type AeonStatusResult = {
   neuralDepth: number;
   cognitiveEntropy: number;
   chaosScore: number;
-  dialecticStage?: 'thesis' | 'antithesis' | 'synthesis';
+  dialecticStage?: "thesis" | "antithesis" | "synthesis";
   cognitiveState?: {
     entropy: number;
     topo: { x: number; y: number; z: number };

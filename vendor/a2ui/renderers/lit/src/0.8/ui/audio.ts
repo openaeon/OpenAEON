@@ -61,34 +61,44 @@ export class Audio extends Root {
         return html`<audio controls src=${this.url.literal} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.processor || !this.component) {
-          return html`(no processor)`;
+          return html`
+            (no processor)
+          `;
         }
 
         const audioUrl = this.processor.getData(
           this.component,
           this.url.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
         if (!audioUrl) {
-          return html`Invalid audio URL`;
+          return html`
+            Invalid audio URL
+          `;
         }
 
         if (typeof audioUrl !== "string") {
-          return html`Invalid audio URL`;
+          return html`
+            Invalid audio URL
+          `;
         }
         return html`<audio controls src=${audioUrl} />`;
       }
     }
 
-    return html`(empty)`;
+    return html`
+      (empty)
+    `;
   }
 
   render() {
     return html`<section
       class=${classMap(this.theme.components.AudioPlayer)}
-      style=${this.theme.additionalStyles?.AudioPlayer
-        ? styleMap(this.theme.additionalStyles?.AudioPlayer)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.AudioPlayer
+          ? styleMap(this.theme.additionalStyles?.AudioPlayer)
+          : nothing
+      }
     >
       ${this.#renderAudio()}
     </section>`;

@@ -109,11 +109,14 @@ export type ResolvedTtsConfig = {
       useSpeakerBoost: boolean;
       speed: number;
     };
+    proxy?: string;
   };
   openai: {
     apiKey?: string;
     model: string;
     voice: string;
+    baseUrl?: string;
+    proxy?: string;
   };
   edge: {
     enabled: boolean;
@@ -284,11 +287,14 @@ export function resolveTtsConfig(cfg: OPENAEONConfig): ResolvedTtsConfig {
           DEFAULT_ELEVENLABS_VOICE_SETTINGS.useSpeakerBoost,
         speed: raw.elevenlabs?.voiceSettings?.speed ?? DEFAULT_ELEVENLABS_VOICE_SETTINGS.speed,
       },
+      proxy: raw.elevenlabs?.proxy?.trim() || undefined,
     },
     openai: {
       apiKey: raw.openai?.apiKey,
       model: raw.openai?.model ?? DEFAULT_OPENAI_MODEL,
       voice: raw.openai?.voice ?? DEFAULT_OPENAI_VOICE,
+      baseUrl: raw.openai?.baseUrl?.trim() || undefined,
+      proxy: raw.openai?.proxy?.trim() || undefined,
     },
     edge: {
       enabled: raw.edge?.enabled ?? true,
@@ -660,6 +666,7 @@ export async function textToSpeech(params: {
           languageCode: languageOverride ?? config.elevenlabs.languageCode,
           voiceSettings,
           timeoutMs: config.timeoutMs,
+          proxy: config.elevenlabs.proxy,
         });
       } else {
         const openaiModelOverride = params.overrides?.openai?.model;
@@ -671,6 +678,8 @@ export async function textToSpeech(params: {
           voice: openaiVoiceOverride ?? config.openai.voice,
           responseFormat: output.openai,
           timeoutMs: config.timeoutMs,
+          baseUrl: config.openai.baseUrl,
+          proxy: config.openai.proxy,
         });
       }
 
@@ -750,6 +759,7 @@ export async function textToSpeechTelephony(params: {
           languageCode: config.elevenlabs.languageCode,
           voiceSettings: config.elevenlabs.voiceSettings,
           timeoutMs: config.timeoutMs,
+          proxy: config.elevenlabs.proxy,
         });
 
         return {
@@ -770,6 +780,8 @@ export async function textToSpeechTelephony(params: {
         voice: config.openai.voice,
         responseFormat: output.format,
         timeoutMs: config.timeoutMs,
+        baseUrl: config.openai.baseUrl,
+        proxy: config.openai.proxy,
       });
 
       return {

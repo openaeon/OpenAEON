@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { DynamicComponent } from '../rendering/dynamic-component';
-import { Primitives } from '@a2ui/lit/0.8';
+import { Component, computed, input } from "@angular/core";
+import { DynamicComponent } from "../rendering/dynamic-component";
+import { Primitives } from "@a2ui/lit/0.8";
 
 @Component({
-  selector: 'a2ui-multiple-choice',
+  selector: "a2ui-multiple-choice",
   template: `
     <section [class]="theme.components.MultipleChoice.container">
       <label [class]="theme.components.MultipleChoice.label" [for]="selectId">{{
@@ -58,7 +58,7 @@ export class MultipleChoice extends DynamicComponent {
   readonly value = input.required<Primitives.StringValue | null>();
   readonly description = input.required<string>();
 
-  protected readonly selectId = super.getUniqueId('a2ui-multiple-choice');
+  protected readonly selectId = super.getUniqueId("a2ui-multiple-choice");
   protected selectValue = computed(() => super.resolvePrimitive(this.value()));
 
   protected handleChange(event: Event) {

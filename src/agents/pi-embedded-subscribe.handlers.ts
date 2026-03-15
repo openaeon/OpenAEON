@@ -31,6 +31,11 @@ export function createEmbeddedPiSessionEventHandler(ctx: EmbeddedPiSubscribeCont
       case "message_end":
         handleMessageEnd(ctx, evt as never);
         return;
+      case "thinking_start":
+      case "thinking_delta":
+      case "thinking_end":
+        handleMessageUpdate(ctx, { ...evt, assistantMessageEvent: evt } as never);
+        return;
       case "tool_execution_start":
         // Async handler - best-effort typing indicator, avoids blocking tool summaries.
         // Catch rejections to avoid unhandled promise rejection crashes.

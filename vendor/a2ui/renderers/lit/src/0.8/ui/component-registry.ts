@@ -17,18 +17,15 @@
 import { CustomElementConstructorOf } from "./ui.js";
 
 export class ComponentRegistry {
-  private registry: Map<string, CustomElementConstructorOf<HTMLElement>> =
-    new Map();
+  private registry: Map<string, CustomElementConstructorOf<HTMLElement>> = new Map();
 
   register(
     typeName: string,
     constructor: CustomElementConstructorOf<HTMLElement>,
-    tagName?: string
+    tagName?: string,
   ) {
     if (!/^[a-zA-Z0-9]+$/.test(typeName)) {
-      throw new Error(
-        `[Registry] Invalid typeName '${typeName}'. Must be alphanumeric.`
-      );
+      throw new Error(`[Registry] Invalid typeName '${typeName}'. Must be alphanumeric.`);
     }
 
     this.registry.set(typeName, constructor);
@@ -39,7 +36,7 @@ export class ComponentRegistry {
       // Constructor is already registered.
       if (existingName !== actualTagName) {
         throw new Error(
-          `Component ${typeName} is already registered as ${existingName}, but requested as ${actualTagName}.`
+          `Component ${typeName} is already registered as ${existingName}, but requested as ${actualTagName}.`,
         );
       }
       return;

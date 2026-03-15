@@ -12,19 +12,19 @@ export const baseStyles = html`
       width: 100%;
       min-height: 0;
       flex: 1;
-      
+
       --nexus-primary: #a855f7;
       --nexus-secondary: #22d3ee;
       --nexus-accent: #fbbf24;
       --nexus-bg: transparent; /* Full bleed to global core */
       --nexus-glass: rgba(15, 23, 42, 0.4);
       --nexus-border: rgba(255, 255, 255, 0.05);
-      
+
       border-radius: 0; /* Fully integrated */
       border: none;
       overflow: hidden;
       position: relative;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: "Inter", system-ui, sans-serif;
       color: #f8fafc;
     }
 
@@ -32,14 +32,14 @@ export const baseStyles = html`
     .sandbox-nexus-bg {
       position: absolute;
       inset: 0;
-      background: 
+      background:
         linear-gradient(rgba(34, 211, 238, 0.02) 1px, transparent 1px),
         linear-gradient(90deg, rgba(34, 211, 238, 0.02) 1px, transparent 1px);
       background-size: 40px 40px;
       z-index: 0;
       pointer-events: none;
     }
-    
+
     .sandbox-nexus-bg::after {
       content: "";
       position: absolute;
@@ -127,8 +127,14 @@ export const baseStyles = html`
     }
 
     @keyframes nexus-pulse-ring {
-      0% { transform: scale(1); opacity: 0.8; }
-      100% { transform: scale(2.5); opacity: 0; }
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
     }
 
     .sandbox-wrap .stat-chip__dot--busy {
@@ -187,7 +193,7 @@ export const baseStyles = html`
       overflow: hidden;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
     }
-    
+
     .sandbox-wrap .leader-card::before {
       content: "";
       position: absolute;
@@ -195,7 +201,7 @@ export const baseStyles = html`
       background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, transparent 50%);
       pointer-events: none;
     }
-    
+
     .sandbox-wrap .leader-card__figure {
       flex-shrink: 0;
       filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.5));
@@ -225,7 +231,7 @@ export const baseStyles = html`
     .sandbox-wrap .leader-card__model {
       font-size: 0.85rem;
       color: rgba(255, 255, 255, 0.5);
-      font-family: 'JetBrains Mono', monospace;
+      font-family: "JetBrains Mono", monospace;
       background: rgba(0, 0, 0, 0.3);
       padding: 4px 12px;
       border-radius: 6px;
@@ -272,8 +278,17 @@ export const baseStyles = html`
       animation: signal-pulse 2s infinite ease-in-out;
     }
     @keyframes signal-pulse {
-      0%, 100% { opacity: 0.3; transform: scale(0.9); filter: blur(2px); }
-      50% { opacity: 0.7; transform: scale(1.1); filter: blur(0); }
+      0%,
+      100% {
+        opacity: 0.3;
+        transform: scale(0.9);
+        filter: blur(2px);
+      }
+      50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+        filter: blur(0);
+      }
     }
     .sandbox-wrap .empty-state__title {
       font-size: 1rem;
@@ -366,8 +381,15 @@ export const baseStyles = html`
       animation: nexus-glow-pulse 2s infinite;
     }
     @keyframes nexus-glow-pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.9); }
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: scale(0.9);
+      }
     }
 
     .sandbox-wrap .agent-card__task {
@@ -439,7 +461,7 @@ export const baseStyles = html`
       content: "";
       position: absolute;
       inset: 0;
-      background-image: 
+      background-image:
         radial-gradient(2px 2px at 40px 40px, rgba(255, 255, 255, 0.5), transparent),
         radial-gradient(2px 2px at 120px 120px, rgba(255, 255, 255, 0.3), transparent);
       background-size: 160px 160px;
@@ -525,7 +547,9 @@ export const baseStyles = html`
       filter: drop-shadow(0 0 5px var(--nexus-secondary));
       animation: tribe-link-flow 30s linear infinite;
       opacity: 0.3;
-      transition: opacity 1s ease, stroke-width 1s ease;
+      transition:
+        opacity 1s ease,
+        stroke-width 1s ease;
     }
     .tribe-link--active {
       stroke: #fff;
@@ -535,8 +559,12 @@ export const baseStyles = html`
       animation-duration: 10s;
     }
     @keyframes tribe-link-flow {
-      from { stroke-dashoffset: 200; }
-      to { stroke-dashoffset: 0; }
+      from {
+        stroke-dashoffset: 200;
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
     }
 
     /* Agent Aesthetics in Kingdom */
@@ -586,16 +614,16 @@ export const baseStyles = html`
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     }
     .sandbox-wrap .zone-card__icon {
-       font-size: 1.8rem;
-       margin-bottom: 12px;
-       filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
     }
     .sandbox-wrap .zone-card__name {
-       font-size: 0.7rem;
-       font-weight: 800;
-       color: rgba(255, 255, 255, 0.4);
-       letter-spacing: 0.15em;
-       margin-bottom: 8px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.15em;
+      margin-bottom: 8px;
     }
     .sandbox-wrap .zone-card__stat {
       font-size: 1.4rem;

@@ -52,9 +52,7 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function isComponentArrayReference(
-  value: unknown
-): value is ComponentArrayReference {
+export function isComponentArrayReference(value: unknown): value is ComponentArrayReference {
   if (!isObject(value)) return false;
   return "explicitList" in value || "template" in value;
 }
@@ -94,18 +92,13 @@ function isAnyComponentNode(value: unknown): value is AnyComponentNode {
   return true;
 }
 
-export function isResolvedAudioPlayer(
-  props: unknown
-): props is ResolvedAudioPlayer {
+export function isResolvedAudioPlayer(props: unknown): props is ResolvedAudioPlayer {
   return isObject(props) && "url" in props && isStringValue(props.url);
 }
 
 export function isResolvedButton(props: unknown): props is ResolvedButton {
   return (
-    isObject(props) &&
-    "child" in props &&
-    isAnyComponentNode(props.child) &&
-    "action" in props
+    isObject(props) && "child" in props && isAnyComponentNode(props.child) && "action" in props
   );
 }
 
@@ -115,10 +108,7 @@ export function isResolvedCard(props: unknown): props is ResolvedCard {
     if (!("children" in props)) {
       return false;
     } else {
-      return (
-        Array.isArray(props.children) &&
-        props.children.every(isAnyComponentNode)
-      );
+      return Array.isArray(props.children) && props.children.every(isAnyComponentNode);
     }
   }
 
@@ -144,9 +134,7 @@ export function isResolvedColumn(props: unknown): props is ResolvedColumn {
   );
 }
 
-export function isResolvedDateTimeInput(
-  props: unknown
-): props is ResolvedDateTimeInput {
+export function isResolvedDateTimeInput(props: unknown): props is ResolvedDateTimeInput {
   return isObject(props) && "value" in props && isStringValue(props.value);
 }
 
@@ -183,9 +171,7 @@ export function isResolvedModal(props: unknown): props is ResolvedModal {
   );
 }
 
-export function isResolvedMultipleChoice(
-  props: unknown
-): props is ResolvedMultipleChoice {
+export function isResolvedMultipleChoice(props: unknown): props is ResolvedMultipleChoice {
   return isObject(props) && "selections" in props;
 }
 
@@ -225,9 +211,7 @@ export function isResolvedText(props: unknown): props is ResolvedText {
   return isObject(props) && "text" in props && isStringValue(props.text);
 }
 
-export function isResolvedTextField(
-  props: unknown
-): props is ResolvedTextField {
+export function isResolvedTextField(props: unknown): props is ResolvedTextField {
   return isObject(props) && "label" in props && isStringValue(props.label);
 }
 

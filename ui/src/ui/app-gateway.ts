@@ -72,6 +72,8 @@ type GatewayHost = {
   assistantAgentId: string | null;
   sessionKey: string;
   chatRunId: string | null;
+  chatChaosScore: number;
+  chatEpiphanyFactor: number;
   refreshSessionsAfterChat: Set<string>;
   sandboxChatEvents: Record<string, unknown>;
   execApprovalQueue: ExecApprovalRequest[];

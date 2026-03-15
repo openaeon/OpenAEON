@@ -12,14 +12,14 @@ const LOG_FILE_PATH = path.join(REPO_ROOT, "docs/aeon/EVOLUTION.md");
 export async function logEvolutionEvent(
   type: "AUTONOMOUS" | "HUMAN_LED" | "SYSTEM_MAINTENANCE" | "SINGULARITY",
   title: string,
-  details: string[]
+  details: string[],
 ): Promise<void> {
   const timestamp = new Date().toISOString().replace("T", " ").split(".")[0];
   const entry = `
 ## ${timestamp} [${type}_EVOLUTION]
 **Status**: ${title}
 **Details**:
-${details.map(d => `- ${d}`).join("\n")}
+${details.map((d) => `- ${d}`).join("\n")}
 `;
 
   try {

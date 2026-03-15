@@ -16,11 +16,7 @@ export const figureStyles = html`
       content: "";
       position: absolute;
       inset: -15% -25%;
-      background: linear-gradient(
-        transparent 0%,
-        rgba(34, 211, 238, 0.15) 50%,
-        transparent 100%
-      );
+      background: linear-gradient(transparent 0%, rgba(34, 211, 238, 0.15) 50%, transparent 100%);
       background-size: 100% 3px;
       animation: nexus-hologram-scan 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
       pointer-events: none;
@@ -28,7 +24,7 @@ export const figureStyles = html`
       z-index: 50;
       mix-blend-mode: overlay;
     }
-    
+
     .sandbox-wrap .figure::before {
       content: "";
       position: absolute;
@@ -44,10 +40,17 @@ export const figureStyles = html`
       opacity: 0.6;
       animation: nexus-core-pulse 2s ease-in-out infinite;
     }
-    
+
     @keyframes nexus-core-pulse {
-      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.5); }
+      0%,
+      100% {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.5);
+      }
     }
 
     .sandbox-wrap .figure:hover {
@@ -57,8 +60,15 @@ export const figureStyles = html`
 
     /* Tribal Resonance Effects */
     @keyframes tribe-resonant-pulse {
-      0%, 100% { filter: drop-shadow(0 0 10px var(--nexus-secondary)); transform: translateY(0); }
-      50% { filter: drop-shadow(0 0 35px var(--nexus-secondary)); transform: translateY(-8px) scale(1.05); }
+      0%,
+      100% {
+        filter: drop-shadow(0 0 10px var(--nexus-secondary));
+        transform: translateY(0);
+      }
+      50% {
+        filter: drop-shadow(0 0 35px var(--nexus-secondary));
+        transform: translateY(-8px) scale(1.05);
+      }
     }
     .figure--resonant {
       animation: tribe-resonant-pulse 2.5s ease-in-out infinite !important;
@@ -70,8 +80,13 @@ export const figureStyles = html`
     }
 
     @keyframes sandbox-pickaxe-swing {
-      0%, 100% { transform: rotate(-30deg) translateY(0); }
-      50% { transform: rotate(60deg) translateY(10px); }
+      0%,
+      100% {
+        transform: rotate(-30deg) translateY(0);
+      }
+      50% {
+        transform: rotate(60deg) translateY(10px);
+      }
     }
     .sandbox-wrap .figure__pickaxe {
       position: absolute;
@@ -100,9 +115,17 @@ export const figureStyles = html`
     }
 
     @keyframes sandbox-steam {
-      0% { opacity: 0; transform: translateY(0) scale(0.8); }
-      50% { opacity: 0.8; }
-      100% { opacity: 0; transform: translateY(-25px) scale(1.2); }
+      0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.8);
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-25px) scale(1.2);
+      }
     }
     .sandbox-wrap .figure__cup {
       position: absolute;
@@ -133,7 +156,7 @@ export const figureStyles = html`
       left: 3px;
       width: 12px;
       height: 12px;
-      background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, transparent 70%);
       border-radius: 50%;
       animation: sandbox-steam 2.5s infinite linear;
     }
@@ -157,15 +180,23 @@ export const figureStyles = html`
     }
 
     @keyframes sandbox-hologram-float {
-      0%, 100% { transform: rotateY(-20deg) rotateX(10deg) translateY(0); opacity: 0.8; }
-      50% { transform: rotateY(-20deg) rotateX(10deg) translateY(-5px); opacity: 1; }
+      0%,
+      100% {
+        transform: rotateY(-20deg) rotateX(10deg) translateY(0);
+        opacity: 0.8;
+      }
+      50% {
+        transform: rotateY(-20deg) rotateX(10deg) translateY(-5px);
+        opacity: 1;
+      }
     }
 
     .sandbox-wrap .hologram__grid {
       position: absolute;
       inset: 0;
-      background-image: linear-gradient(rgba(34, 211, 238, 0.1) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(34, 211, 238, 0.1) 1px, transparent 1px);
+      background-image:
+        linear-gradient(rgba(34, 211, 238, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.1) 1px, transparent 1px);
       background-size: 10px 10px;
     }
 
@@ -177,54 +208,127 @@ export const figureStyles = html`
       box-shadow: 0 0 5px #22d3ee;
     }
 
-    .sandbox-wrap .hologram__data--1 { top: 15px; left: 10px; width: 40px; animation: sandbox-hologram-scan 3s infinite; }
-    .sandbox-wrap .hologram__data--2 { top: 30px; left: 10px; width: 60px; animation: sandbox-hologram-scan 3s infinite 0.5s; }
+    .sandbox-wrap .hologram__data--1 {
+      top: 15px;
+      left: 10px;
+      width: 40px;
+      animation: sandbox-hologram-scan 3s infinite;
+    }
+    .sandbox-wrap .hologram__data--2 {
+      top: 30px;
+      left: 10px;
+      width: 60px;
+      animation: sandbox-hologram-scan 3s infinite 0.5s;
+    }
 
     @keyframes sandbox-hologram-scan {
-      0% { transform: scaleX(0); opacity: 0; }
-      10%, 90% { transform: scaleX(1); opacity: 1; }
-      100% { transform: scaleX(0); opacity: 0; }
+      0% {
+        transform: scaleX(0);
+        opacity: 0;
+      }
+      10%,
+      90% {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scaleX(0);
+        opacity: 0;
+      }
     }
 
     /* Boss Aura */
     @keyframes sandbox-boss-aura {
-      0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
-      50% { transform: translateX(-50%) scale(1.15); opacity: 1; filter: blur(8px); }
+      0%,
+      100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: translateX(-50%) scale(1.15);
+        opacity: 1;
+        filter: blur(8px);
+      }
     }
 
     /* ─── Qiaobang Tiered Visuals ─── */
-    .sandbox-wrap .figure--tier-0 { transform: scale(1.1); }
-    .sandbox-wrap .figure--tier-1 { transform: scale(1.05); }
-    .sandbox-wrap .figure--tier-2 { transform: scale(1); }
-    .sandbox-wrap .figure--tier-3 { transform: scale(0.95); }
-    .sandbox-wrap .figure--tier-4 { transform: scale(0.85); }
+    .sandbox-wrap .figure--tier-0 {
+      transform: scale(1.1);
+    }
+    .sandbox-wrap .figure--tier-1 {
+      transform: scale(1.05);
+    }
+    .sandbox-wrap .figure--tier-2 {
+      transform: scale(1);
+    }
+    .sandbox-wrap .figure--tier-3 {
+      transform: scale(0.95);
+    }
+    .sandbox-wrap .figure--tier-4 {
+      transform: scale(0.85);
+    }
 
     /* Tiered Auras */
-    .sandbox-wrap .figure__aura--tier-0 { 
-      background: radial-gradient(circle, rgba(234, 179, 8, 0.4) 0%, rgba(234, 179, 8, 0.1) 50%, transparent 75%);
-      width: 160px; height: 160px; animation: sandbox-boss-aura 5s ease-in-out infinite;
+    .sandbox-wrap .figure__aura--tier-0 {
+      background: radial-gradient(
+        circle,
+        rgba(234, 179, 8, 0.4) 0%,
+        rgba(234, 179, 8, 0.1) 50%,
+        transparent 75%
+      );
+      width: 160px;
+      height: 160px;
+      animation: sandbox-boss-aura 5s ease-in-out infinite;
       filter: blur(5px);
     }
-    .sandbox-wrap .figure__aura--tier-1 { 
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0.05) 50%, transparent 75%);
-      width: 130px; height: 130px; animation: sandbox-aura-pulse 4s ease-in-out infinite;
+    .sandbox-wrap .figure__aura--tier-1 {
+      background: radial-gradient(
+        circle,
+        rgba(56, 189, 248, 0.3) 0%,
+        rgba(56, 189, 248, 0.05) 50%,
+        transparent 75%
+      );
+      width: 130px;
+      height: 130px;
+      animation: sandbox-aura-pulse 4s ease-in-out infinite;
     }
-    .sandbox-wrap .figure__aura--tier-2 { 
+    .sandbox-wrap .figure__aura--tier-2 {
       background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
-      width: 110px; height: 110px; animation: sandbox-aura-pulse 5s ease-in-out infinite;
+      width: 110px;
+      height: 110px;
+      animation: sandbox-aura-pulse 5s ease-in-out infinite;
     }
 
     /* Tiered Crowns */
-    .sandbox-wrap .figure__crown--tier-0 .crown__point { border-bottom-color: #fbbf24; }
-    .sandbox-wrap .figure__crown--tier-0 .crown__band { background: linear-gradient(180deg, #fcd34d 0%, #d97706 100%); }
-    
-    .sandbox-wrap .figure__crown--tier-1 .crown__point { border-bottom-color: #94a3b8; filter: drop-shadow(0 0 5px #64748b); }
-    .sandbox-wrap .figure__crown--tier-1 .crown__band { background: linear-gradient(180deg, #cbd5e1 0%, #64748b 100%); box-shadow: 0 0 10px rgba(148, 163, 184, 0.6); }
+    .sandbox-wrap .figure__crown--tier-0 .crown__point {
+      border-bottom-color: #fbbf24;
+    }
+    .sandbox-wrap .figure__crown--tier-0 .crown__band {
+      background: linear-gradient(180deg, #fcd34d 0%, #d97706 100%);
+    }
+
+    .sandbox-wrap .figure__crown--tier-1 .crown__point {
+      border-bottom-color: #94a3b8;
+      filter: drop-shadow(0 0 5px #64748b);
+    }
+    .sandbox-wrap .figure__crown--tier-1 .crown__band {
+      background: linear-gradient(180deg, #cbd5e1 0%, #64748b 100%);
+      box-shadow: 0 0 10px rgba(148, 163, 184, 0.6);
+    }
 
     /* Tiered Badges */
-    .sandbox-wrap .figure--tier-0 .figure__badge { background: radial-gradient(circle, #fbbf24, #d97706); box-shadow: 0 0 15px #fbbf24; }
-    .sandbox-wrap .figure--tier-1 .figure__badge { background: radial-gradient(circle, #cbd5e1, #64748b); box-shadow: 0 0 12px #94a3b8; }
-    .sandbox-wrap .figure--tier-2 .figure__badge { background: radial-gradient(circle, #34d399, #059669); box-shadow: 0 0 8px #34d399; }
+    .sandbox-wrap .figure--tier-0 .figure__badge {
+      background: radial-gradient(circle, #fbbf24, #d97706);
+      box-shadow: 0 0 15px #fbbf24;
+    }
+    .sandbox-wrap .figure--tier-1 .figure__badge {
+      background: radial-gradient(circle, #cbd5e1, #64748b);
+      box-shadow: 0 0 12px #94a3b8;
+    }
+    .sandbox-wrap .figure--tier-2 .figure__badge {
+      background: radial-gradient(circle, #34d399, #059669);
+      box-shadow: 0 0 8px #34d399;
+    }
 
     .sandbox-wrap .figure__crown--boss .crown__gem {
       position: absolute;
@@ -241,8 +345,17 @@ export const figureStyles = html`
     }
 
     @keyframes sandbox-gem-glow {
-      0%, 100% { box-shadow: 0 0 10px #22d3ee; filter: brightness(1); }
-      50% { box-shadow: 0 0 25px #22d3ee, 0 0 40px rgba(34, 211, 238, 0.6); filter: brightness(1.4); }
+      0%,
+      100% {
+        box-shadow: 0 0 10px #22d3ee;
+        filter: brightness(1);
+      }
+      50% {
+        box-shadow:
+          0 0 25px #22d3ee,
+          0 0 40px rgba(34, 211, 238, 0.6);
+        filter: brightness(1.4);
+      }
     }
 
     /* Crown */
@@ -299,8 +412,13 @@ export const figureStyles = html`
 
     /* Boss Commanding Arms */
     @keyframes sandbox-command {
-      0%, 100% { transform: rotate(-20deg) translateY(0); }
-      50% { transform: rotate(-10deg) translateY(-4px); }
+      0%,
+      100% {
+        transform: rotate(-20deg) translateY(0);
+      }
+      50% {
+        transform: rotate(-10deg) translateY(-4px);
+      }
     }
     .sandbox-wrap .figure--commanding .figure__arm--l {
       animation: sandbox-command 0.2s ease-in-out infinite;
@@ -317,7 +435,9 @@ export const figureStyles = html`
       height: 10px;
       background: linear-gradient(180deg, #fcd34d 0%, #d97706 100%);
       border-radius: 2px;
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.9), inset 0 2px 2px rgba(255,255,255,0.5);
+      box-shadow:
+        0 0 15px rgba(245, 158, 11, 0.9),
+        inset 0 2px 2px rgba(255, 255, 255, 0.5);
     }
 
     /* Manager Specific 3D Glowing Enhancement */
@@ -326,24 +446,32 @@ export const figureStyles = html`
     }
     .figure--manager .figure__face {
       background: radial-gradient(circle at 30% 30%, #c7d2fe 0%, #818cf8 100%);
-      box-shadow: inset -2px -2px 6px rgba(0,0,0,0.2), inset 2px 2px 6px rgba(255,255,255,0.7);
+      box-shadow:
+        inset -2px -2px 6px rgba(0, 0, 0, 0.2),
+        inset 2px 2px 6px rgba(255, 255, 255, 0.7);
     }
     .figure--manager .figure__body::before {
       background: radial-gradient(circle at 30% 30%, #4338ca 0%, #1e1b4b 100%);
-      box-shadow: inset -3px -3px 8px rgba(0,0,0,0.4), inset 2px 2px 5px rgba(255,255,255,0.2);
+      box-shadow:
+        inset -3px -3px 8px rgba(0, 0, 0, 0.4),
+        inset 2px 2px 5px rgba(255, 255, 255, 0.2);
     }
     .figure--manager .figure__badge {
       background: radial-gradient(circle, #fbbf24, #d97706);
-      box-shadow: 0 0 15px #fbbf24, 0 0 25px rgba(251, 191, 36, 0.4);
-      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow:
+        0 0 15px #fbbf24,
+        0 0 25px rgba(251, 191, 36, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
     .figure--manager .figure__eye {
       background: #0f172a;
-      box-shadow: 0 0 2px rgba(255,255,255,0.2);
+      box-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
     }
     .figure--manager .figure__cup {
       background: radial-gradient(circle at 30% 30%, #fcd34d 0%, #d97706 100%);
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4), inset -2px -2px 4px rgba(0,0,0,0.2);
+      box-shadow:
+        0 0 10px rgba(245, 158, 11, 0.4),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.2);
     }
 
     /* Head */
@@ -465,7 +593,7 @@ export const figureStyles = html`
       height: 32px;
       background: linear-gradient(90deg, #1e1b4b, #312e81);
       border-radius: 3px 0 0 3px;
-      box-shadow: inset 1px 0 2px rgba(255,255,255,0.1);
+      box-shadow: inset 1px 0 2px rgba(255, 255, 255, 0.1);
     }
 
     .sandbox-wrap .figure__body-side--r {
@@ -476,7 +604,7 @@ export const figureStyles = html`
       height: 32px;
       background: linear-gradient(270deg, #1e1b4b, #312e81);
       border-radius: 0 3px 3px 0;
-      box-shadow: inset -1px 0 2px rgba(255,255,255,0.1);
+      box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.1);
     }
 
     .sandbox-wrap .figure--worker .figure__body-side--l,
@@ -492,7 +620,7 @@ export const figureStyles = html`
       height: 6px;
       background: #6366f1;
       border-radius: 3px 3px 0 0;
-      box-shadow: inset 0 2px 3px rgba(255,255,255,0.3);
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3);
     }
 
     .sandbox-wrap .figure--worker .figure__body-top {
@@ -718,69 +846,90 @@ export const figureStyles = html`
     }
 
     /* Avatar Characters - Volumetric 3D Enhancement */
-    .sandbox-wrap .figure--codex .figure__face { 
-      background: radial-gradient(circle at 30% 30%, #f8fafc 0%, #cbd5e1 100%); 
-      box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), inset 2px 2px 5px rgba(255,255,255,0.8);
+    .sandbox-wrap .figure--codex .figure__face {
+      background: radial-gradient(circle at 30% 30%, #f8fafc 0%, #cbd5e1 100%);
+      box-shadow:
+        inset -2px -2px 5px rgba(0, 0, 0, 0.1),
+        inset 2px 2px 5px rgba(255, 255, 255, 0.8);
     }
-    .sandbox-wrap .figure--codex .figure__body::before { 
-      background: radial-gradient(circle at 30% 30%, #94a3b8 0%, #475569 100%); 
+    .sandbox-wrap .figure--codex .figure__body::before {
+      background: radial-gradient(circle at 30% 30%, #94a3b8 0%, #475569 100%);
     }
-    .sandbox-wrap .figure--codex .figure__badge { 
-      background: radial-gradient(circle, #22d3ee, #0891b2); 
-      box-shadow: 0 0 12px #22d3ee, 0 0 20px rgba(34, 211, 238, 0.4); 
-    }
-
-    .sandbox-wrap .figure--claude .figure__face { 
-      background: radial-gradient(circle at 30% 30%, #ffedd5 0%, #fed7aa 100%); 
-      box-shadow: inset -3px -3px 6px rgba(0,0,0,0.1), inset 2px 2px 4px rgba(255,255,255,0.7);
-    }
-    .sandbox-wrap .figure--claude .figure__head-top { 
-      background: #78350f; height: 14px; top: -14px; border-radius: 12px 12px 0 0; 
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);
-    }
-    .sandbox-wrap .figure--claude .figure__body::before { 
-      background: radial-gradient(circle at 30% 30%, #f97316 0%, #9a3412 100%); 
+    .sandbox-wrap .figure--codex .figure__badge {
+      background: radial-gradient(circle, #22d3ee, #0891b2);
+      box-shadow:
+        0 0 12px #22d3ee,
+        0 0 20px rgba(34, 211, 238, 0.4);
     }
 
-    .sandbox-wrap .figure--gemini .figure__face { 
-      background: radial-gradient(circle at 30% 30%, #fae8ff 0%, #f5d0fe 100%); 
+    .sandbox-wrap .figure--claude .figure__face {
+      background: radial-gradient(circle at 30% 30%, #ffedd5 0%, #fed7aa 100%);
+      box-shadow:
+        inset -3px -3px 6px rgba(0, 0, 0, 0.1),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.7);
     }
-    .sandbox-wrap .figure--gemini .figure__head-top { 
-      background: #2e1065; height: 16px; top: -16px; border-radius: 12px 12px 0 0; 
+    .sandbox-wrap .figure--claude .figure__head-top {
+      background: #78350f;
+      height: 14px;
+      top: -14px;
+      border-radius: 12px 12px 0 0;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2);
     }
-    .sandbox-wrap .figure--gemini .figure__body::before { 
-      background: radial-gradient(circle at 30% 30%, #a855f7 0%, #6b21a8 100%); 
+    .sandbox-wrap .figure--claude .figure__body::before {
+      background: radial-gradient(circle at 30% 30%, #f97316 0%, #9a3412 100%);
     }
-    .sandbox-wrap .figure--gemini .figure__badge { 
-      background: radial-gradient(circle, #fcd34d, #d97706); 
+
+    .sandbox-wrap .figure--gemini .figure__face {
+      background: radial-gradient(circle at 30% 30%, #fae8ff 0%, #f5d0fe 100%);
+    }
+    .sandbox-wrap .figure--gemini .figure__head-top {
+      background: #2e1065;
+      height: 16px;
+      top: -16px;
+      border-radius: 12px 12px 0 0;
+    }
+    .sandbox-wrap .figure--gemini .figure__body::before {
+      background: radial-gradient(circle at 30% 30%, #a855f7 0%, #6b21a8 100%);
+    }
+    .sandbox-wrap .figure--gemini .figure__badge {
+      background: radial-gradient(circle, #fcd34d, #d97706);
       box-shadow: 0 0 10px #fcd34d;
     }
 
-    .sandbox-wrap .figure--qwen .figure__face { 
-      background: radial-gradient(circle at 30% 30%, #e0f2fe 0%, #bae6fd 100%); 
+    .sandbox-wrap .figure--qwen .figure__face {
+      background: radial-gradient(circle at 30% 30%, #e0f2fe 0%, #bae6fd 100%);
     }
-    .sandbox-wrap .figure--qwen .figure__eye { background: #1e3a8a; box-shadow: 0 0 5px rgba(30, 58, 138, 0.5); }
-    .sandbox-wrap .figure--qwen .figure__head-top { 
-      background: #1e3a8a; height: 12px; top: -12px; border-radius: 50% 50% 0 0;
+    .sandbox-wrap .figure--qwen .figure__eye {
+      background: #1e3a8a;
+      box-shadow: 0 0 5px rgba(30, 58, 138, 0.5);
     }
-    .sandbox-wrap .figure--qwen .figure__body::before { 
-      background: radial-gradient(circle at 30% 30%, #2563eb 0%, #1e3a8a 100%); 
+    .sandbox-wrap .figure--qwen .figure__head-top {
+      background: #1e3a8a;
+      height: 12px;
+      top: -12px;
+      border-radius: 50% 50% 0 0;
     }
-
-    .sandbox-wrap .figure--cursor .figure__face { 
-      background: radial-gradient(circle at 30% 30%, #334155 0%, #0f172a 100%); 
-    }
-    .sandbox-wrap .figure--cursor .figure__eye { background: #94a3b8; box-shadow: 0 0 5px #94a3b8; }
-    .sandbox-wrap .figure--cursor .figure__body::before { 
-      background: radial-gradient(circle at 30% 30%, #1e293b 0%, #020617 100%); 
+    .sandbox-wrap .figure--qwen .figure__body::before {
+      background: radial-gradient(circle at 30% 30%, #2563eb 0%, #1e3a8a 100%);
     }
 
-    .sandbox-wrap .figure--molty .figure__face { 
-      background: radial-gradient(circle at 30% 30%, #fca5a5 0%, #ef4444 100%); 
-      box-shadow: inset -2px -2px 6px rgba(0,0,0,0.2);
+    .sandbox-wrap .figure--cursor .figure__face {
+      background: radial-gradient(circle at 30% 30%, #334155 0%, #0f172a 100%);
     }
-    .sandbox-wrap .figure--molty .figure__body::before { 
-      background: radial-gradient(circle at 30% 30%, #dc2626 0%, #7f1d1d 100%); 
+    .sandbox-wrap .figure--cursor .figure__eye {
+      background: #94a3b8;
+      box-shadow: 0 0 5px #94a3b8;
+    }
+    .sandbox-wrap .figure--cursor .figure__body::before {
+      background: radial-gradient(circle at 30% 30%, #1e293b 0%, #020617 100%);
+    }
+
+    .sandbox-wrap .figure--molty .figure__face {
+      background: radial-gradient(circle at 30% 30%, #fca5a5 0%, #ef4444 100%);
+      box-shadow: inset -2px -2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .sandbox-wrap .figure--molty .figure__body::before {
+      background: radial-gradient(circle at 30% 30%, #dc2626 0%, #7f1d1d 100%);
     }
 
     .sandbox-wrap .figure--idle {
@@ -804,7 +953,9 @@ export const figureStyles = html`
     .sandbox-wrap .agent-slot {
       position: absolute;
       pointer-events: none;
-      transition: top 1s cubic-bezier(0.4, 0, 0.2, 1), left 1s cubic-bezier(0.4, 0, 0.2, 1);
+      transition:
+        top 1s cubic-bezier(0.4, 0, 0.2, 1),
+        left 1s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -870,7 +1021,9 @@ export const figureStyles = html`
         box-shadow: 0 0 6px #f59e0b;
       }
       50% {
-        box-shadow: 0 0 16px #f59e0b, 0 0 30px rgba(245, 158, 11, 0.4);
+        box-shadow:
+          0 0 16px #f59e0b,
+          0 0 30px rgba(245, 158, 11, 0.4);
       }
     }
   </style>

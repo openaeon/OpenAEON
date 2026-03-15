@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { computed, Component, input } from '@angular/core';
-import { Primitives, Types } from '@a2ui/lit/0.8';
-import { DynamicComponent } from '../rendering/dynamic-component';
+import { computed, Component, input } from "@angular/core";
+import { Primitives, Types } from "@a2ui/lit/0.8";
+import { DynamicComponent } from "../rendering/dynamic-component";
 
 @Component({
-  selector: 'a2ui-text-field',
+  selector: "a2ui-text-field",
   styles: `
     :host {
       display: flex;
@@ -47,9 +47,7 @@ import { DynamicComponent } from '../rendering/dynamic-component';
 
     <section [class]="theme.components.TextField.container">
       @if (resolvedLabel) {
-        <label [for]="inputId" [class]="theme.components.TextField.label">{{
-          resolvedLabel
-        }}</label>
+        <label [for]="inputId" [class]="theme.components.TextField.label">{{ resolvedLabel }}</label>
       }
 
       <input
@@ -68,11 +66,11 @@ import { DynamicComponent } from '../rendering/dynamic-component';
 export class TextField extends DynamicComponent {
   readonly text = input.required<Primitives.StringValue | null>();
   readonly label = input.required<Primitives.StringValue | null>();
-  readonly inputType = input.required<Types.ResolvedTextField['type'] | null>();
+  readonly inputType = input.required<Types.ResolvedTextField["type"] | null>();
 
-  protected inputValue = computed(() => super.resolvePrimitive(this.text()) || '');
+  protected inputValue = computed(() => super.resolvePrimitive(this.text()) || "");
   protected resolvedLabel = computed(() => super.resolvePrimitive(this.label()));
-  protected inputId = super.getUniqueId('a2ui-input');
+  protected inputId = super.getUniqueId("a2ui-input");
 
   protected handleInput(event: Event) {
     const path = this.text()?.path;

@@ -199,6 +199,23 @@ function stripStaleAssistantUsageBeforeLatestCompaction(messages: AgentMessage[]
   return touched ? out : messages;
 }
 
+function ensureAssistantContentIsArray(messages: AgentMessage[]): AgentMessage[] {
+  let touched = false;
+  const out: AgentMessage[] = [];
+  for (const msg of messages) {
+    if (msg.role !== "assistant" || Array.isArray(msg.content)) {
+      out.push(msg);
+      continue;
+    }
+    touched = true;
+    out.push({
+      ...(msg as any),
+      content: typeof msg.content === "string" ? [{ type: "text", text: msg.content }] : [],
+    } as AgentMessage);
+  }
+  return touched ? out : messages;
+}
+
 function findUnsupportedSchemaKeywords(schema: unknown, path: string): string[] {
   if (!schema || typeof schema !== "object") {
     return [];
@@ -441,7 +458,8 @@ export async function sanitizeSessionHistory(params: {
   const droppedThinking = policy.dropThinkingBlocks
     ? dropThinkingBlocks(sanitizedImages)
     : sanitizedImages;
-  const sanitizedToolCalls = sanitizeToolCallInputs(droppedThinking, {
+  const normalizedAssistantContent = ensureAssistantContentIsArray(droppedThinking);
+  const sanitizedToolCalls = sanitizeToolCallInputs(normalizedAssistantContent, {
     allowedToolNames: params.allowedToolNames,
   });
   const repairedTools = policy.repairToolUseResultPairing

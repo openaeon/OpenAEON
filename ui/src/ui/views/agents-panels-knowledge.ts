@@ -20,14 +20,18 @@ export function renderAgentKnowledge(params: {
   onFileSave: (name: string) => void;
   onFileDelete: (name: string) => void;
 }) {
-  const list = params.agentKnowledgeList?.agentId === params.agentId ? params.agentKnowledgeList : null;
+  const list =
+    params.agentKnowledgeList?.agentId === params.agentId ? params.agentKnowledgeList : null;
   const files = list?.files ?? [];
   const active = params.agentKnowledgeFileActive ?? null;
   const activeEntry = active ? (files.find((file) => file.name === active) ?? null) : null;
   const baseContent = active ? (params.agentKnowledgeFileContents[active] ?? "") : "";
   const draft = active ? (params.agentKnowledgeFileDrafts[active] ?? baseContent) : "";
   const isDirty = active ? draft !== baseContent : false;
-  const status = params.agentKnowledgeStatus?.agentId === params.agentId ? params.agentKnowledgeStatus.status : null;
+  const status =
+    params.agentKnowledgeStatus?.agentId === params.agentId
+      ? params.agentKnowledgeStatus.status
+      : null;
 
   return html`
     <section class="card">

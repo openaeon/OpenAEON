@@ -1996,7 +1996,9 @@ describe("subagent announce formatting", () => {
 
       expect(didAnnounce).toBe(true);
 
-      const call = agentSpy.mock.calls[0]?.[0] as { params?: { message?: string; internalEvents?: Array<{ result?: string }> } };
+      const call = agentSpy.mock.calls[0]?.[0] as {
+        params?: { message?: string; internalEvents?: Array<{ result?: string }> };
+      };
       const internalEvents = call?.params?.internalEvents;
       expect(internalEvents, "should have internal events").toBeDefined();
       expect(internalEvents?.[0]?.result).toContain(findingsText);
@@ -2004,7 +2006,9 @@ describe("subagent announce formatting", () => {
 
       const announcementText = call?.params?.message;
       expect(announcementText).toContain(findingsText);
-      expect(announcementText).toContain("[Updated Shared Context]:\n```json\n" + sharedContextJson + "\n```");
+      expect(announcementText).toContain(
+        "[Updated Shared Context]:\n```json\n" + sharedContextJson + "\n```",
+      );
       expect(announcementText).not.toContain("<updated_shared_context>");
     });
   });

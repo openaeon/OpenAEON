@@ -82,6 +82,8 @@ export type AppViewState = {
   fallbackStatus: FallbackStatus | null;
   chatAvatarUrl: string | null;
   chatThinkingLevel: string | null;
+  chatChaosScore: number;
+  chatEpiphanyFactor: number;
   chatQueue: ChatQueueItem[];
   chatManualRefreshInFlight: boolean;
   chatWebSearchEnabled: boolean;
@@ -177,7 +179,7 @@ export type AppViewState = {
   aeonLogicError: string | null;
   aeonLogicContent: string | null;
   aeonSystemStatus: AeonStatusResult | null;
-  aeonActiveTab: 'logic' | 'memory';
+  aeonActiveTab: "logic" | "memory";
   aeonManualVisible: boolean;
   chatManualVisible: boolean;
   sandboxTaskPlan: import("./views/sandbox.js").TaskPlanSnapshot | null;
@@ -361,7 +363,7 @@ export type AppViewState = {
   handleAgentAvatarChange: (agentId: string, avatar: string) => Promise<void>;
   handleAeonLogicRefresh: () => Promise<void>;
   handleAeonLogicCompaction: () => Promise<void>;
-  handleAeonTabChange: (tab: 'logic' | 'memory') => void;
+  handleAeonTabChange: (tab: "logic" | "memory") => void;
   handleToggleAeonManual: (visible: boolean) => void;
   handleToggleChatManual: (visible: boolean) => void;
 };

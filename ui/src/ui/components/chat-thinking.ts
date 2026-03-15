@@ -9,6 +9,8 @@ export class ChatThinking extends LitElement {
   @property({ type: String }) content = "";
   @property({ type: Number }) duration?: number;
   @property({ type: Boolean }) isStreaming = false;
+  @property({ type: Number }) chaosScore = 0;
+  @property({ type: Number }) epiphanyFactor = 0;
   @state() private isExpanded = false;
 
   connectedCallback() {
@@ -176,11 +178,23 @@ export class ChatThinking extends LitElement {
       opacity: 0.4;
       animation: thinkingTyping 1.4s infinite ease-in-out both;
     }
-    .skeleton-dot:nth-child(1) { animation-delay: -0.32s; }
-    .skeleton-dot:nth-child(2) { animation-delay: -0.16s; }
+    .skeleton-dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+    .skeleton-dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
     @keyframes thinkingTyping {
-      0%, 80%, 100% { transform: scale(0); opacity: 0.2; }
-      40% { transform: scale(1); opacity: 1; }
+      0%,
+      80%,
+      100% {
+        transform: scale(0);
+        opacity: 0.2;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     .thinking-content :first-child {
@@ -205,6 +219,10 @@ export class ChatThinking extends LitElement {
     const label = this.isStreaming
       ? "AEON 深度思考 (AEON Deep Thinking)"
       : `逻辑推演 (Logic Deduction) ${durationText ? `(${durationText})` : ""}`;
+    const metrics: string[] = [];
+    if (this.chaosScore > 0) metrics.push(`Chaos: ${this.chaosScore.toFixed(1)}`);
+    if (this.epiphanyFactor > 0) metrics.push(`Depth: ${this.epiphanyFactor}`);
+    const metricsText = metrics.length > 0 ? ` [${metrics.join(" | ")}]` : "";
 
     return html`
       <div class="thinking-box aeon-glass-light aeon-border-glow">
@@ -213,7 +231,7 @@ export class ChatThinking extends LitElement {
             ${icons.brain}
           </span>
           <span class="thinking-label" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--aeon-cyan); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em;">
-            ${label}
+            ${label}${metricsText}
           </span>
           <span class="thinking-chevron ${this.isExpanded ? "expanded" : ""}">
             <svg
@@ -236,9 +254,9 @@ export class ChatThinking extends LitElement {
                 : this.isStreaming
                   ? html`
                       <div class="skeleton-typing">
-                        <div class="skeleton-dot" style="background: var(--aeon-cyan);"></div>
-                        <div class="skeleton-dot" style="background: var(--aeon-purple);"></div>
-                        <div class="skeleton-dot" style="background: var(--aeon-indigo);"></div>
+                        <div class="skeleton-dot" style="background: var(--aeon-cyan)"></div>
+                        <div class="skeleton-dot" style="background: var(--aeon-purple)"></div>
+                        <div class="skeleton-dot" style="background: var(--aeon-indigo)"></div>
                       </div>
                     `
                   : nothing

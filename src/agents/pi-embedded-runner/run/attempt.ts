@@ -12,6 +12,7 @@ import { resolveChannelCapabilities } from "../../../config/channel-capabilities
 import type { OPENAEONConfig } from "../../../config/config.js";
 import { getMachineDisplayName } from "../../../infra/machine-name.js";
 import { MAX_IMAGE_BYTES } from "../../../media/constants.js";
+import OpenAI from "openai";
 import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
 import type {
   PluginHookAgentContext,
@@ -469,6 +470,45 @@ function summarizeSessionContext(messages: AgentMessage[]): {
   };
 }
 
+// v1/responses Deep Integration: Force serverside persistence (store: true)
+// for compatible OpenAI requests to maximize caching and performance.
+// This is applied via prototype patching to bypass hardcoding in pi-ai.
+export let openAiPatched = false;
+export function patchOpenAiForResponses() {
+  if (openAiPatched) return;
+  openAiPatched = true;
+  try {
+    const proto = OpenAI.prototype as any;
+    if (proto && proto.responses && typeof proto.responses.create === "function") {
+      const original = proto.responses.create;
+      proto.responses.create = function (params: any, options: any) {
+        if (params && typeof params === "object") {
+          const modelId = String(params.model || "");
+          // Enable for gpt-5, o1/o3 series and custom yunwu-ai models that support v1/responses
+          if (
+            modelId.includes("gpt-5") ||
+            modelId.includes("o1") ||
+            modelId.includes("o3") ||
+            modelId.includes("yunwu")
+          ) {
+            if (params.store === false || params.store === undefined) {
+              params.store = true;
+            }
+            // Maximize reasoning transparency with detailed summaries
+            if (!params.reasoning) {
+              params.reasoning = { summary: "detailed" };
+            }
+          }
+        }
+        return original.apply(this, [params, options]);
+      };
+      log.info("openai-compat: forced 'store: true' enabled for v1/responses API");
+    }
+  } catch (err) {
+    log.error(`openai-compat: failed to patch OpenAI prototype: ${String(err)}`);
+  }
+}
+
 export async function runEmbeddedAttempt(
   params: EmbeddedRunAttemptParams,
 ): Promise<EmbeddedRunAttemptResult> {
@@ -852,6 +892,10 @@ export async function runEmbeddedAttempt(
         : [];
 
       const allCustomTools = [...customTools, ...clientToolDefs];
+
+      if (params.model.api?.includes("responses")) {
+        patchOpenAiForResponses();
+      }
 
       ({ session } = await createAgentSession({
         cwd: resolvedWorkspace,
@@ -1352,7 +1396,9 @@ export async function runEmbeddedAttempt(
           // Tactical history compression: summarize long successful tool sequences to save tokens.
           const compressedMessages = compressHistory(activeSession.messages);
           if (compressedMessages.length !== activeSession.messages.length) {
-            log.debug(`Tactical history compression applied: ${activeSession.messages.length} -> ${compressedMessages.length} messages`);
+            log.debug(
+              `Tactical history compression applied: ${activeSession.messages.length} -> ${compressedMessages.length} messages`,
+            );
             activeSession.agent.replaceMessages(compressedMessages);
           }
 
@@ -1592,6 +1638,17 @@ export async function runEmbeddedAttempt(
         .slice()
         .toReversed()
         .find((m) => m.role === "assistant");
+
+      if (lastAssistant && lastAssistant.role === "assistant") {
+        const content = (lastAssistant as any).content;
+        log.info(
+          `[diag] lastAssistant content type=${Array.isArray(content) ? "array" : typeof content} ` +
+            `isArray=${Array.isArray(content)} runId=${params.runId}`,
+        );
+        if (typeof content === "string" && content.length > 0) {
+          log.warn(`[diag] lastAssistant content is a string: "${content.slice(0, 100)}..."`);
+        }
+      }
 
       const toolMetasNormalized = toolMetas
         .filter(

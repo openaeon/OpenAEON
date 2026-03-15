@@ -38,7 +38,6 @@ export function createQwenWebStreamFn(
         const isThinkingModel = model.id.toLowerCase().includes("thinking");
         let deepSearch = streamParams?.webSearchEnabled ?? true;
 
-
         // Force new session if search mode changed to prevent sticky tools/behavior
         if (
           lastSearchStateMap.has(sessionKey) &&
@@ -90,7 +89,7 @@ export function createQwenWebStreamFn(
             '<tool_call id="sub00003" name="sessions_spawn">{"task": "Research Apple GPU products and pricing", "label": "apple_research"}</tool_call>\n' +
             "```\n\n" +
             "### ⚠️ Anti-Pattern (DO NOT DO THIS)\n" +
-            "❌ Wrong: \"I will now execute sessions_spawn three times...\"\n" +
+            '❌ Wrong: "I will now execute sessions_spawn three times..."\n' +
             "✅ Correct: Output the actual <tool_call> XML tags as shown above.\n\n" +
             "### Browser Tool\n" +
             "- Profile 'openaeon' (Recommended): Independent browser window.\n" +
@@ -100,8 +99,8 @@ export function createQwenWebStreamFn(
             "### Multi-Agent Orchestration Protocol (三阶段 FSM)\n" +
             "When the user gives a COMPLEX multi-step task, follow this 3-phase workflow:\n\n" +
             "#### Phase 1: PLANNING (规划阶段)\n" +
-            "1. Call `write_todos(create_plan, description=\"...\")` — this creates plan with phase=planning\n" +
-            "2. Call `write_todos(add_todo, title=\"...\")` for each major step (at least 3-5 steps)\n" +
+            '1. Call `write_todos(create_plan, description="...")` — this creates plan with phase=planning\n' +
+            '2. Call `write_todos(add_todo, title="...")` for each major step (at least 3-5 steps)\n' +
             "3. Present the implementation plan to the user as a structured Markdown overview:\n" +
             "   - Problem analysis / 问题分析\n" +
             "   - Proposed approach / 实施方案\n" +
@@ -110,16 +109,16 @@ export function createQwenWebStreamFn(
             "5. When user sends 批准/approve/开始/确认/执行, IMMEDIATELY proceed to Phase 2\n\n" +
             "#### Phase 2: EXECUTION (执行阶段) — FULLY AUTOMATIC\n" +
             "Once approved, execute ALL steps without stopping:\n" +
-            "1. Call `write_todos(set_phase, phase=\"execution\")` to transition\n" +
+            '1. Call `write_todos(set_phase, phase="execution")` to transition\n' +
             "2. For each todo:\n" +
-            "   - `write_todos(update_todo, taskId, status=\"in_progress\")`\n" +
-            "   - Do the work directly OR `sessions_spawn(task=\"...\", label=\"...\")` to delegate\n" +
+            '   - `write_todos(update_todo, taskId, status="in_progress")`\n' +
+            '   - Do the work directly OR `sessions_spawn(task="...", label="...")` to delegate\n' +
             "   - When using `sessions_spawn`, the tool automatically waits for the subagent to finish and returns its output inline. You must read it and then proceed.\n" +
-            "3. Complete ALL todos automatically: `write_todos(update_todo, taskId, status=\"done\", result=\"...\")` (pass subagent or step output in result)\n" +
+            '3. Complete ALL todos automatically: `write_todos(update_todo, taskId, status="done", result="...")` (pass subagent or step output in result)\n' +
             "4. Do NOT stop or ask for approval between steps.\n\n" +
             "#### Phase 3: VERIFICATION (验证阶段)\n" +
             "After ALL todos are done:\n" +
-            "1. Call `write_todos(set_phase, phase=\"verification\")`\n" +
+            '1. Call `write_todos(set_phase, phase="verification")`\n' +
             "2. Synthesize all subagent results into a consolidated report\n" +
             "3. Call `write_todos(complete_plan)` to finalize (auto-sets phase=complete)\n\n" +
             "Example PLANNING phase:\n" +
@@ -136,7 +135,6 @@ export function createQwenWebStreamFn(
             '<tool_call id="spn00001" name="sessions_spawn">{"task": "Research NVIDIA GPU lineup...", "label": "nvidia_research"}</tool_call>\n' +
             "```\n\n" +
             "### Available Tools\n";
-
 
           // If native search is enabled, we hide the local web_search tool to force native logic
           const filteredTools = streamParams?.webSearchEnabled
@@ -227,7 +225,6 @@ export function createQwenWebStreamFn(
           prompt +=
             '\n\n[SYSTEM HINT]: CRITICAL REMINDER — To use a tool, you MUST output the exact XML format: <tool_call id="unique_id" name="tool_name">{"param": "value"}</tool_call>. Writing about tools in plain text WILL NOT execute them. For parallel tasks (e.g., spawning multiple subagents), output multiple <tool_call> tags in the same response.';
         }
-
 
         // Append Mode Hint to all prompts (even continuing ones) to ensure consistency
         const modeHint = deepSearch

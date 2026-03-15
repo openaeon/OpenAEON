@@ -32,9 +32,7 @@ export const layout = `
       const idx = index - 24;
       const lbl = idx < 0 ? `n${Math.abs(idx)}` : idx.toString();
       return `
-        .layout-p-${lbl} { --padding: ${
-        idx * grid
-      }px; padding: var(--padding); }
+        .layout-p-${lbl} { --padding: ${idx * grid}px; padding: var(--padding); }
         .layout-pt-${lbl} { padding-top: ${idx * grid}px; }
         .layout-pr-${lbl} { padding-right: ${idx * grid}px; }
         .layout-pb-${lbl} { padding-bottom: ${idx * grid}px; }
@@ -65,9 +63,7 @@ export const layout = `
     .fill(0)
     .map((_, idx) => {
       return `
-        .layout-grd-col${idx + 1} { grid-template-columns: ${"1fr "
-        .repeat(idx + 1)
-        .trim()}; }`;
+        .layout-grd-col${idx + 1} { grid-template-columns: ${"1fr ".repeat(idx + 1).trim()}; }`;
     })
     .join("\n")}
 

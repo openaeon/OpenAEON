@@ -14,12 +14,12 @@
  limitations under the License.
  */
 
-import { Component, computed, input } from '@angular/core';
-import { Primitives, Styles, Types } from '@a2ui/lit/0.8';
-import { DynamicComponent } from '../rendering/dynamic-component';
+import { Component, computed, input } from "@angular/core";
+import { Primitives, Styles, Types } from "@a2ui/lit/0.8";
+import { DynamicComponent } from "../rendering/dynamic-component";
 
 @Component({
-  selector: 'a2ui-image',
+  selector: "a2ui-image",
   styles: `
     :host {
       display: block;
@@ -47,7 +47,7 @@ import { DynamicComponent } from '../rendering/dynamic-component';
 })
 export class Image extends DynamicComponent {
   readonly url = input.required<Primitives.StringValue | null>();
-  readonly usageHint = input.required<Types.ResolvedImage['usageHint'] | null>();
+  readonly usageHint = input.required<Types.ResolvedImage["usageHint"] | null>();
 
   protected readonly resolvedUrl = computed(() => this.resolvePrimitive(this.url()));
 

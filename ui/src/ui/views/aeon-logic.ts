@@ -17,8 +17,8 @@ export interface AeonLogicOptions {
   showManual?: boolean;
   onToggleManual?: (visible: boolean) => void;
   cognitiveLog?: import("../types.ts").CognitiveLogEntry[];
-  activeTab?: 'logic' | 'memory';
-  onTabChange?: (tab: 'logic' | 'memory') => void;
+  activeTab?: "logic" | "memory";
+  onTabChange?: (tab: "logic" | "memory") => void;
 }
 
 export function renderAeonLogic(params: AeonLogicOptions) {
@@ -27,25 +27,28 @@ export function renderAeonLogic(params: AeonLogicOptions) {
   const userDraft = params.userDraft?.trim().toLowerCase() || "";
   const isThinking = params.isThinking || false;
   const showManual = params.showManual || false;
-  const activeTab = params.activeTab || 'logic';
+  const activeTab = params.activeTab || "logic";
 
   // Extract keywords from history (last message) for background resonance
-  const lastMessage = params.history && params.history.length > 0 
-    ? (params.history[params.history.length - 1] as any) 
-    : null;
+  const lastMessage =
+    params.history && params.history.length > 0
+      ? (params.history[params.history.length - 1] as any)
+      : null;
   const historyText = lastMessage?.text?.toLowerCase() || "";
-  
+
   const draftTokens = userDraft.split(/\s+/).filter((t: string) => t.length > 1);
   const historyTokens = historyText.split(/\s+/).filter((t: string) => t.length > 1);
   const allTokens = [...new Set([...draftTokens, ...historyTokens])];
 
-  const draftIntensity = Math.min(1, (userDraft.length / 50) + (isThinking ? 0.5 : 0));
-  
+  const draftIntensity = Math.min(1, userDraft.length / 50 + (isThinking ? 0.5 : 0));
+
   // Normalized status values with defaults
   const cpuVal = sys?.cpuLoad?.[0] ?? 0.1;
   const memVal = sys?.memoryUsagePercent ?? 32;
-  const uptimeVal = sys?.uptime ? `${Math.floor(sys.uptime / 3600)}h ${Math.floor((sys.uptime % 3600) / 60)}m` : "0h 0m";
-  
+  const uptimeVal = sys?.uptime
+    ? `${Math.floor(sys.uptime / 3600)}h ${Math.floor((sys.uptime % 3600) / 60)}m`
+    : "0h 0m";
+
   const cg = statusRes?.cognitiveState;
   const dynamicEntropy = cg?.entropy ?? statusRes?.cognitiveEntropy ?? 15;
   const neuralDepth = statusRes?.neuralDepth ?? 1;
@@ -53,7 +56,7 @@ export function renderAeonLogic(params: AeonLogicOptions) {
   const memorySaturation = cg?.density ?? statusRes?.memorySaturation ?? 0;
   const memorySizeKB = ((statusRes?.memorySize ?? 0) / 1024).toFixed(1);
   const logicSizeKB = ((statusRes?.logicGateSize ?? 0) / 1024).toFixed(1);
-  const dialecticStage = cg?.phase ?? statusRes?.dialecticStage ?? 'thesis';
+  const dialecticStage = cg?.phase ?? statusRes?.dialecticStage ?? "thesis";
   const autoSealEnabled = statusRes?.autoSealEnabled ?? false;
   const lastSealTime = statusRes?.lastSealTime;
   const chaosScore = statusRes?.chaosScore ?? 0;
@@ -63,7 +66,7 @@ export function renderAeonLogic(params: AeonLogicOptions) {
   const intensity = statusRes?.evolution?.lastMaintenanceIntensity ?? "medium";
 
   const isSealRecommended = memorySaturation > 80;
-  const chaosLevel = chaosScore >= 5 ? 'critical' : chaosScore >= 3 ? 'warning' : 'stable';
+  const chaosLevel = chaosScore >= 5 ? "critical" : chaosScore >= 3 ? "warning" : "stable";
 
   // Render segmented progress segments
   const renderSegments = (percent: number, colorClass: string) => {
@@ -71,11 +74,13 @@ export function renderAeonLogic(params: AeonLogicOptions) {
     const activeSegments = Math.ceil((percent / 100) * totalSegments);
     return html`
       <div class="aeon-segmented-progress">
-        ${Array.from({ length: totalSegments }).map((_, i) => html`
+        ${Array.from({ length: totalSegments }).map(
+          (_, i) => html`
           <div class="aeon-progress-segment ${i < activeSegments ? "active" : ""}" 
                style="${i < activeSegments ? `background: var(--aeon-${colorClass}); box-shadow: 0 0 10px var(--aeon-${colorClass});` : ""}">
           </div>
-        `)}
+        `,
+        )}
       </div>
     `;
   };
@@ -83,37 +88,39 @@ export function renderAeonLogic(params: AeonLogicOptions) {
   // Parse logic content for Axiomatic 4D topological rendering
   const renderLogicContent = (content: string) => {
     if (!content) return t("chat.noGates");
-    
-    const lines = content.split("\n").filter(l => l.trim().length > 0);
+
+    const lines = content.split("\n").filter((l) => l.trim().length > 0);
     const now = Date.now();
-    
+
     return html`
       <div class="aeon-hyper-grid" style="perspective: 1500px; padding-bottom: 100px;">
         ${lines.map((line, index) => {
           const metaMatch = line.match(/<!-- \{ "ts": (\d+)(?:, "v": \d+)? \} -->/);
           const cleanLine = line.replace(/<!-- \{ "ts": \d+(?:, "v": \d+)? \} -->/, "").trim();
-          
+
           let zIndex = 0;
           let opacity = 1;
           let color = "var(--aeon-primary)";
           let scale = 1;
           let rotateX = -2;
-          
+
           if (metaMatch) {
             const ts = parseInt(metaMatch[1], 10);
             const ageHours = (now - ts) / (1000 * 60 * 60);
-            
+
             // Temporal dimension: Vanishing point recedence
             zIndex = Math.max(-800, 0 - ageHours * 20);
-            opacity = Math.max(0.1, 1 - (ageHours / 168)); 
-            scale = Math.max(0.6, 1 - (ageHours / 400));
+            opacity = Math.max(0.1, 1 - ageHours / 168);
+            scale = Math.max(0.6, 1 - ageHours / 400);
             rotateX = ageHours * 0.5; // Slight tilt as it recedes
-            
+
             if (ageHours > 24) color = "var(--aeon-secondary)";
             else if (ageHours > 1) color = "rgba(0, 242, 255, 0.7)";
           }
 
-          const isResonating = allTokens.length > 0 && allTokens.some(token => cleanLine.toLowerCase().includes(token));
+          const isResonating =
+            allTokens.length > 0 &&
+            allTokens.some((token) => cleanLine.toLowerCase().includes(token));
           if (isResonating) {
             zIndex = 50; // Pop out
             color = "var(--aeon-accent)";
@@ -134,7 +141,22 @@ export function renderAeonLogic(params: AeonLogicOptions) {
                       <div class="mono muted" style="font-size: 0.55rem; opacity: 0.3; letter-spacing: 1px;">
                          SILICON_LOC: ${Math.random().toString(36).substring(2, 6).toUpperCase()}::NOD_${index}
                       </div>
-                      ${isResonating ? html`<div class="aeon-shushu-pulse" style="width: 6px; height: 6px; border-radius: 50%; background: var(--aeon-accent); box-shadow: 0 0 10px var(--aeon-accent);"></div>` : nothing}
+                      ${
+                        isResonating
+                          ? html`
+                              <div
+                                class="aeon-shushu-pulse"
+                                style="
+                                  width: 6px;
+                                  height: 6px;
+                                  border-radius: 50%;
+                                  background: var(--aeon-accent);
+                                  box-shadow: 0 0 10px var(--aeon-accent);
+                                "
+                              ></div>
+                            `
+                          : nothing
+                      }
                    </div>
                 </div>
               </div>
@@ -142,7 +164,6 @@ export function renderAeonLogic(params: AeonLogicOptions) {
         })}
       </div>`;
   };
-
 
   return html`
     <style>
@@ -307,11 +328,15 @@ export function renderAeonLogic(params: AeonLogicOptions) {
         </div>
         
         <div class="row" style="gap: 16px; align-items: center;">
-          ${isSealRecommended ? html`
+          ${
+            isSealRecommended
+              ? html`
             <div class="aeon-recommendation-tag animate-pulse" style="color: var(--aeon-orange); font-family: var(--mono); font-size: 0.7rem; padding: 4px 12px; background: rgba(255,165,0,0.1); border: 1px solid var(--aeon-orange); border-radius: 4px;">
               ${t("chat.distillationRecommended")}
             </div>
-          ` : nothing}
+          `
+              : nothing
+          }
           <div class="card aeon-glass column" style="padding: 8px 16px; min-width: 160px; gap: 4px;">
              <div class="row" style="justify-content: space-between; align-items: center;">
                 <div class="muted mono" style="font-size: 0.6rem;">AUTO_SEAL</div>
@@ -331,7 +356,13 @@ export function renderAeonLogic(params: AeonLogicOptions) {
                   ?disabled=${params.loading} 
                   style="color: var(--aeon-cyan); position: relative;">
             ✨ ${t("chat.sealAxioms")}
-            ${isSealRecommended ? html`<div class="aeon-btn-glow-layer"></div>` : nothing}
+            ${
+              isSealRecommended
+                ? html`
+                    <div class="aeon-btn-glow-layer"></div>
+                  `
+                : nothing
+            }
           </button>
         </div>
       </header>
@@ -372,11 +403,15 @@ export function renderAeonLogic(params: AeonLogicOptions) {
               <div style="position: absolute; right: 8px; bottom: 4px; font-size: 0.5rem; color: var(--aeon-cyan); opacity: 0.5; font-family: var(--mono);">
                 AUTOPERC_ACTIVE
               </div>
-              ${userDraft ? html`
+              ${
+                userDraft
+                  ? html`
                 <div style="position: absolute; left: 10px; top: 10px; font-size: 0.6rem; color: var(--aeon-orange); font-family: var(--mono);">
                    DETECTION: ${userDraft.length}B
                 </div>
-              ` : nothing}
+              `
+                  : nothing
+              }
             </div>
           </section>
 
@@ -392,9 +427,11 @@ export function renderAeonLogic(params: AeonLogicOptions) {
               
               <!-- Recursive Depth Visualizer -->
               <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                ${Array.from({ length: Math.min(6, neuralDepth) }).map((_, i) => html`
+                ${Array.from({ length: Math.min(6, neuralDepth) }).map(
+                  (_, i) => html`
                   <div class="aeon-depth-frame" style="width: ${i * 40 + 60}px; height: ${i * 40 + 60}px; border-radius: ${4 + i * 2}px; animation-delay: ${i * 0.5}s;"></div>
-                `)}
+                `,
+                )}
               </div>
 
               <!-- Live Peano Indicator -->
@@ -413,13 +450,21 @@ export function renderAeonLogic(params: AeonLogicOptions) {
           
           <div class="row" style="background: rgba(0,242,255,0.05); padding: 0 24px; border-bottom: 1px solid rgba(0,242,255,0.1); justify-content: space-between; align-items: stretch; height: 48px;">
             <div class="row" style="gap: 0; align-items: stretch;">
-              <button class="aeon-tab ${activeTab === 'logic' ? 'active' : ''}" @click=${() => params.onTabChange?.('logic')}>
+              <button class="aeon-tab ${activeTab === "logic" ? "active" : ""}" @click=${() => params.onTabChange?.("logic")}>
                 <span class="mono" style="font-size: 0.75rem;">[ LOGIC_GATES.md ]</span>
               </button>
-              <button class="aeon-tab ${activeTab === 'memory' ? 'active' : ''}" @click=${() => params.onTabChange?.('memory')}>
+              <button class="aeon-tab ${activeTab === "memory" ? "active" : ""}" @click=${() => params.onTabChange?.("memory")}>
                 <span class="mono" style="font-size: 0.75rem;">[ MEMORY_GRAPH ]</span>
               </button>
-              ${userDraft ? html`<div class="row" style="align-items: center; margin-left: 16px;"><span style="color: var(--aeon-orange); font-size: 0.7rem;">(PERCEIVING...)</span></div>` : nothing}
+              ${
+                userDraft
+                  ? html`
+                      <div class="row" style="align-items: center; margin-left: 16px">
+                        <span style="color: var(--aeon-orange); font-size: 0.7rem">(PERCEIVING...)</span>
+                      </div>
+                    `
+                  : nothing
+              }
             </div>
             <div class="column" style="justify-content: center;">
               <div class="mono muted" style="font-size: 0.7rem;">Z = Z² + C</div>
@@ -428,22 +473,23 @@ export function renderAeonLogic(params: AeonLogicOptions) {
 
           <div style="flex: 1; overflow-y: auto; padding: 40px; position: relative; display: flex; flex-direction: column; perspective: 1000px;">
             <div style="flex: 1; transform-style: preserve-3d;">
-              ${params.loading 
-                ? html`
+              ${
+                params.loading
+                  ? html`
                     <div style="height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;">
                       <div class="spinner"></div>
                       <div class="muted mono animate-pulse">${t("agents.knowledge.loading")}</div>
                     </div>
                   `
-                : params.error
-                  ? html`<div class="callout danger aeon-glass" style="margin: 24px;">${params.error}</div>`
-                  : activeTab === 'logic'
-                    ? html`
+                  : params.error
+                    ? html`<div class="callout danger aeon-glass" style="margin: 24px;">${params.error}</div>`
+                    : activeTab === "logic"
+                      ? html`
                         <div class="aeon-hyper-grid" style="transform: rotateX(5deg);">
                            ${renderLogicContent(params.content || "")}
                         </div>
                       `
-                    : html`
+                      : html`
                         <div class="aeon-memory-view">
                            ${renderMemoryGraph({ graph: statusRes?.evolution?.memoryGraph, active: true })}
                         </div>
@@ -474,16 +520,23 @@ export function renderAeonLogic(params: AeonLogicOptions) {
             <h3 class="mono" style="margin: 0 0 16px 0; color: var(--aeon-cyan); font-size: 0.8rem;">${t("chat.memorySaturation")}</h3>
             <div class="row" style="justify-content: space-between; margin-bottom: 8px;">
                <span class="mono muted" style="font-size: 0.65rem;">${memorySizeKB} KB / 50 KB</span>
-               <span class="mono" style="font-size: 0.8rem; color: ${memorySaturation > 80 ? 'var(--aeon-orange)' : 'var(--aeon-cyan)'}">${memorySaturation}%</span>
+               <span class="mono" style="font-size: 0.8rem; color: ${memorySaturation > 80 ? "var(--aeon-orange)" : "var(--aeon-cyan)"}">${memorySaturation}%</span>
             </div>
             <div class="aeon-gauge-container" style="height: 6px; background: rgba(0,242,255,0.05); border-radius: 3px; overflow: hidden; position: relative; border: 1px solid rgba(0,242,255,0.1);">
-               <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${memorySaturation}%; background: ${memorySaturation > 80 ? 'var(--aeon-orange)' : 'var(--aeon-cyan)'}; box-shadow: 0 0 15px ${memorySaturation > 80 ? 'var(--aeon-orange)' : 'var(--aeon-cyan)'}; transition: width 1s ease-out;"></div>
+               <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${memorySaturation}%; background: ${memorySaturation > 80 ? "var(--aeon-orange)" : "var(--aeon-cyan)"}; box-shadow: 0 0 15px ${memorySaturation > 80 ? "var(--aeon-orange)" : "var(--aeon-cyan)"}; transition: width 1s ease-out;"></div>
             </div>
-            ${isSealRecommended ? html`
-               <div class="mono" style="font-size: 0.6rem; color: var(--aeon-orange); margin-top: 10px; line-height: 1.4;">
-                  CRITICAL_OVERLOAD: Axiom distillation recommended to maintain cognitive clarity.
-               </div>
-            ` : nothing}
+            ${
+              isSealRecommended
+                ? html`
+                    <div
+                      class="mono"
+                      style="font-size: 0.6rem; color: var(--aeon-orange); margin-top: 10px; line-height: 1.4"
+                    >
+                      CRITICAL_OVERLOAD: Axiom distillation recommended to maintain cognitive clarity.
+                    </div>
+                  `
+                : nothing
+            }
           </section>
 
           <!-- Cognitive Parameters Panel -->
@@ -492,15 +545,15 @@ export function renderAeonLogic(params: AeonLogicOptions) {
             <div class="column" style="gap: 12px;">
               <div class="row" style="justify-content: space-between;">
                 <span class="mono muted" style="font-size: 0.65rem;">TEMPERATURE</span>
-                <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${statusRes?.evolution?.cognitiveParameters?.temperature ?? '0.7'}</span>
+                <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${statusRes?.evolution?.cognitiveParameters?.temperature ?? "0.7"}</span>
               </div>
               <div class="row" style="justify-content: space-between;">
                 <span class="mono muted" style="font-size: 0.65rem;">TOP_P</span>
-                <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${statusRes?.evolution?.cognitiveParameters?.top_p ?? '1.0'}</span>
+                <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${statusRes?.evolution?.cognitiveParameters?.top_p ?? "1.0"}</span>
               </div>
               <div class="row" style="justify-content: space-between;">
                 <span class="mono muted" style="font-size: 0.65rem;">MAX_TOKENS</span>
-                <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${statusRes?.evolution?.cognitiveParameters?.maxTokens ?? 'AUTO'}</span>
+                <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${statusRes?.evolution?.cognitiveParameters?.maxTokens ?? "AUTO"}</span>
               </div>
             </div>
             <div class="mono" style="font-size: 0.55rem; color: var(--aeon-purple); margin-top: 12px; opacity: 0.6;">
@@ -531,18 +584,18 @@ export function renderAeonLogic(params: AeonLogicOptions) {
           <section class="card aeon-glass aeon-card-3d" style="padding: 20px;">
              <h3 class="mono" style="margin: 0 0 16px 0; font-size: 0.8rem; color: var(--text-strong);">${t("chat.dialecticFlow")}</h3>
              <div class="column" style="gap: 12px;">
-                <div class="row" style="gap: 12px; align-items: center; opacity: ${dialecticStage === 'thesis' ? 1 : 0.4};">
-                   <div class="${dialecticStage === 'thesis' ? 'aeon-pulse-dot' : ''}" style="width: 20px; height: 20px; background: var(--aeon-cyan); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: black; font-weight: 800;">T</div>
+                <div class="row" style="gap: 12px; align-items: center; opacity: ${dialecticStage === "thesis" ? 1 : 0.4};">
+                   <div class="${dialecticStage === "thesis" ? "aeon-pulse-dot" : ""}" style="width: 20px; height: 20px; background: var(--aeon-cyan); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: black; font-weight: 800;">T</div>
                    <span class="mono" style="font-size: 0.75rem; color: var(--aeon-cyan);">${t("chat.thesis")}</span>
                 </div>
                 <div style="width: 2px; height: 10px; background: rgba(255,255,255,0.1); margin-left: 9px;"></div>
-                <div class="row" style="gap: 12px; align-items: center; opacity: ${dialecticStage === 'antithesis' ? 1 : 0.4};">
-                   <div class="${dialecticStage === 'antithesis' ? 'aeon-pulse-dot' : ''}" style="width: 20px; height: 20px; background: var(--aeon-purple); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; font-weight: 800;">A</div>
+                <div class="row" style="gap: 12px; align-items: center; opacity: ${dialecticStage === "antithesis" ? 1 : 0.4};">
+                   <div class="${dialecticStage === "antithesis" ? "aeon-pulse-dot" : ""}" style="width: 20px; height: 20px; background: var(--aeon-purple); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; font-weight: 800;">A</div>
                    <span class="mono" style="font-size: 0.75rem; color: var(--aeon-purple);">${t("chat.antithesis")}</span>
                 </div>
                 <div style="width: 2px; height: 10px; background: rgba(255,255,255,0.1); margin-left: 9px;"></div>
-                <div class="row" style="gap: 12px; align-items: center; opacity: ${dialecticStage === 'synthesis' ? 1 : 0.4};">
-                   <div class="${dialecticStage === 'synthesis' ? 'aeon-pulse-dot' : ''}" style="width: 20px; height: 20px; background: var(--aeon-orange); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: black; font-weight: 800;">S</div>
+                <div class="row" style="gap: 12px; align-items: center; opacity: ${dialecticStage === "synthesis" ? 1 : 0.4};">
+                   <div class="${dialecticStage === "synthesis" ? "aeon-pulse-dot" : ""}" style="width: 20px; height: 20px; background: var(--aeon-orange); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: black; font-weight: 800;">S</div>
                    <span class="mono" style="font-size: 0.75rem; color: var(--aeon-orange);">${t("chat.synthesis")}</span>
                 </div>
              </div>
@@ -551,7 +604,9 @@ export function renderAeonLogic(params: AeonLogicOptions) {
       </div>
     </div>
 
-    ${showManual ? html`
+    ${
+      showManual
+        ? html`
       <div class="aeon-manual-overlay" @click=${() => params.onToggleManual?.(false)}>
         <div class="card aeon-glass column" style="max-width: 800px; padding: 40px; gap: 32px; border: 1px solid var(--aeon-cyan);" @click=${(e: Event) => e.stopPropagation()}>
           <div class="row" style="justify-content: space-between; align-items: start;">
@@ -610,6 +665,8 @@ export function renderAeonLogic(params: AeonLogicOptions) {
           </div>
         </div>
       </div>
-    ` : nothing}
+    `
+        : nothing
+    }
   `;
 }

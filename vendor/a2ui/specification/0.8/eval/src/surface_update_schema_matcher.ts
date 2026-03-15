@@ -26,7 +26,7 @@ export class SurfaceUpdateSchemaMatcher extends SchemaMatcher {
     public componentType: string,
     public propertyName?: string,
     public propertyValue?: any,
-    public caseInsensitive: boolean = false
+    public caseInsensitive: boolean = false,
   ) {
     super();
   }
@@ -61,7 +61,7 @@ export class SurfaceUpdateSchemaMatcher extends SchemaMatcher {
     }
 
     const matchingComponents = components.filter(
-      (c: any) => c.component && c.component[this.componentType]
+      (c: any) => c.component && c.component[this.componentType],
     );
 
     if (matchingComponents.length === 0) {
@@ -90,20 +90,9 @@ export class SurfaceUpdateSchemaMatcher extends SchemaMatcher {
         }
 
         // Specifically for Buttons, check for label in a child Text component
-        if (
-          this.componentType === "Button" &&
-          this.propertyName === "label" &&
-          properties.child
-        ) {
-          const childComponent = this.getComponentById(
-            components,
-            properties.child
-          );
-          if (
-            childComponent &&
-            childComponent.component &&
-            childComponent.component.Text
-          ) {
+        if (this.componentType === "Button" && this.propertyName === "label" && properties.child) {
+          const childComponent = this.getComponentById(components, properties.child);
+          if (childComponent && childComponent.component && childComponent.component.Text) {
             const textValue = childComponent.component.Text.text;
             if (this.valueMatches(textValue, this.propertyValue)) {
               return { success: true };
@@ -132,9 +121,7 @@ export class SurfaceUpdateSchemaMatcher extends SchemaMatcher {
     }
 
     const compareStrings = (s1: string, s2: string) => {
-      return this.caseInsensitive
-        ? s1.toLowerCase() === s2.toLowerCase()
-        : s1 === s2;
+      return this.caseInsensitive ? s1.toLowerCase() === s2.toLowerCase() : s1 === s2;
     };
 
     // Handle new literal/path object structure
@@ -165,15 +152,8 @@ export class SurfaceUpdateSchemaMatcher extends SchemaMatcher {
             compareStrings(item.literalString, expectedValue)
           )
             return true;
-          if (
-            item.literalNumber !== undefined &&
-            item.literalNumber === expectedValue
-          )
-            return true;
-          if (
-            item.literalBoolean !== undefined &&
-            item.literalBoolean === expectedValue
-          )
+          if (item.literalNumber !== undefined && item.literalNumber === expectedValue) return true;
+          if (item.literalBoolean !== undefined && item.literalBoolean === expectedValue)
             return true;
 
           // Check for structures like MultipleChoice options {label: {literalString: ...}, value: ...}

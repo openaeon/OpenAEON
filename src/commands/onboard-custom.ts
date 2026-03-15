@@ -654,8 +654,7 @@ export function applyCustomApiConfig(params: ApplyCustomApiConfigParams): Custom
           ? {
               ...model,
               contextWindow: normalizeContextWindowForCustomModel(model.contextWindow),
-              reasoning:
-                model.reasoning || params.compatibility === "openai-responses",
+              reasoning: model.reasoning || params.compatibility === "openai-responses",
             }
           : model,
       )
@@ -806,7 +805,11 @@ export async function promptCustomApiConfig(params: {
     if (compatibility === "anthropic") {
       result = await requestAnthropicVerification({ baseUrl, apiKey: resolvedApiKey, modelId });
     } else if (compatibility === "openai-responses") {
-      result = await requestOpenAiResponsesVerification({ baseUrl, apiKey: resolvedApiKey, modelId });
+      result = await requestOpenAiResponsesVerification({
+        baseUrl,
+        apiKey: resolvedApiKey,
+        modelId,
+      });
     } else {
       result = await requestOpenAiVerification({ baseUrl, apiKey: resolvedApiKey, modelId });
     }

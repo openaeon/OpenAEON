@@ -16,12 +16,12 @@ name: Lit samples build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - 'samples/agent/adk/**'
+      - "samples/agent/adk/**"
   pull_request:
     paths-ignore:
-      - 'samples/agent/adk/**'
+      - "samples/agent/adk/**"
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install lib's deps
         working-directory: ./renderers/lit
@@ -50,5 +50,3 @@ jobs:
       - name: Build all lit samples workspaces
         working-directory: ./samples/client/lit
         run: npm run build --workspaces
-
-

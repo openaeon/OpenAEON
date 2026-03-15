@@ -81,7 +81,9 @@ describe("CronService failure alerts", () => {
         job: expect.objectContaining({ id: job.id }),
         channel: "telegram",
         to: "19098680",
-        text: expect.stringContaining(`[CRITICAL SYSTEM ALERT] Your scheduled task "daily report" has failed 2 consecutive times.`),
+        text: expect.stringContaining(
+          `[CRITICAL SYSTEM ALERT] Your scheduled task "daily report" has failed 2 consecutive times.`,
+        ),
       }),
     );
 
@@ -93,7 +95,9 @@ describe("CronService failure alerts", () => {
     expect(sendCronFailureAlert).toHaveBeenCalledTimes(2);
     expect(sendCronFailureAlert).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        text: expect.stringContaining(`[CRITICAL SYSTEM ALERT] Your scheduled task "daily report" has failed 4 consecutive times.`),
+        text: expect.stringContaining(
+          `[CRITICAL SYSTEM ALERT] Your scheduled task "daily report" has failed 4 consecutive times.`,
+        ),
         channel: "telegram",
         to: "19098680",
       }),

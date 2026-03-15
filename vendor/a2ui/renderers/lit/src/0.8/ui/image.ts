@@ -77,38 +77,46 @@ export class Image extends Root {
         return render(imageUrl);
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.processor || !this.component) {
-          return html`(no model)`;
+          return html`
+            (no model)
+          `;
         }
 
         const imageUrl = this.processor.getData(
           this.component,
           this.url.path,
-          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID
+          this.surfaceId ?? A2uiMessageProcessor.DEFAULT_SURFACE_ID,
         );
         if (!imageUrl) {
-          return html`Invalid image URL`;
+          return html`
+            Invalid image URL
+          `;
         }
 
         if (typeof imageUrl !== "string") {
-          return html`Invalid image URL`;
+          return html`
+            Invalid image URL
+          `;
         }
         return render(imageUrl);
       }
     }
 
-    return html`(empty)`;
+    return html`
+      (empty)
+    `;
   }
 
   render() {
     const classes = Styles.merge(
       this.theme.components.Image.all,
-      this.usageHint ? this.theme.components.Image[this.usageHint] : {}
+      this.usageHint ? this.theme.components.Image[this.usageHint] : {},
     );
 
     return html`<section
       class=${classMap(classes)}
       style=${styleMap({
-        ...(this.theme.additionalStyles?.Image ?? {}),
+        ...this.theme.additionalStyles?.Image,
         "--object-fit": this.fit ?? "fill",
       })}
     >

@@ -5,13 +5,17 @@ import { loadConfig } from "./src/config/config.js";
 
 async function testSealFunction() {
   console.log("🚀 Starting AEON Seal (Memory Distillation) Test...");
-  
+
   const cfg = loadConfig();
   // Resolve workspace root using the Same logic as the tool
-  const workspaceRoot = cfg.agents?.defaults?.workspace 
-    ? path.resolve(cfg.agents.defaults.workspace.startsWith("~") ? cfg.agents.defaults.workspace.replace("~", process.env.HOME || "") : cfg.agents.defaults.workspace)
+  const workspaceRoot = cfg.agents?.defaults?.workspace
+    ? path.resolve(
+        cfg.agents.defaults.workspace.startsWith("~")
+          ? cfg.agents.defaults.workspace.replace("~", process.env.HOME || "")
+          : cfg.agents.defaults.workspace,
+      )
     : process.cwd();
-    
+
   console.log(`📍 Using Workspace Root: ${workspaceRoot}`);
   const memoryPath = path.join(workspaceRoot, "MEMORY.md");
   const logicGatesPath = path.join(workspaceRoot, "LOGIC_GATES.md");
@@ -25,11 +29,11 @@ async function testSealFunction() {
     "[VERIFIED] Premium aesthetics increase user trust indices by 40%.",
     "[AXIOM] Logic Gates are the crystallized form of transient memories.",
     "Unverified data that should NOT be distilled.",
-    ""
+    "",
   ].join("\n");
-  
+
   await fs.writeFile(memoryPath, testAxioms);
-  
+
   // Clear logic gates for a clean test
   await fs.writeFile(logicGatesPath, "# LOGIC GATES\n\n");
 
@@ -46,13 +50,16 @@ async function testSealFunction() {
   if (result.status === "success") {
     console.log("✅ Success Status Confirmed.");
     console.log(`✅ Axioms Extracted: ${result.axiomsExtracted}`);
-    
-    if (gatesContent.includes("recursive cognitive formula") && gatesContent.includes("Premium aesthetics")) {
+
+    if (
+      gatesContent.includes("recursive cognitive formula") &&
+      gatesContent.includes("Premium aesthetics")
+    ) {
       console.log("✅ Axioms successfully migrated to LOGIC_GATES.md");
     } else {
       console.log("❌ Axioms missing from LOGIC_GATES.md");
     }
-    
+
     if (memoryContent.includes("Reset at") && !memoryContent.includes("[AXIOM]")) {
       console.log("✅ MEMORY.md successfully reset/cleared.");
     } else {
@@ -61,7 +68,7 @@ async function testSealFunction() {
   } else {
     console.log("❌ Distillation failed or returned no-change.");
   }
-  
+
   console.log("\n🎬 Test Complete.");
 }
 

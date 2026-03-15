@@ -16,10 +16,12 @@ describe("Meta-Cognition Tool", () => {
       thought: "Testing thought",
     });
 
-    expect(addCognitiveLog).toHaveBeenCalledWith(expect.objectContaining({
-      type: "deliberation",
-      content: "Testing thought",
-    }));
+    expect(addCognitiveLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "deliberation",
+        content: "Testing thought",
+      }),
+    );
   });
 
   it("should handle optimize_parameters", async () => {
@@ -31,16 +33,18 @@ describe("Meta-Cognition Tool", () => {
       max_tokens: 1000,
     };
 
-    const result = await tool.execute("test-call", params) as any;
+    const result = (await tool.execute("test-call", params)) as any;
 
     expect(setAeonParameters).toHaveBeenCalledWith({
       temperature: 0.8,
       top_p: 0.9,
       maxTokens: 1000,
     });
-    expect(addCognitiveLog).toHaveBeenCalledWith(expect.objectContaining({
-      type: "reflection",
-    }));
+    expect(addCognitiveLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "reflection",
+      }),
+    );
     expect(result.details.status).toBe("parameters_optimized");
   });
 
@@ -52,9 +56,11 @@ describe("Meta-Cognition Tool", () => {
       severity: 0.8,
     });
 
-    expect(addCognitiveLog).toHaveBeenCalledWith(expect.objectContaining({
-      type: "anomaly",
-      content: "Conflict Detected: Logical contradiction",
-    }));
+    expect(addCognitiveLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "anomaly",
+        content: "Conflict Detected: Logical contradiction",
+      }),
+    );
   });
 });

@@ -134,12 +134,14 @@ export function createSessionsSpawnTool(opts?: {
           : undefined;
 
       const subagentSpawnParams = {
-        sharedContext: params.sharedContext && typeof params.sharedContext === "object"
-          ? (params.sharedContext as Record<string, unknown>)
-          : undefined,
-        role: (params.role === "manager" || params.role === "worker"
-          ? params.role
-          : undefined) as "manager" | "worker" | undefined,
+        sharedContext:
+          params.sharedContext && typeof params.sharedContext === "object"
+            ? (params.sharedContext as Record<string, unknown>)
+            : undefined,
+        role: (params.role === "manager" || params.role === "worker" ? params.role : undefined) as
+          | "manager"
+          | "worker"
+          | undefined,
         dialecticMode: !!params.dialecticMode,
       };
 

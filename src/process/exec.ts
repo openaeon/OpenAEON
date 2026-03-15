@@ -46,7 +46,9 @@ export function shouldSpawnWithShell(params: {
 export async function runExec(
   command: string,
   args: string[],
-  opts: number | { timeoutMs?: number; maxBuffer?: number; cwd?: string } = 10_000,
+  opts:
+    | number
+    | { timeoutMs?: number; maxBuffer?: number; cwd?: string; env?: NodeJS.ProcessEnv } = 10_000,
 ): Promise<{ stdout: string; stderr: string }> {
   const options =
     typeof opts === "number"
@@ -55,6 +57,7 @@ export async function runExec(
           timeout: opts.timeoutMs,
           maxBuffer: opts.maxBuffer,
           cwd: opts.cwd,
+          env: opts.env,
           encoding: "utf8" as const,
         };
   try {

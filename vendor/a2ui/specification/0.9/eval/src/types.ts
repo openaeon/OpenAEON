@@ -30,11 +30,7 @@ export interface ValidatedResult extends GeneratedResult {
   validationErrors: string[];
 }
 
-export type IssueSeverity =
-  | "minor"
-  | "significant"
-  | "critical"
-  | "criticalSchema";
+export type IssueSeverity = "minor" | "significant" | "critical" | "criticalSchema";
 
 export interface EvaluatedResult extends ValidatedResult {
   evaluationResult?: {

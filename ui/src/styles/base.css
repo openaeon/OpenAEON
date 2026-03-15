@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 :root {
   /* Celestial Light Theme (Fractal AEON) */
@@ -71,11 +71,8 @@
 
   /* Focus */
   --focus: rgba(22, 119, 255, 0.15);
-  --focus-ring: 0 0 0 2px var(--bg),
-    0 0 0 4px var(--ring);
-  --focus-glow: 0 0 0 2px var(--bg),
-    0 0 0 4px var(--ring),
-    0 0 16px var(--accent-glow);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 16px var(--accent-glow);
 
   /* Grid */
   --grid-line: rgba(0, 0, 0, 0.04);
@@ -91,12 +88,9 @@
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
   --shadow-glow: 0 0 20px var(--accent-glow);
 
   /* Radii */
@@ -177,11 +171,8 @@
   --info: #1677ff;
 
   --focus: rgba(22, 119, 255, 0.2);
-  --focus-ring: 0 0 0 2px var(--bg),
-    0 0 0 4px var(--ring);
-  --focus-glow: 0 0 0 2px var(--bg),
-    0 0 0 4px var(--ring),
-    0 0 16px var(--accent-glow);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 16px var(--accent-glow);
 
   --grid-line: rgba(255, 255, 255, 0.04);
 
@@ -241,7 +232,6 @@ html.theme-transition::view-transition-new(theme) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   html.theme-transition::view-transition-old(theme),
   html.theme-transition::view-transition-new(theme) {
     animation: none !important;
@@ -354,7 +344,6 @@ select {
 }
 
 @keyframes pulse-subtle {
-
   0%,
   100% {
     opacity: 1;
@@ -366,7 +355,6 @@ select {
 }
 
 @keyframes glow-pulse {
-
   0%,
   100% {
     box-shadow: 0 0 0 rgba(255, 92, 92, 0);

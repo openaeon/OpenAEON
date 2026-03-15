@@ -111,15 +111,17 @@ export class Modal extends Root {
     >
       <section
         class=${classMap(this.theme.components.Modal.element)}
-        style=${this.theme.additionalStyles?.Modal
-        ? styleMap(this.theme.additionalStyles?.Modal)
-        : nothing}
+        style=${
+          this.theme.additionalStyles?.Modal
+            ? styleMap(this.theme.additionalStyles?.Modal)
+            : nothing
+        }
       >
         <div id="controls">
           <button
             @click=${() => {
-        this.#closeModal();
-      }}
+              this.#closeModal();
+            }}
           >
             <span class="g-icon">close</span>
           </button>

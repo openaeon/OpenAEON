@@ -7,10 +7,14 @@ import { type AnyAgentTool, jsonResult, readStringParam } from "../src/agents/to
 const EVOLUTION_ACTIONS = ["analyze_gates", "sprout_tool", "relink_registry"] as const;
 
 const EvolutionToolSchema = Type.Object({
-  action: Type.Enum(Object.fromEntries(EVOLUTION_ACTIONS.map(v => [v, v]))),
-  toolName: Type.Optional(Type.String({ description: "Name of the tool to sprout (PascalCase, e.g. EntropyCalculator)" })),
+  action: Type.Enum(Object.fromEntries(EVOLUTION_ACTIONS.map((v) => [v, v]))),
+  toolName: Type.Optional(
+    Type.String({ description: "Name of the tool to sprout (PascalCase, e.g. EntropyCalculator)" }),
+  ),
   code: Type.Optional(Type.String({ description: "Full TypeScript code for the new tool" })),
-  description: Type.Optional(Type.String({ description: "Optional description for registry update" })),
+  description: Type.Optional(
+    Type.String({ description: "Optional description for registry update" }),
+  ),
 });
 
 function createEvolutionToolManual(opts?: { workspaceDir?: string }): AnyAgentTool {
@@ -33,7 +37,10 @@ function createEvolutionToolManual(opts?: { workspaceDir?: string }): AnyAgentTo
             const content = await fs.readFile(gatesPath, "utf-8");
             return jsonResult({ status: "ok", content });
           } catch (err) {
-            return jsonResult({ status: "error", message: `Failed to read LOGIC_GATES.md: ${String(err)}` });
+            return jsonResult({
+              status: "error",
+              message: `Failed to read LOGIC_GATES.md: ${String(err)}`,
+            });
           }
         }
 
@@ -46,10 +53,10 @@ function createEvolutionToolManual(opts?: { workspaceDir?: string }): AnyAgentTo
           try {
             await fs.mkdir(evolvedDir, { recursive: true });
             await fs.writeFile(filePath, code, "utf-8");
-            return jsonResult({ 
-              status: "ok", 
+            return jsonResult({
+              status: "ok",
               message: `Successfully sprouted tool: ${toolName}`,
-              filePath 
+              filePath,
             });
           } catch (err) {
             throw new Error(`Failed to sprout tool ${toolName}: ${String(err)}`);
@@ -59,20 +66,30 @@ function createEvolutionToolManual(opts?: { workspaceDir?: string }): AnyAgentTo
         case "relink_registry": {
           try {
             const files = await fs.readdir(evolvedDir);
-            const toolFiles = files.filter(f => f.endsWith("-tool.ts"));
-            
-            const imports = toolFiles.map(f => {
-              const name = f.replace(".ts", ".js");
-              const toolBase = f.replace("-tool.ts", "");
-              const pascalName = toolBase.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("");
-              return `import { create${pascalName}Tool } from "./${name}";`;
-            }).join("\n");
+            const toolFiles = files.filter((f) => f.endsWith("-tool.ts"));
 
-            const exports = toolFiles.map(f => {
+            const imports = toolFiles
+              .map((f) => {
+                const name = f.replace(".ts", ".js");
                 const toolBase = f.replace("-tool.ts", "");
-                const pascalName = toolBase.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+                const pascalName = toolBase
+                  .split("-")
+                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                  .join("");
+                return `import { create${pascalName}Tool } from "./${name}";`;
+              })
+              .join("\n");
+
+            const exports = toolFiles
+              .map((f) => {
+                const toolBase = f.replace("-tool.ts", "");
+                const pascalName = toolBase
+                  .split("-")
+                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                  .join("");
                 return `  create${pascalName}Tool(),`;
-            }).join("\n");
+              })
+              .join("\n");
 
             const registryContent = `import type { AnyAgentTool } from "../common.js";
 ${imports}
@@ -101,10 +118,14 @@ ${exports}
 async function runTest() {
   console.log("🚀 Starting AEON PROPHET Isolation Test...");
   const tool = createEvolutionToolManual({ workspaceDir: "/Users/opnclaw/.openaeon/workspace" });
-  
+
   // 0. Ensure directory exists
   await fs.mkdir("src/agents/tools/evolved", { recursive: true });
-  await fs.writeFile("src/agents/tools/evolved/_registry.ts", "export const EVOLVED_TOOLS = [];", "utf-8");
+  await fs.writeFile(
+    "src/agents/tools/evolved/_registry.ts",
+    "export const EVOLVED_TOOLS = [];",
+    "utf-8",
+  );
 
   // 1. Test analyze_gates (Expected to fail/error gracefully if file missing)
   console.log("\n--- Testing analyze_gates ---");
@@ -113,8 +134,13 @@ async function runTest() {
 
   // 2. Test sprout_tool
   console.log("\n--- Testing sprout_tool ---");
-  const toolCode = 'export function createTestTool() { return { name: "test", execute: async () => ({}) }; }';
-  const res2 = await tool.execute("test-2", { action: "sprout_tool", toolName: "Test", code: toolCode });
+  const toolCode =
+    'export function createTestTool() { return { name: "test", execute: async () => ({}) }; }';
+  const res2 = await tool.execute("test-2", {
+    action: "sprout_tool",
+    toolName: "Test",
+    code: toolCode,
+  });
   console.log("Result:", JSON.stringify(res2.details, null, 2));
 
   // 3. Test relink_registry

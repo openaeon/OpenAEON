@@ -2,6 +2,10 @@ import { randomBytes } from "node:crypto";
 import fs from "node:fs/promises";
 import type { ThinkLevel } from "../../auto-reply/thinking.js";
 import { generateSecureToken } from "../../infra/secure-random.js";
+import { distillMemory } from "../tools/memory-distill-tool.js";
+import { emitAgentEvent } from "../../infra/agent-events.js";
+import { getActiveEmbeddedRunHandle } from "./runs.js";
+import { loadConfig } from "../../config/config.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import type { PluginHookBeforeAgentStartResult } from "../../plugins/types.js";
 import { enqueueCommandInLane } from "../../process/command-queue.js";
@@ -642,7 +646,58 @@ export async function runEmbeddedPiAgent(
             timedOutDuringCompaction,
             sessionIdUsed,
             lastAssistant,
+            chaosScore,
           } = attempt;
+
+          // Phase 1: Dynamic Gear Shifting (松果体进化)
+          // If chaosScore is rising, elevate thinking level to avoid logic loops.
+          if (
+            chaosScore != null &&
+            chaosScore >= 5 &&
+            thinkLevel !== "high" &&
+            thinkLevel !== "xhigh"
+          ) {
+            const nextLevelMap: Record<string, ThinkLevel> = {
+              off: "low",
+              minimal: "low",
+              low: "medium",
+              medium: "high",
+            };
+            const nextLevel = nextLevelMap[thinkLevel] || "high";
+            log.warn(
+              `[gear-shift] high chaos detected (score=${chaosScore}); elevating thinking level ${thinkLevel} -> ${nextLevel}`,
+            );
+            thinkLevel = nextLevel;
+            emitAgentEvent({
+              runId: params.runId,
+              stream: "lifecycle",
+              data: {
+                phase: "elevation",
+                thinkLevel: nextLevel,
+                chaosScore,
+              },
+            });
+          }
+
+          // Phase 2: Automated Self-Sealing (心脏跃迁)
+          // Proactively trigger memory distillation if saturation is high or chaos is critical.
+          if (!aborted && !promptError && (chaosScore ?? 0) >= 8) {
+            log.info(
+              `[self-seal] critical chaos (${chaosScore}); triggering background memory distillation`,
+            );
+            emitAgentEvent({
+              runId: params.runId,
+              stream: "lifecycle",
+              data: {
+                phase: "resonance",
+                intensity: "critical",
+                chaosScore,
+              },
+            });
+            distillMemory().catch((e) =>
+              log.warn(`[self-seal] background distillation failed: ${String(e)}`),
+            );
+          }
           const lastAssistantUsage = normalizeUsage(lastAssistant?.usage as UsageLike);
           const attemptUsage = attempt.attemptUsage ?? lastAssistantUsage;
           mergeUsageIntoAccumulator(usageAccumulator, attemptUsage);

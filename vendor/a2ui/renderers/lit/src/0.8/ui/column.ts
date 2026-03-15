@@ -94,9 +94,11 @@ export class Column extends Root {
   render() {
     return html`<section
       class=${classMap(this.theme.components.Column)}
-      style=${this.theme.additionalStyles?.Column
-        ? styleMap(this.theme.additionalStyles?.Column)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.Column
+          ? styleMap(this.theme.additionalStyles?.Column)
+          : nothing
+      }
     >
       <slot></slot>
     </section>`;

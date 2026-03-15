@@ -340,17 +340,15 @@ export async function runOnboardingWizard(
 
   const workspaceDir = resolveUserPath(workspaceInput.trim() || onboardHelpers.DEFAULT_WORKSPACE);
 
-  const { applyOnboardingLocalWorkspaceConfig, applyFreedomConfig } = await import(
-    "../commands/onboard-config.js"
-  );
+  const { applyOnboardingLocalWorkspaceConfig, applyFreedomConfig } =
+    await import("../commands/onboard-config.js");
   let nextConfig: OPENAEONConfig = applyOnboardingLocalWorkspaceConfig(baseConfig, workspaceDir);
 
   const freedomEnabled =
     flow === "quickstart"
       ? false
       : await prompter.confirm({
-          message:
-            "开启进化模式? (授权更高的自主权、读写权限与递归能力)",
+          message: "开启进化模式? (授权更高的自主权、读写权限与递归能力)",
           initialValue: false,
         });
 

@@ -62,9 +62,9 @@ export class List extends Root {
   render() {
     return html`<section
       class=${classMap(this.theme.components.List)}
-      style=${this.theme.additionalStyles?.List
-        ? styleMap(this.theme.additionalStyles?.List)
-        : nothing}
+      style=${
+        this.theme.additionalStyles?.List ? styleMap(this.theme.additionalStyles?.List) : nothing
+      }
     >
       <slot></slot>
     </section>`;
