@@ -1174,7 +1174,17 @@ is_macos_admin_user() {
     if is_root; then
         return 0
     fi
-    id -Gn "$(id -un)" 2>/dev/null | grep -qw "admin"
+    # Check if user is in the admin group
+    if ! id -Gn "$(id -un)" 2>/dev/null | grep -qw "admin"; then
+        return 1
+    fi
+    # If not interactive, we must have passwordless or cached sudo
+    if ! is_promptable; then
+        if ! sudo -n true 2>/dev/null; then
+            return 1
+        fi
+    fi
+    return 0
 }
 
 print_homebrew_admin_fix() {
@@ -1194,11 +1204,18 @@ install_homebrew() {
     if [[ "$OS" == "macos" ]]; then
         if ! command -v brew &> /dev/null; then
             if ! is_macos_admin_user; then
-                ui_warn "Homebrew not found and you are not an administrator. Skipping Homebrew installation."
+                ui_warn "Homebrew not found and installation is not possible in this session (requires admin/sudo or interactive terminal)."
                 return 1
             fi
             ui_info "Homebrew not found, installing"
-            run_quiet_step "Installing Homebrew" run_remote_bash "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+            # Use non-interactive flag for Homebrew installer if stdin is not a TTY
+            local hb_installer="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+            if ! is_promptable; then
+                run_quiet_step "Installing Homebrew" run_remote_bash "$hb_installer"
+            else
+                # Pipe stdin back if promptable
+                run_quiet_step "Installing Homebrew" run_remote_bash "$hb_installer"
+            fi
 
             # Add Homebrew to PATH for this session
             if [[ -f "/opt/homebrew/bin/brew" ]]; then
