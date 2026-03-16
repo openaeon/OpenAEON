@@ -1194,8 +1194,8 @@ install_homebrew() {
     if [[ "$OS" == "macos" ]]; then
         if ! command -v brew &> /dev/null; then
             if ! is_macos_admin_user; then
-                print_homebrew_admin_fix
-                exit 1
+                ui_warn "Homebrew not found and you are not an administrator. Skipping Homebrew installation."
+                return 1
             fi
             ui_info "Homebrew not found, installing"
             run_quiet_step "Installing Homebrew" run_remote_bash "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
@@ -1304,14 +1304,20 @@ check_node() {
 # Install Node.js
 install_node() {
     if [[ "$OS" == "macos" ]]; then
-        ui_info "Installing Node.js via Homebrew"
-        run_quiet_step "Installing node@22" brew install node@22
-        brew link node@22 --overwrite --force 2>/dev/null || true
-        if ! ensure_macos_node22_active; then
+        if command -v brew &> /dev/null; then
+            ui_info "Installing Node.js via Homebrew"
+            run_quiet_step "Installing node@22" brew install node@22
+            brew link node@22 --overwrite --force 2>/dev/null || true
+            if ! ensure_macos_node22_active; then
+                exit 1
+            fi
+            ui_success "Node.js installed"
+            print_active_node_paths || true
+        else
+            ui_error "Node.js not found and Homebrew is not available."
+            ui_info "Please install Node.js v22+ manually: https://nodejs.org/en/download/"
             exit 1
         fi
-        ui_success "Node.js installed"
-        print_active_node_paths || true
     elif [[ "$OS" == "linux" ]]; then
         ui_info "Installing Node.js via NodeSource"
         require_sudo
@@ -2116,12 +2122,22 @@ main() {
 
     ui_stage "Preparing environment"
 
-    # Step 1: Homebrew (macOS only)
-    install_homebrew
+    # Step 1: Detect existing tools
+    local has_node=false
+    if check_node; then
+        has_node=true
+    fi
 
-    # Step 2: Node.js
-    if ! check_node; then
-        install_node
+    # Step 2: Homebrew (macOS only, only if tools missing)
+    if [[ "$OS" == "macos" && "$has_node" == "false" ]]; then
+        install_homebrew || true
+    fi
+
+    # Step 3: Ensure Node.js is installed
+    if [[ "$has_node" == "false" ]]; then
+        if ! check_node; then
+            install_node
+        fi
     fi
 
     ui_stage "Installing OpenAEON"
