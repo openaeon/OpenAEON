@@ -1080,7 +1080,7 @@ is_promptable() {
     if [[ "$NO_PROMPT" == "1" ]]; then
         return 1
     fi
-    if [[ -r /dev/tty && -w /dev/tty ]]; then
+    if [[ -t 0 && -r /dev/tty && -w /dev/tty ]]; then
         return 0
     fi
     return 1
