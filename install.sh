@@ -1667,7 +1667,7 @@ ensure_pnpm() {
 
     ui_info "Installing pnpm via npm"
     fix_npm_permissions
-    run_quiet_step "Installing pnpm" npm install -g pnpm@10
+    run_quiet_step "Installing pnpm" npm install -g pnpm@10 --force
     refresh_shell_command_cache
     if detect_pnpm_cmd && pnpm_cmd_is_ready; then
         ui_success "pnpm ready ($(pnpm_cmd_pretty))"
