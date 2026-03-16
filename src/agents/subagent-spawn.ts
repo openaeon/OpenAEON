@@ -15,7 +15,12 @@ import {
   parseAgentSessionKey,
 } from "../routing/session-key.js";
 import { normalizeDeliveryContext } from "../utils/delivery-context.js";
-import { resolveAgentConfig } from "./agent-scope.js";
+import {
+  resolveAgentConfig,
+  resolveAgentSkillsFilter,
+  resolveSubagentFixedSkills,
+  resolveSubagentInheritSkills,
+} from "./agent-scope.js";
 import { AGENT_LANE_SUBAGENT } from "./lanes.js";
 import { resolveSubagentSpawnModelSelection } from "./model-selection.js";
 import { resolveSandboxRuntimeStatus } from "./sandbox/runtime-status.js";
@@ -431,6 +436,30 @@ export async function spawnSubagentDirect(
     readStringParam(targetAgentConfig?.subagents ?? {}, "thinking") ??
     readStringParam(cfg.agents?.defaults?.subagents ?? {}, "thinking");
 
+  // Multi-agent Cognitive Loop Fusion: Resolve and merge skills
+  const parentSkills = resolveAgentSkillsFilter(cfg, requesterAgentId);
+  const inheritEnabled = resolveSubagentInheritSkills(cfg, requesterAgentId);
+  const subagentFixedSkills = resolveSubagentFixedSkills(cfg, requesterAgentId);
+
+  const mergedSkills = new Set<string>();
+
+  // 1. Inherit parent skills if enabled
+  if (inheritEnabled && parentSkills) {
+    for (const s of parentSkills) mergedSkills.add(s);
+  }
+
+  // 2. Add subagent fixed skills defined by parent
+  if (subagentFixedSkills) {
+    for (const s of subagentFixedSkills) mergedSkills.add(s);
+  }
+
+  // 3. Add explicitly requested skills
+  if (params.skills) {
+    for (const s of params.skills) mergedSkills.add(s);
+  }
+
+  const finalSkills = mergedSkills.size > 0 ? Array.from(mergedSkills) : undefined;
+
   let thinkingOverride: string | undefined;
   const thinkingCandidateRaw = thinkingOverrideRaw || resolvedThinkingDefaultRaw;
   if (thinkingCandidateRaw) {
@@ -611,7 +640,7 @@ export async function spawnSubagentDirect(
         groupChannel: ctx.agentGroupChannel ?? undefined,
         groupSpace: ctx.agentGroupSpace ?? undefined,
         tools: params.tools,
-        skills: params.skills,
+        skills: finalSkills,
       },
       timeoutMs: 10_000,
     });

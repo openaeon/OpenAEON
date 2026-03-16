@@ -10,6 +10,10 @@ export {
   resolveConfigSnapshotHash,
   setRuntimeConfigSnapshot,
   writeConfigFile,
+  getConfigAtPath,
+  parseConfigPath,
+  setConfigAtPath,
+  unsetConfigAtPath,
 } from "./io.js";
 export { migrateLegacyConfig } from "./legacy-migrate.js";
 export * from "./paths.js";

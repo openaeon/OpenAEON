@@ -14,6 +14,8 @@ export type AgentConfig = {
   model?: AgentModelConfig;
   /** Optional allowlist of skills for this agent (omit = all skills; empty = none). */
   skills?: string[];
+  /** Skills that are always active for this agent, regardless of filters. */
+  fixedSkills?: string[];
   memorySearch?: MemorySearchConfig;
   /** Human-like delay between block replies for this agent. */
   humanDelay?: HumanDelayConfig;
@@ -26,6 +28,10 @@ export type AgentConfig = {
     allowAgents?: string[];
     /** Per-agent default model for spawned sub-agents (string or {primary,fallbacks}). */
     model?: AgentModelConfig;
+    /** Whether sub-agents should inherit the parent's active skills. */
+    inheritSkills?: boolean;
+    /** Fixed skills to always inject into spawned sub-agents. */
+    fixedSkills?: string[];
   };
   /** Optional per-agent sandbox overrides. */
   sandbox?: AgentSandboxConfig;

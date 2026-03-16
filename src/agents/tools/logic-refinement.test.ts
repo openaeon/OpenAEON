@@ -55,4 +55,59 @@ describe("Logic Refinement Tool", () => {
 
     expect(result.data.findings.totalAxioms).toBe(2);
   });
+
+  it("should crystallize a logic gate", async () => {
+    const mockContent = 'Axiom 1 <!-- {"ts": 1000, "id": "a1"} -->\n';
+    vi.mocked(fs.readFile).mockResolvedValue(mockContent);
+
+    const tool = createLogicRefinementTool();
+    const result = (await tool.execute("test-call", {
+      action: "crystallize",
+      target: "Axiom 1",
+    })) as any;
+
+    expect(result.status).toBe("ok");
+    expect(result.text).toContain("Crystallized logic gate");
+    expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
+      logicGatesPath,
+      expect.stringContaining('"crystallized":true'),
+    );
+  });
+
+  it("should not prune crystallized axioms even if stale", async () => {
+    const now = Date.now();
+    const mockContent =
+      [
+        `Axiom 1 <!-- {"ts": ${now - 40 * 86400000}, "id": "a1", "crystallized": true} -->`,
+        `Axiom 2 <!-- {"ts": ${now - 40 * 86400000}, "id": "a2"} -->`,
+      ].join("\n") + "\n";
+
+    vi.mocked(fs.readFile).mockResolvedValue(mockContent);
+
+    const tool = createLogicRefinementTool();
+    const result = (await tool.execute("test-call", { action: "prune" })) as any;
+
+    expect(result.data.prunedCount).toBe(1); // Only Axiom 2 should be pruned
+    expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
+      logicGatesPath,
+      expect.stringContaining("Axiom 1"),
+    );
+    expect(vi.mocked(fs.writeFile)).not.toEqual(expect.stringContaining("Axiom 2"));
+  });
+
+  it("should not prune axioms with high heat even if stale", async () => {
+    const now = Date.now();
+    const mockContent =
+      [
+        `Axiom 1 <!-- {"ts": ${now - 40 * 86400000}, "id": "a1", "heat": 15} -->`,
+        `Axiom 2 <!-- {"ts": ${now - 40 * 86400000}, "id": "a2", "heat": 5} -->`,
+      ].join("\n") + "\n";
+
+    vi.mocked(fs.readFile).mockResolvedValue(mockContent);
+
+    const tool = createLogicRefinementTool();
+    const result = (await tool.execute("test-call", { action: "prune" })) as any;
+
+    expect(result.data.prunedCount).toBe(1); // Only Axiom 2 should be pruned
+  });
 });

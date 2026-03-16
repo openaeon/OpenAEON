@@ -1151,19 +1151,61 @@ EOF
     return 1
 }
 
+# Proactive check for Xcode Command Line Tools on macOS
+check_xcode_tools_proactive() {
+    if [[ "$OS" != "macos" ]]; then
+        return 0
+    fi
+
+    if xcode-select -p &>/dev/null; then
+        return 0
+    fi
+
+    ui_warn "macOS detected but Xcode Command Line Tools are not configured."
+    ui_info "Triggering developer tools installation prompt..."
+    xcode-select --install &>/dev/null || true
+    
+    echo ""
+    ui_important "ACTION REQUIRED: A macOS prompt has appeared to install command line tools."
+    ui_important "Please complete the installation, then RE-RUN this script."
+    echo ""
+    
+    if ! is_promptable; then
+        ui_error "Non-interactive environment; cannot wait for Xcode tools. Please install them manually and retry."
+        exit 1
+    fi
+
+    ui_info "Waiting for you to finish the Xcode tools installation..."
+    while ! xcode-select -p &>/dev/null; do
+        sleep 5
+    done
+    ui_success "Xcode tools detected! Continuing..."
+}
+
 detect_openaeon_checkout() {
     local dir="$1"
-    if [[ ! -f "$dir/package.json" ]]; then
-        return 1
+    
+    # helper function for validation
+    _is_openaeon_repo() {
+        local d="$1"
+        [[ -f "$d/package.json" && -f "$d/pnpm-workspace.yaml" ]] && \
+        grep -q '"name"[[:space:]]*:[[:space:]]*"openaeon"' "$d/package.json" 2>/dev/null
+    }
+
+    if [[ -n "$dir" ]] && _is_openaeon_repo "$dir"; then
+        echo "$dir"
+        return 0
     fi
-    if [[ ! -f "$dir/pnpm-workspace.yaml" ]]; then
-        return 1
+
+    # Check parent of current script if it looks like a repo
+    local script_dir=""
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+    if _is_openaeon_repo "$script_dir"; then
+        echo "$script_dir"
+        return 0
     fi
-    if ! grep -q '"name"[[:space:]]*:[[:space:]]*"openaeon"' "$dir/package.json" 2>/dev/null; then
-        return 1
-    fi
-    echo "$dir"
-    return 0
+
+    return 1
 }
 
 # Check for Homebrew on macOS
@@ -1943,10 +1985,24 @@ install_openaeon_from_git() {
 
     cleanup_legacy_submodules "$repo_dir"
 
-    SHARP_IGNORE_GLOBAL_LIBVIPS="$SHARP_IGNORE_GLOBAL_LIBVIPS" run_quiet_step "Installing dependencies" run_pnpm -C "$repo_dir" install
+    # macOS TCC / EPERM awareness
+    if [[ "$OS" == "macos" ]]; then
+        if [[ "$repo_dir" == "$HOME/Documents"* || "$repo_dir" == "$HOME/Desktop"* ]]; then
+            ui_warn "Installation directory is in a 'protected' macOS folder (${repo_dir})"
+            ui_info "If pnpm install or build fails with EPERM, please grant your Terminal 'Full Disk Access' in System Settings."
+        fi
+    fi
+
+    SHARP_IGNORE_GLOBAL_LIBVIPS="$SHARP_IGNORE_GLOBAL_LIBVIPS" run_quiet_step "Installing dependencies" run_pnpm -C "$repo_dir" install || {
+        ui_error "Dependency installation failed."
+        ui_info "Try running 'pnpm install' manually in ${repo_dir}"
+        exit 1
+    }
 
     if ! run_quiet_step "Building UI" run_pnpm -C "$repo_dir" ui:build; then
-        ui_warn "UI build failed; continuing (CLI may still work)"
+        ui_warn "UI build failed (possibly due to EPERM or missing dev tools)."
+        ui_info "The CLI will still work, but the Dashboard may be missing assets."
+        ui_info "Fix: run 'pnpm ui:build' manually in ${repo_dir}"
     fi
     run_quiet_step "Building OpenAEON" run_pnpm -C "$repo_dir" build
 
@@ -2191,6 +2247,7 @@ main() {
     print_installer_banner
     print_gum_status
     detect_os_or_die
+    check_xcode_tools_proactive
 
     local detected_checkout=""
     detected_checkout="$(detect_openaeon_checkout "$PWD" || true)"
@@ -2435,18 +2492,8 @@ main() {
                 ui_info "Config already present; skipping onboarding"
                 skip_onboard=true
             fi
-            ui_info "Starting setup"
-            echo ""
-            if [[ -r /dev/tty && -w /dev/tty ]]; then
-                local claw="${OPENAEON_BIN:-}"
-                if [[ -z "$claw" ]]; then
-                    claw="$(resolve_openaeon_bin || true)"
-                fi
-                if [[ -z "$claw" ]]; then
-                    ui_info "Skipping onboarding (openaeon not on PATH yet)"
-                    warn_openaeon_not_found
-                    return 0
-                fi
+                ui_info "Starting guided setup (onboarding)..."
+                echo ""
                 exec </dev/tty
                 exec "$claw" onboard --install-daemon
             fi

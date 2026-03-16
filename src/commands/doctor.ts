@@ -46,6 +46,8 @@ import { createDoctorPrompter, type DoctorOptions } from "./doctor-prompter.js";
 import { maybeRepairSandboxImages, noteSandboxScopeWarnings } from "./doctor-sandbox.js";
 import { noteSecurityWarnings } from "./doctor-security.js";
 import { noteSessionLockHealth } from "./doctor-session-locks.js";
+import { noteGitMaintenanceHealth } from "./doctor-git-maintenance.js";
+import { noteAutoRepairAdvisor } from "./doctor-auto-repair.js";
 import { noteStateIntegrity, noteWorkspaceBackupTip } from "./doctor-state-integrity.js";
 import {
   detectLegacyStateMigrations,
@@ -190,6 +192,8 @@ export async function doctorCommand(
 
   await noteStateIntegrity(cfg, prompter, configResult.path ?? CONFIG_PATH);
   await noteSessionLockHealth({ shouldRepair: prompter.shouldRepair });
+  await noteGitMaintenanceHealth({ shouldRepair: prompter.shouldRepair });
+  await noteAutoRepairAdvisor({ shouldRepair: prompter.shouldRepair });
 
   cfg = await maybeRepairSandboxImages(cfg, runtime, prompter);
   noteSandboxScopeWarnings(cfg);

@@ -19,6 +19,7 @@ import { createSessionsHistoryTool } from "./tools/sessions-history-tool.js";
 import { createSessionsListTool } from "./tools/sessions-list-tool.js";
 import { createSessionsSendTool } from "./tools/sessions-send-tool.js";
 import { createSessionsSpawnTool } from "./tools/sessions-spawn-tool.js";
+import { createSkillsDefineTool } from "./tools/skills-define-tool.js";
 import { createSubagentsTool } from "./tools/subagents-tool.js";
 import { createTaskPlannerTool } from "./tools/task-planner-tool.js";
 import { createTtsTool } from "./tools/tts-tool.js";
@@ -27,6 +28,7 @@ import { createEvolutionTool } from "./tools/evolution-tool.js";
 import { createLogicRefinementTool } from "./tools/logic-refinement.js";
 import { createMetaCognitionTool } from "./tools/meta-cognition-tool.js";
 import { createEvolutionMandateTool } from "./tools/evolution-mandate-tool.js";
+import { createSelfRepairTool } from "./tools/self-repair-tool.js";
 import { EVOLVED_TOOLS } from "./tools/evolved/_registry.js";
 import { resolveWorkspaceRoot } from "./workspace-dir.js";
 
@@ -176,6 +178,11 @@ export function createOPENAEONTools(options?: {
       iterationDepth: options?.iterationDepth,
       freedom: options?.freedom,
     }),
+    createSkillsDefineTool({
+      agentSessionKey: options?.agentSessionKey,
+      agentChannel: options?.agentChannel,
+      agentAccountId: options?.agentAccountId,
+    }),
     createSessionsEvaluateTool({
       agentSessionKey: options?.agentSessionKey,
       agentChannel: options?.agentChannel,
@@ -209,6 +216,7 @@ export function createOPENAEONTools(options?: {
     createLogicRefinementTool(),
     createMetaCognitionTool(),
     createEvolutionMandateTool(),
+    createSelfRepairTool(),
     ...EVOLVED_TOOLS,
   ];
 

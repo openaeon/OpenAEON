@@ -30,6 +30,7 @@ type ResolvedAgentConfig = {
   agentDir?: string;
   model?: AgentEntry["model"];
   skills?: AgentEntry["skills"];
+  fixedSkills?: AgentEntry["fixedSkills"];
   memorySearch?: AgentEntry["memorySearch"];
   humanDelay?: AgentEntry["humanDelay"];
   heartbeat?: AgentEntry["heartbeat"];
@@ -132,6 +133,7 @@ export function resolveAgentConfig(
         ? entry.model
         : undefined,
     skills: Array.isArray(entry.skills) ? entry.skills : undefined,
+    fixedSkills: Array.isArray(entry.fixedSkills) ? entry.fixedSkills : undefined,
     memorySearch: entry.memorySearch,
     humanDelay: entry.humanDelay,
     heartbeat: entry.heartbeat,
@@ -148,6 +150,24 @@ export function resolveAgentSkillsFilter(
   agentId: string,
 ): string[] | undefined {
   return normalizeSkillFilter(resolveAgentConfig(cfg, agentId)?.skills);
+}
+
+export function resolveAgentFixedSkills(
+  cfg: OPENAEONConfig,
+  agentId: string,
+): string[] | undefined {
+  return normalizeSkillFilter(resolveAgentConfig(cfg, agentId)?.fixedSkills);
+}
+
+export function resolveSubagentFixedSkills(
+  cfg: OPENAEONConfig,
+  agentId: string,
+): string[] | undefined {
+  return normalizeSkillFilter(resolveAgentConfig(cfg, agentId)?.subagents?.fixedSkills);
+}
+
+export function resolveSubagentInheritSkills(cfg: OPENAEONConfig, agentId: string): boolean {
+  return resolveAgentConfig(cfg, agentId)?.subagents?.inheritSkills ?? false;
 }
 
 function resolveModelPrimary(raw: unknown): string | undefined {

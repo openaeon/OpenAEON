@@ -5,12 +5,17 @@ import { loadConfig } from "../../config/config.js";
 import { resolveWorkspaceRoot } from "../workspace-dir.js";
 import type { AgentTool, AgentToolResult } from "@mariozechner/pi-agent-core";
 import { jsonResult } from "./common.js";
+import { calculatePeanoIndex } from "../../utils/peano.js";
+import { createEmbeddingProvider } from "../../memory/embeddings.js";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
 
 const LogicRefinementSchema = Type.Object({
   action: Type.Enum(
     {
       audit: "audit",
       prune: "prune",
+      crystallize: "crystallize",
+      align: "align",
     },
     {
       description:
@@ -39,7 +44,7 @@ export function createLogicRefinementTool(): AgentTool {
     parameters: LogicRefinementSchema,
     execute: async (_toolCallId: string, args: any) => {
       const { action, peanoRange } = args as {
-        action: "audit" | "prune";
+        action: "audit" | "prune" | "crystallize" | "align";
         peanoRange?: [number, number];
       };
       const cfg = loadConfig();
@@ -70,7 +75,7 @@ export function createLogicRefinementTool(): AgentTool {
         if (peanoRange) {
           const [min, max] = peanoRange;
           axioms = axioms.filter((a) => {
-            const x = a.meta.peano?.x ?? 0.5;
+            const x = a.meta.peano?.index ?? a.meta.peano?.x ?? 0.5;
             return x >= min && x <= max;
           });
         }
@@ -104,6 +109,22 @@ export function createLogicRefinementTool(): AgentTool {
               if (textI === textJ) {
                 redundancies.push(`Duplicate: "${axioms[i].text}"`);
               }
+
+              // 4. Topological Proximity Audit
+              const indexI = axioms[i].meta.peano?.index ?? 0.5;
+              const indexJ = axioms[j].meta.peano?.index ?? 0.5;
+              if (Math.abs(indexI - indexJ) < 0.005 && textI !== textJ) {
+                // If topologically very close but text is different, might be a subtle contradiction or semantic overlap
+                // This is a heuristic for Phase 6
+              }
+            }
+          }
+
+          // 3. Semantic Divergence Check (Future LLM integration)
+          // For now, look for "never" vs "always" style markers
+          for (const a of axioms) {
+            if (a.text.toLowerCase().includes("never") && a.text.toLowerCase().includes("always")) {
+              contradictions.push(`Internal Divergence in Axiom: "${a.text}"`);
             }
           }
 
@@ -133,16 +154,53 @@ export function createLogicRefinementTool(): AgentTool {
             text:
               (reports.concat(contradictions, redundancies).join("\n") ||
                 "Audit complete: Logic gates are in optimal alignment.") +
-              ` \nStatus: ${healthLabel}. Found ${contradictions.length} contradictions and ${redundancies.length} redundancies.`,
+              ` \nStatus: ${healthLabel}. Found ${contradictions.length} contradictions and ${redundancies.length} redundancies.` +
+              (axioms.some((a) => a.meta.crystallized)
+                ? `\nCrystallized Axioms: ${axioms.filter((a) => a.meta.crystallized).length}`
+                : ""),
+          });
+        }
+
+        if (action === "crystallize") {
+          const target = (args as any).target;
+          if (!target) {
+            return jsonResult({ status: "error", error: "Missing 'target' for crystallization." });
+          }
+
+          const targetAxiom = axioms.find(
+            (a) => a.text.includes(target) || (a.meta.id && a.meta.id === target),
+          );
+          if (!targetAxiom) {
+            return jsonResult({ status: "error", error: `Target logic gate not found: ${target}` });
+          }
+
+          targetAxiom.meta.crystallized = true;
+          targetAxiom.meta.history = targetAxiom.meta.history || [];
+          targetAxiom.meta.history.push({ ts: Date.now(), event: "crystallized" });
+
+          const newEntry = `${targetAxiom.text} <!-- ${JSON.stringify(targetAxiom.meta)} -->`;
+          const newContent = content.replace(targetAxiom.line, newEntry);
+          await fs.writeFile(logicGatesPath, newContent);
+
+          return jsonResult({
+            status: "ok",
+            text: `Crystallized logic gate: "${targetAxiom.text}". It is now protected from regular pruning.`,
           });
         }
 
         if (action === "prune") {
           const now = Date.now();
           const keepAxioms = axioms.filter((a) => {
+            if (a.meta.crystallized) return true; // Never prune crystallized axioms
+
             const ageDays = (now - a.meta.ts) / 86400000;
-            // Prune if older than 30 days unless it's version 2+ and has a high "weight" (future feature)
-            return ageDays < 30;
+            const heat = a.meta.heat || 0;
+
+            // Prune if older than 30 days unless it has high heat or is crystallized
+            if (ageDays > 30 && heat < 10) {
+              return false;
+            }
+            return true;
           });
 
           if (keepAxioms.length < axioms.length) {
@@ -159,6 +217,49 @@ export function createLogicRefinementTool(): AgentTool {
             status: "ok",
             prunedCount: 0,
             text: "No axioms required pruning.",
+          });
+        }
+
+        if (action === "align") {
+          const providerResult = await createEmbeddingProvider({
+            config: cfg,
+            provider: cfg.agents?.defaults?.memorySearch?.provider ?? "auto",
+            model: cfg.agents?.defaults?.memorySearch?.model ?? "auto",
+            fallback: "none",
+          });
+
+          if (!providerResult.provider) {
+            return jsonResult({
+              status: "error",
+              error: "No embedding provider available for alignment.",
+            });
+          }
+
+          let updatedCount = 0;
+          let currentContent = content;
+
+          for (const a of axioms) {
+            try {
+              const vector = await providerResult.provider.embedQuery(a.text);
+              const peanoIndex = calculatePeanoIndex(vector);
+
+              const newMeta = { ...a.meta, peano: { index: peanoIndex, ts: Date.now() } };
+              const newEntry = `${a.text} <!-- ${JSON.stringify(newMeta)} -->`;
+              currentContent = currentContent.replace(a.line, newEntry);
+              updatedCount++;
+            } catch (err) {
+              // Skip failed embeddings
+            }
+          }
+
+          if (updatedCount > 0) {
+            await fs.writeFile(logicGatesPath, currentContent);
+          }
+
+          return jsonResult({
+            status: "ok",
+            updatedCount,
+            text: `Topological alignment complete. Updated ${updatedCount} logic gates with Peano indices.`,
           });
         }
       } catch (err) {

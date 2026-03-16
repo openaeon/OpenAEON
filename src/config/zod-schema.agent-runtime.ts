@@ -681,6 +681,8 @@ export const AgentEntrySchema = z
     agentDir: z.string().optional(),
     model: AgentModelSchema.optional(),
     skills: z.array(z.string()).optional(),
+    /** Skills that are always active for this agent, regardless of filters. */
+    fixedSkills: z.array(z.string()).optional(),
     memorySearch: MemorySearchSchema,
     humanDelay: HumanDelaySchema.optional(),
     heartbeat: HeartbeatSchema,
@@ -701,6 +703,10 @@ export const AgentEntrySchema = z
           ])
           .optional(),
         thinking: z.string().optional(),
+        /** Whether sub-agents should inherit the parent's active skills. */
+        inheritSkills: z.boolean().optional(),
+        /** Fixed skills to always inject into spawned sub-agents. */
+        fixedSkills: z.array(z.string()).optional(),
       })
       .strict()
       .optional(),

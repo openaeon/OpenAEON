@@ -12,6 +12,8 @@ export type MemoryNode = {
   id: string;
   type: "axiom" | "verified" | "unverified";
   content: string;
+  peanoIndex?: number;
+  organId?: string;
 };
 
 export type MemoryEdge = {
@@ -23,6 +25,13 @@ export type MemoryEdge = {
 export type MemoryGraph = {
   nodes: MemoryNode[];
   edges: MemoryEdge[];
+};
+
+export type AeonOrgan = {
+  id: string;
+  label: string;
+  nodeIds: string[];
+  resonance: number;
 };
 
 export type CognitiveParameters = {
@@ -37,6 +46,9 @@ let lastMaintenanceIntensity: "low" | "medium" | "high" | null = null;
 let lastEpiphanyFactor: number | null = null;
 let systemEntropy: number = 0;
 let collectiveResonance: number = 0;
+let resonanceScore: number = 0;
+let axiomHeat: Record<string, number> = {};
+let aeonOrgans: AeonOrgan[] = [];
 let cognitiveParameters: CognitiveParameters = {
   temperature: 0.7,
   top_p: 1.0,
@@ -89,6 +101,30 @@ export function updateSystemEntropy(value: number): void {
 
 export function getSystemEntropy(): number {
   return systemEntropy;
+}
+
+export function updateResonanceScore(value: number): void {
+  resonanceScore = value;
+}
+
+export function getResonanceScore(): number {
+  return resonanceScore;
+}
+
+export function updateAxiomHeat(id: string, delta: number): void {
+  axiomHeat[id] = (axiomHeat[id] || 0) + delta;
+}
+
+export function getAxiomHeat(id: string): number {
+  return axiomHeat[id] || 0;
+}
+
+export function updateAeonOrgans(organs: AeonOrgan[]): void {
+  aeonOrgans = organs;
+}
+
+export function getAeonOrgans(): AeonOrgan[] {
+  return aeonOrgans;
 }
 
 export function setAeonParameters(params: CognitiveParameters): void {
@@ -151,6 +187,9 @@ export function getAeonEvolutionState(): {
   lastMaintenanceIntensity: "low" | "medium" | "high" | null;
   lastEpiphanyFactor: number | null;
   collectiveResonance: number;
+  resonanceScore: number;
+  axiomHeat: Record<string, number>;
+  aeonOrgans: AeonOrgan[];
   systemEntropy: number;
   cognitiveLog: CognitiveLogEntry[];
   memoryGraph: MemoryGraph;
@@ -163,6 +202,9 @@ export function getAeonEvolutionState(): {
     lastMaintenanceIntensity,
     lastEpiphanyFactor,
     collectiveResonance,
+    resonanceScore,
+    axiomHeat: { ...axiomHeat },
+    aeonOrgans: [...aeonOrgans],
     systemEntropy,
     cognitiveLog: [...cognitiveLog],
     memoryGraph: getAeonMemoryGraph(),

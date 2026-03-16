@@ -1403,3 +1403,186 @@ export async function writeConfigFile(
     unsetPaths: options.unsetPaths,
   });
 }
+
+export function parseConfigPath(raw: string): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return [];
+  }
+  const parts: string[] = [];
+  let current = "";
+  let i = 0;
+  while (i < trimmed.length) {
+    const ch = trimmed[i];
+    if (ch === "\\") {
+      const next = trimmed[i + 1];
+      if (next) {
+        current += next;
+      }
+      i += 2;
+      continue;
+    }
+    if (ch === ".") {
+      if (current) {
+        parts.push(current);
+      }
+      current = "";
+      i += 1;
+      continue;
+    }
+    if (ch === "[") {
+      if (current) {
+        parts.push(current);
+      }
+      current = "";
+      const close = trimmed.indexOf("]", i);
+      if (close === -1) {
+        throw new Error(`Invalid path (missing "]"): ${raw}`);
+      }
+      const inside = trimmed.slice(i + 1, close).trim();
+      if (!inside) {
+        throw new Error(`Invalid path (empty "[]"): ${raw}`);
+      }
+      parts.push(inside);
+      i = close + 1;
+      continue;
+    }
+    current += ch;
+    i += 1;
+  }
+  if (current) {
+    parts.push(current);
+  }
+  const segments = parts.map((part) => part.trim()).filter(Boolean);
+  for (const segment of segments) {
+    if (!isNumericPathSegment(segment) && isBlockedObjectKey(segment)) {
+      throw new Error(`Invalid path segment: ${segment}`);
+    }
+  }
+  return segments;
+}
+
+export function getConfigAtPath(
+  root: unknown,
+  path: string[],
+): { found: boolean; value?: unknown } {
+  let current: unknown = root;
+  for (const segment of path) {
+    if (!current || typeof current !== "object") {
+      return { found: false };
+    }
+    if (Array.isArray(current)) {
+      if (!isNumericPathSegment(segment)) {
+        return { found: false };
+      }
+      const index = Number.parseInt(segment, 10);
+      if (!Number.isFinite(index) || index < 0 || index >= current.length) {
+        return { found: false };
+      }
+      current = current[index];
+      continue;
+    }
+    const record = current as Record<string, unknown>;
+    if (!hasOwnObjectKey(record, segment)) {
+      return { found: false };
+    }
+    current = record[segment];
+  }
+  return { found: true, value: current };
+}
+
+export function setConfigAtPath(
+  root: Record<string, unknown>,
+  path: string[],
+  value: unknown,
+): void {
+  let current: unknown = root;
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const segment = path[i];
+    const next = path[i + 1];
+    const nextIsIndex = Boolean(next && isNumericPathSegment(next));
+    if (Array.isArray(current)) {
+      if (!isNumericPathSegment(segment)) {
+        throw new Error(`Expected numeric index for array segment "${segment}"`);
+      }
+      const index = Number.parseInt(segment, 10);
+      const existing = current[index];
+      if (!existing || typeof existing !== "object") {
+        current[index] = nextIsIndex ? [] : {};
+      }
+      current = current[index];
+      continue;
+    }
+    if (!current || typeof current !== "object") {
+      throw new Error(`Cannot traverse into "${segment}" (not an object)`);
+    }
+    const record = current as Record<string, unknown>;
+    const existing = hasOwnObjectKey(record, segment) ? record[segment] : undefined;
+    if (!existing || typeof existing !== "object") {
+      record[segment] = nextIsIndex ? [] : {};
+    }
+    current = record[segment];
+  }
+
+  const last = path[path.length - 1];
+  if (Array.isArray(current)) {
+    if (!isNumericPathSegment(last)) {
+      throw new Error(`Expected numeric index for array segment "${last}"`);
+    }
+    const index = Number.parseInt(last, 10);
+    current[index] = value;
+    return;
+  }
+  if (!current || typeof current !== "object") {
+    throw new Error(`Cannot set "${last}" (parent is not an object)`);
+  }
+  (current as Record<string, unknown>)[last] = value;
+}
+
+export function unsetConfigAtPath(root: Record<string, unknown>, path: string[]): boolean {
+  let current: unknown = root;
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const segment = path[i];
+    if (!current || typeof current !== "object") {
+      return false;
+    }
+    if (Array.isArray(current)) {
+      if (!isNumericPathSegment(segment)) {
+        return false;
+      }
+      const index = Number.parseInt(segment, 10);
+      if (!Number.isFinite(index) || index < 0 || index >= current.length) {
+        return false;
+      }
+      current = current[index];
+      continue;
+    }
+    const record = current as Record<string, unknown>;
+    if (!hasOwnObjectKey(record, segment)) {
+      return false;
+    }
+    current = record[segment];
+  }
+
+  const last = path[path.length - 1];
+  if (Array.isArray(current)) {
+    if (!isNumericPathSegment(last)) {
+      return false;
+    }
+    const index = Number.parseInt(last, 10);
+    if (!Number.isFinite(index) || index < 0 || index >= current.length) {
+      return false;
+    }
+    current.splice(index, 1);
+    return true;
+  }
+  if (!current || typeof current !== "object") {
+    return false;
+  }
+  const record = current as Record<string, unknown>;
+  if (!hasOwnObjectKey(record, last)) {
+    return false;
+  }
+  delete record[last];
+  return true;
+}

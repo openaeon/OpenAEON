@@ -1,5 +1,6 @@
-import { randomBytes } from "node:crypto";
+import crypto, { randomBytes } from "node:crypto";
 import fs from "node:fs/promises";
+import os from "node:os";
 import type { ThinkLevel } from "../../auto-reply/thinking.js";
 import { generateSecureToken } from "../../infra/secure-random.js";
 import { distillMemory } from "../tools/memory-distill-tool.js";

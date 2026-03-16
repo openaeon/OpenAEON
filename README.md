@@ -76,6 +76,78 @@ Inspired by fractal geometry, every turn of the engine is an iteration. **Diverg
 
 ---
 
+## 🧠 AEON Cognitive Engine / AEON 认知引擎
+
+OpenAEON features a recursive, biological-inspired cognitive loop that allows the system to repair, optimize, and expand itself autonomously.
+
+OpenAEON 包含一个受生物启发的递归认知循环，允许系统自主进行修复、优化和扩展。
+
+### 1. Recursive Self-Healing (递归自愈)
+
+The system monitors its own pulse via a **Gateway Watchdog** and **Log Signal Extractor**.
+
+- **Autonomous Repair**: Use `openaeon doctor --fix` to automatically patch configuration issues and resolve environment conflicts (e.g., Git lock files).
+- **Hot-Reload Architecture**: Changes to core configuration trigger a `SIGUSR1` hot-reload, allowing the system to re-anchor its logic without service interruption.
+
+系统通过**网关看门狗**和**日志信号提取器**监控自身脉搏。
+
+- **自主修复**：使用 `openaeon doctor --fix` 自动修复配置问题并解决环境冲突（如 Git 锁定文件）。
+- **热加载架构**：核心配置更改会触发 `SIGUSR1` 热加载，允许系统在不中断服务的情况下重新锚定其逻辑。
+
+### 2. Axiomatic Evolution (公理演化)
+
+Knowledge is not just stored; it is synthesized into **Axioms** within `LOGIC_GATES.md`.
+
+- **Semantic Deconfliction**: LLM-driven auditing identifies and resolves semantic contradictions within the logic layer.
+- **Crystallization**: Highly verified logic blocks can be "crystallized," protecting them from temporal decay.
+
+知识不仅是被存储，而是在 `LOGIC_GATES.md` 中被综合为**公理**。
+
+- **语义去冲突**：由大模型驱动的审计系统识别并解决逻辑层内的语义矛盾。
+- **结晶化**：高度验证的逻辑块可以被“结晶”，从而免受时间衰减的影响。
+
+### 3. Topological Alignment & Organs (拓扑对齐与器官)
+
+Using **Peano Space-Filling Curves**, OpenAEON maps high-dimensional semantic embeddings into 1D topological sequences.
+
+- **Functional Organs**: Adjacent logic gates condense into specialized "Organs" (functional clusters) based on usage resonance.
+- **Locality Preservation**: Semantic proximity is preserved in physical storage, enabling efficient neighborhood-based reasoning.
+
+利用**皮亚诺空间填充曲线**，OpenAEON 将高维语义向量映射为一维拓扑序列。
+
+- **功能器官**：邻近的逻辑门根据使用共振冷凝为专门的“器官”（功能集群）。
+- **局部性保护**：语义接近性在物理存储中得到保留，从而实现高效的邻域推理。
+
+---
+
+## 🌙 Dreaming Mode / 睡眠模式 (Deep Analysis)
+
+OpenAEON uses a sophisticated idle-time evolutionary cycle known as **Dreaming**. This is not a standby state, but an active phase of cognitive consolidation.
+
+OpenAEON 使用一种被称为 **Dreaming（睡眠模式）** 的复杂闲置演化循环。这并非待机状态，而是认知的活跃固化阶段。
+
+### 1. Triggers / 触发机制
+
+- **Idle Trigger (闲置触发)**: Activated after 15 minutes of inactivity.
+- **Resonance Trigger (共振触发)**: Activated immediately if the `epiphanyFactor` (Cognitive Resonance) exceeds 0.85.
+- **Singularity Rebirth (奇点重生)**: A critical state (>0.95 resonance) that forces system-wide recursive logic refactors.
+
+### 2. The Distillation Process / 蒸馏过程
+
+During Dreaming, the system processes the `MEMORY.md` evolutionary ledger:
+
+- **Axiom Extraction**: Verified truths (`[AXIOM]`) are promoted to the permanent `LOGIC_GATES.md`.
+- **Gravitational Logic (引力逻辑)**: Axioms that reference each other gain "Weight" (Gravity), moving to the top of the priority stack.
+- **Entropy & Decay (熵与衰减)**: Older, unreferenced logic gates accumulate "Entropy". High-entropy gates are pruned to prevent "Cognitive Bloat".
+
+### 3. Peano-Spatial Consolidation / 空间固化
+
+Logic is not just indexed; it is **spatially aligned**. Using the Peano curve, the system ensures that "Knowledge Clusters" are physically adjacent, similar to how functional areas are organized in a biological brain.
+
+逻辑不仅是被索引，而是被**空间对齐**。利用皮亚诺曲线，系统确保“知识集群”在物理上相互邻近，类似于生物大脑中功能区域的组织方式。
+
+---
+
 ## 🛠 Installation / 安装教程
 
 ### Prerequisites / 环境准备
