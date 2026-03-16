@@ -1318,75 +1318,139 @@ check_node() {
     fi
 }
 
+# Install standalone Node.js (fallback)
+install_node_standalone() {
+    local version="22.13.1"
+    local arch=""
+    case "$(uname -m)" in
+        x86_64|amd64) arch="x64" ;;
+        arm64|aarch64) arch="arm64" ;;
+        *) ui_error "Unsupported architecture: $(uname -m)"; return 1 ;;
+    esac
+
+    local node_dir="${PREFIX:-$HOME/.openaeon}/nodejs"
+    mkdir -p "$node_dir"
+
+    local os_name=""
+    case "$OS" in
+        macos) os_name="darwin" ;;
+        linux) os_name="linux" ;;
+        *) ui_error "Unsupported OS for standalone Node: $OS"; return 1 ;;
+    esac
+
+    local tarball="node-v${version}-${os_name}-${arch}.tar.gz"
+    local url="https://nodejs.org/dist/v${version}/${tarball}"
+
+    ui_info "Downloading standalone Node.js v${version} for ${os_name}-${arch}..."
+    if ! curl -fsSL "$url" -o "/tmp/${tarball}"; then
+        ui_error "Failed to download Node.js from $url"
+        return 1
+    fi
+
+    ui_info "Extracting Node.js..."
+    if ! tar -xzf "/tmp/${tarball}" -C "$node_dir" --strip-components=1; then
+        ui_error "Failed to extract Node.js"
+        rm -f "/tmp/${tarball}"
+        return 1
+    fi
+    rm -f "/tmp/${tarball}"
+
+    # Add to PATH for the rest of the script
+    export PATH="${node_dir}/bin:$PATH"
+
+    # Ensure binary is on permanent PATH
+    ensure_bin_on_path "${node_dir}/bin"
+
+    ui_success "Standalone Node.js installed to ${node_dir}"
+    return 0
+}
+
 # Install Node.js
 install_node() {
     if [[ "$OS" == "macos" ]]; then
         if command -v brew &> /dev/null; then
             ui_info "Installing Node.js via Homebrew"
-            run_quiet_step "Installing node@22" brew install node@22
-            brew link node@22 --overwrite --force 2>/dev/null || true
-            if ! ensure_macos_node22_active; then
-                exit 1
+            if run_quiet_step "Installing node@22" brew install node@22; then
+                brew link node@22 --overwrite --force 2>/dev/null || true
+                if ensure_macos_node22_active; then
+                    ui_success "Node.js installed via Homebrew"
+                    print_active_node_paths || true
+                    return 0
+                fi
             fi
-            ui_success "Node.js installed"
-            print_active_node_paths || true
-        else
-            ui_error "Node.js not found and Homebrew is not available."
-            ui_info "Please install Node.js v22+ manually: https://nodejs.org/en/download/"
-            exit 1
+            ui_warn "Homebrew Node.js installation failed, trying standalone fallback"
         fi
+
+        if install_node_standalone; then
+            return 0
+        fi
+
+        ui_error "Failed to install Node.js automatically."
+        ui_info "Please install Node.js v22+ manually: https://nodejs.org/en/download/"
+        exit 1
     elif [[ "$OS" == "linux" ]]; then
-        ui_info "Installing Node.js via NodeSource"
-        require_sudo
+        if [[ "$(id -u)" -eq 0 ]] || is_promptable || sudo -n true 2>/dev/null; then
+            ui_info "Installing Node.js via NodeSource"
+            ui_info "Installing Linux build tools (make/g++/cmake/python3)"
+            if ! install_build_tools_linux; then
+                ui_warn "Continuing without auto-installing build tools"
+            fi
 
-        ui_info "Installing Linux build tools (make/g++/cmake/python3)"
-        if install_build_tools_linux; then
-            ui_success "Build tools installed"
-        else
-            ui_warn "Continuing without auto-installing build tools"
+            if command -v apt-get &> /dev/null; then
+                local tmp
+                tmp="$(mktempfile)"
+                download_file "https://deb.nodesource.com/setup_22.x" "$tmp"
+                if is_root; then
+                    run_quiet_step "Configuring NodeSource repository" bash "$tmp"
+                    run_quiet_step "Installing Node.js" apt-get install -y -qq nodejs
+                else
+                    run_quiet_step "Configuring NodeSource repository" sudo -E bash "$tmp"
+                    run_quiet_step "Installing Node.js" sudo apt-get install -y -qq nodejs
+                fi
+            elif command -v dnf &> /dev/null; then
+                local tmp
+                tmp="$(mktempfile)"
+                download_file "https://rpm.nodesource.com/setup_22.x" "$tmp"
+                if is_root; then
+                    run_quiet_step "Configuring NodeSource repository" bash "$tmp"
+                    run_quiet_step "Installing Node.js" dnf install -y -q nodejs
+                else
+                    run_quiet_step "Configuring NodeSource repository" sudo bash "$tmp"
+                    run_quiet_step "Installing Node.js" sudo dnf install -y -q nodejs
+                fi
+            elif command -v yum &> /dev/null; then
+                local tmp
+                tmp="$(mktempfile)"
+                download_file "https://rpm.nodesource.com/setup_22.x" "$tmp"
+                if is_root; then
+                    run_quiet_step "Configuring NodeSource repository" bash "$tmp"
+                    run_quiet_step "Installing Node.js" yum install -y -q nodejs
+                else
+                    run_quiet_step "Configuring NodeSource repository" sudo bash "$tmp"
+                    run_quiet_step "Installing Node.js" sudo yum install -y -q nodejs
+                fi
+            else
+                ui_warn "No supported package manager found for NodeSource, trying standalone"
+                if install_node_standalone; then
+                    return 0
+                fi
+            fi
+
+            if command -v node &> /dev/null && [[ "$(node_major_version)" -ge 22 ]]; then
+                ui_success "Node.js v22+ installed via package manager"
+                print_active_node_paths || true
+                return 0
+            fi
         fi
 
-        if command -v apt-get &> /dev/null; then
-            local tmp
-            tmp="$(mktempfile)"
-            download_file "https://deb.nodesource.com/setup_22.x" "$tmp"
-            if is_root; then
-                run_quiet_step "Configuring NodeSource repository" bash "$tmp"
-                run_quiet_step "Installing Node.js" apt-get install -y -qq nodejs
-            else
-                run_quiet_step "Configuring NodeSource repository" sudo -E bash "$tmp"
-                run_quiet_step "Installing Node.js" sudo apt-get install -y -qq nodejs
-            fi
-        elif command -v dnf &> /dev/null; then
-            local tmp
-            tmp="$(mktempfile)"
-            download_file "https://rpm.nodesource.com/setup_22.x" "$tmp"
-            if is_root; then
-                run_quiet_step "Configuring NodeSource repository" bash "$tmp"
-                run_quiet_step "Installing Node.js" dnf install -y -q nodejs
-            else
-                run_quiet_step "Configuring NodeSource repository" sudo bash "$tmp"
-                run_quiet_step "Installing Node.js" sudo dnf install -y -q nodejs
-            fi
-        elif command -v yum &> /dev/null; then
-            local tmp
-            tmp="$(mktempfile)"
-            download_file "https://rpm.nodesource.com/setup_22.x" "$tmp"
-            if is_root; then
-                run_quiet_step "Configuring NodeSource repository" bash "$tmp"
-                run_quiet_step "Installing Node.js" yum install -y -q nodejs
-            else
-                run_quiet_step "Configuring NodeSource repository" sudo bash "$tmp"
-                run_quiet_step "Installing Node.js" sudo yum install -y -q nodejs
-            fi
-        else
-            ui_error "Could not detect package manager"
-            echo "Please install Node.js 22+ manually: https://nodejs.org"
-            exit 1
+        # Standalone fallback for Linux
+        if install_node_standalone; then
+            return 0
         fi
 
-        ui_success "Node.js v22 installed"
-        print_active_node_paths || true
+        ui_error "Failed to install Node.js automatically."
+        ui_info "Please install Node.js v22+ manually: https://nodejs.org"
+        exit 1
     fi
 }
 
