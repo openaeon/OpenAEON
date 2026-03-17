@@ -184,7 +184,7 @@ const formatQueueDetails = (queue?: QueueStatus) => {
   if (!queue) {
     return "";
   }
-  const depth = typeof queue.depth === "number" ? `depth ${queue.depth}` : null;
+  const depth = typeof queue.depth === "number" ? `深度 ${queue.depth}` : null;
   if (!queue.showDetails) {
     return depth ? ` (${depth})` : "";
   }
@@ -195,11 +195,11 @@ const formatQueueDetails = (queue?: QueueStatus) => {
   if (typeof queue.debounceMs === "number") {
     const ms = Math.max(0, Math.round(queue.debounceMs));
     const label =
-      ms >= 1000 ? `${ms % 1000 === 0 ? ms / 1000 : (ms / 1000).toFixed(1)}s` : `${ms}ms`;
-    detailParts.push(`debounce ${label}`);
+      ms >= 1000 ? `${ms % 1000 === 0 ? ms / 1000 : (ms / 1000).toFixed(1)}秒` : `${ms}毫秒`;
+    detailParts.push(`防抖 ${label}`);
   }
   if (typeof queue.cap === "number") {
-    detailParts.push(`cap ${queue.cap}`);
+    detailParts.push(`上限 ${queue.cap}`);
   }
   if (queue.dropPolicy) {
     detailParts.push(`drop ${queue.dropPolicy}`);
@@ -309,7 +309,7 @@ const formatUsagePair = (input?: number | null, output?: number | null) => {
   }
   const inputLabel = typeof input === "number" ? formatTokenCount(input) : "?";
   const outputLabel = typeof output === "number" ? formatTokenCount(output) : "?";
-  return `🧮 Tokens: ${inputLabel} in / ${outputLabel} out`;
+  return `🧮 输入: ${inputLabel} / 输出: ${outputLabel}`;
 };
 
 const formatCacheLine = (
@@ -339,7 +339,7 @@ const formatCacheLine = (
       ? Math.round((cacheRead / totalInput) * 100)
       : 0;
 
-  return `🗄️ Cache: ${hitRate}% hit · ${cachedLabel} cached, ${newLabel} new`;
+  return `🗄️ 缓存: ${hitRate}% 命中 · ${cachedLabel} 已缓存, ${newLabel} 新增`;
 };
 
 const formatMediaUnderstandingLine = (decisions?: ReadonlyArray<MediaUnderstandingDecision>) => {
@@ -520,9 +520,23 @@ export function buildStatusMessage(args: StatusArgs): string {
   const runtime = { label: resolveRuntimeLabel(args) };
 
   const updatedAt = entry?.updatedAt;
+  // 转换 sessionKey 为友好显示
+  const rawKey = args.sessionKey ?? "未知";
+  let displayKey = rawKey;
+  if (rawKey.includes("telegram")) {
+    displayKey = "Telegram 会话";
+  } else if (rawKey.includes("discord")) {
+    displayKey = "Discord 会话";
+  } else if (rawKey.includes("whatsapp")) {
+    displayKey = "WhatsApp 会话";
+  } else if (rawKey.includes("signal")) {
+    displayKey = "Signal 会话";
+  } else if (rawKey.includes("webchat")) {
+    displayKey = "网页会话";
+  }
   const sessionLine = [
-    `Session: ${args.sessionKey ?? "unknown"}`,
-    typeof updatedAt === "number" ? `updated ${formatTimeAgo(now - updatedAt)}` : "no activity",
+    `会话: ${displayKey}`,
+    typeof updatedAt === "number" ? `更新于 ${formatTimeAgo(now - updatedAt).replace("just now", "刚刚").replace("m ago", "分钟前").replace("h ago", "小时前").replace("d ago", "天前")}` : "无活动",
   ]
     .filter(Boolean)
     .join(" • ");
@@ -537,33 +551,34 @@ export function buildStatusMessage(args: StatusArgs): string {
     : undefined;
 
   const contextLine = [
-    `Context: ${formatTokens(totalTokens, contextTokens ?? null)}`,
-    `🧹 Compactions: ${entry?.compactionCount ?? 0}`,
+    `上下文: ${formatTokens(totalTokens, contextTokens ?? null)}`,
+    `🧹 压缩: ${entry?.compactionCount ?? 0}`,
   ]
     .filter(Boolean)
     .join(" · ");
 
   const queueMode = args.queue?.mode ?? "unknown";
+  const queueModeLabel = queueMode === "collect" ? "收集" : queueMode === "eager" ? "立即" : queueMode === "batch" ? "批量" : queueMode;
   const queueDetails = formatQueueDetails(args.queue);
   const verboseLabel =
-    verboseLevel === "full" ? "verbose:full" : verboseLevel === "on" ? "verbose" : null;
+    verboseLevel === "full" ? "详细:全开" : verboseLevel === "on" ? "详细" : null;
   const elevatedLabel =
     elevatedLevel && elevatedLevel !== "off"
       ? elevatedLevel === "on"
-        ? "elevated"
-        : `elevated:${elevatedLevel}`
+        ? "提升模式"
+        : `提升:${elevatedLevel}`
       : null;
   const optionParts = [
-    `Runtime: ${runtime.label}`,
-    `Think: ${thinkLevel}`,
+    `运行时: ${runtime.label}`,
+    `思考: ${thinkLevel}`,
     verboseLabel,
-    reasoningLevel !== "off" ? `Reasoning: ${reasoningLevel}` : null,
+    reasoningLevel !== "off" ? `推理: ${reasoningLevel === "stream" ? "流式" : reasoningLevel}` : null,
     elevatedLabel,
   ];
   const optionsLine = optionParts.filter(Boolean).join(" · ");
   const activationParts = [
-    groupActivationValue ? `👥 Activation: ${groupActivationValue}` : null,
-    `🪢 Queue: ${queueMode}${queueDetails}`,
+    groupActivationValue ? `👥 激活: ${groupActivationValue}` : null,
+    `🪢 队列: ${queueModeLabel}${queueDetails}`,
   ];
   const activationLine = activationParts.filter(Boolean).join(" · ");
 
@@ -608,7 +623,17 @@ export function buildStatusMessage(args: StatusArgs): string {
       : undefined;
   const costLabel = showCost && hasUsage ? formatUsd(cost) : undefined;
 
-  const selectedAuthLabel = selectedAuthLabelValue ? ` · 🔑 ${selectedAuthLabelValue}` : "";
+  // 翻译认证模式为中文
+  const translateAuthMode = (mode?: string): string => {
+    if (!mode) return "";
+    if (mode === "api-key") return "API密钥";
+    if (mode === "oauth") return "OAuth";
+    if (mode === "token") return "令牌";
+    if (mode === "aws-sdk") return "AWS";
+    if (mode === "mixed") return "混合";
+    return mode;
+  };
+  const selectedAuthLabel = selectedAuthLabelValue ? ` · 🔑 ${translateAuthMode(selectedAuthLabelValue)}` : "";
   const channelModelNote = (() => {
     if (!args.config || !entry) {
       return undefined;
@@ -648,7 +673,7 @@ export function buildStatusMessage(args: StatusArgs): string {
     return "channel override";
   })();
   const modelNote = channelModelNote ? ` · ${channelModelNote}` : "";
-  const modelLine = `🧠 Model: ${selectedModelLabel}${selectedAuthLabel}${modelNote}`;
+  const modelLine = `🧠 模型: ${selectedModelLabel}${selectedAuthLabel}${modelNote}`;
   const showFallbackAuth = activeAuthLabelValue && activeAuthLabelValue !== selectedAuthLabelValue;
   const fallbackLine = fallbackState.active
     ? `↪️ Fallback: ${activeModelLabel}${
@@ -659,7 +684,7 @@ export function buildStatusMessage(args: StatusArgs): string {
   const versionLine = `🦞 OPENAEON ${VERSION}${commit ? ` (${commit})` : ""}`;
   const usagePair = formatUsagePair(inputTokens, outputTokens);
   const cacheLine = formatCacheLine(inputTokens, cacheRead, cacheWrite);
-  const costLine = costLabel ? `💵 Cost: ${costLabel}` : null;
+  const costLine = costLabel ? `💵 费用: ${costLabel}` : null;
   const usageCostLine =
     usagePair && costLine ? `${usagePair} · ${costLine}` : (usagePair ?? costLine);
   const mediaLine = formatMediaUnderstandingLine(args.mediaDecisions);
@@ -722,9 +747,9 @@ function groupCommandsByCategory(
 }
 
 export function buildHelpMessage(cfg?: OPENAEONConfig): string {
-  const lines = ["ℹ️ Help", ""];
+  const lines = ["ℹ️ 帮助", ""];
 
-  lines.push("Session");
+  lines.push("会话");
   lines.push("  /new  |  /reset  |  /compact [instructions]  |  /stop");
   lines.push("");
 
@@ -735,19 +760,19 @@ export function buildHelpMessage(cfg?: OPENAEONConfig): string {
   if (isCommandFlagEnabled(cfg, "debug")) {
     optionParts.push("/debug");
   }
-  lines.push("Options");
+  lines.push("选项");
   lines.push(`  ${optionParts.join("  |  ")}`);
   lines.push("");
 
-  lines.push("Status");
+  lines.push("状态");
   lines.push("  /status  |  /whoami  |  /context");
   lines.push("");
 
-  lines.push("Skills");
-  lines.push("  /skill <name> [input]");
+  lines.push("技能");
+  lines.push("  /skill <名称> [输入]");
 
   lines.push("");
-  lines.push("More: /commands for full list");
+  lines.push("更多: /commands 查看完整列表");
 
   return lines.join("\n");
 }
