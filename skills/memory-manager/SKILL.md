@@ -1,6 +1,6 @@
 ---
 name: memory-manager
-description: "Skill for implementing the 3-step Memory-First Protocol (Research, Response, Learning). Use when starting ANY task to understand past context, and MUST use when completing a task to save new conventions, architectural decisions, or learned user preferences to the memory/ directory."
+description: "实现 3 步记忆优先协议（研究、响应、学习）的技能。用于开始任何任务时了解过去的上下文，并在完成任务时将新的约定、架构决策或学习到的用户偏好保存到 memory/ 目录。"
 metadata:
   {
     "openaeon":
