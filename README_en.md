@@ -173,7 +173,7 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
    pnpm build
    ```
    ```bash
-   # 本仓库
+   # This warehouse
    git clone https://github.com/gu2003li/OpenAEON.git
    cd OpenAEON && pnpm install
    pnpm build
