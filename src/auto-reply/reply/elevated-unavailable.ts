@@ -7,23 +7,23 @@ export function formatElevatedUnavailableMessage(params: {
 }): string {
   const lines: string[] = [];
   lines.push(
-    `elevated is not available right now (runtime=${params.runtimeSandboxed ? "sandboxed" : "direct"}).`,
+    `提升模式当前不可用 (runtime=${params.runtimeSandboxed ? "sandboxed" : "direct"}).`,
   );
   if (params.failures.length > 0) {
-    lines.push(`Failing gates: ${params.failures.map((f) => `${f.gate} (${f.key})`).join(", ")}`);
+    lines.push(`失败的门控: ${params.failures.map((f) => `${f.gate} (${f.key})`).join(", ")}`);
   } else {
     lines.push(
-      "Failing gates: enabled (tools.elevated.enabled / agents.list[].tools.elevated.enabled), allowFrom (tools.elevated.allowFrom.<provider>).",
+      "失败的门控: enabled (tools.elevated.enabled / agents.list[].tools.elevated.enabled), allowFrom (tools.elevated.allowFrom.<provider>).",
     );
   }
-  lines.push("Fix-it keys:");
+  lines.push("修复键:");
   lines.push("- tools.elevated.enabled");
   lines.push("- tools.elevated.allowFrom.<provider>");
   lines.push("- agents.list[].tools.elevated.enabled");
   lines.push("- agents.list[].tools.elevated.allowFrom.<provider>");
   if (params.sessionKey) {
     lines.push(
-      `See: ${formatCliCommand(`openaeon sandbox explain --session ${params.sessionKey}`)}`,
+      `参见: ${formatCliCommand(`openaeon sandbox explain --session ${params.sessionKey}`)}`,
     );
   }
   return lines.join("\n");
