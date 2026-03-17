@@ -6,7 +6,7 @@
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-OpenAEON-181717?style=for-the-badge&logo=github)](https://github.com/openaeon/OpenAEON)
 
-**English** | [中文](README_zh.md)
+**English** | [中文](README.md)
 
 ### **AEON PROPHET — A Species-Level Evolution of the Logic Layer**
 
