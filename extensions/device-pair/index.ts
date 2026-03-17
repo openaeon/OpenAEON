@@ -346,7 +346,7 @@ function formatPendingRequests(pending: PendingPairingRequest[]): string {
 export default function register(api: OpenAEONPluginApi) {
   api.registerCommand({
     name: "pair",
-    description: "Generate setup codes and approve device pairing requests.",
+    description: "生成配对码并批准设备配对请求",
     acceptsArgs: true,
     handler: async (ctx) => {
       const args = ctx.args?.trim() ?? "";
