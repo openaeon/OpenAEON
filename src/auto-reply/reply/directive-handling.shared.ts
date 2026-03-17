@@ -11,26 +11,26 @@ export const withOptions = (line: string, options: string) =>
   `${line}\n${formatOptionsLine(options)}`;
 
 export const formatElevatedRuntimeHint = () =>
-  `${SYSTEM_MARK} Runtime is direct; sandboxing does not apply.`;
+  `${SYSTEM_MARK} 运行时为 direct；沙盒不适用。`;
 
 export const formatElevatedEvent = (level: ElevatedLevel) => {
   if (level === "full") {
-    return "Elevated FULL — exec runs on host with auto-approval.";
+    return "提升模式 FULL — exec 在主机上自动批准运行。";
   }
   if (level === "ask" || level === "on") {
-    return "Elevated ASK — exec runs on host; approvals may still apply.";
+    return "提升模式 ASK — exec 在主机上运行；可能仍需批准。";
   }
-  return "Elevated OFF — exec stays in sandbox.";
+  return "提升模式 OFF — exec 保持在沙盒中。";
 };
 
 export const formatReasoningEvent = (level: ReasoningLevel) => {
   if (level === "stream") {
-    return "Reasoning STREAM — emit live <think>.";
+    return "推理模式 STREAM — 实时输出 ⟨thought⟩。";
   }
   if (level === "on") {
-    return "Reasoning ON — include <think>.";
+    return "推理模式 ON — 包含 ⟨thought⟩。";
   }
-  return "Reasoning OFF — hide <think>.";
+  return "推理模式 OFF — 隐藏 ⟨thought⟩。";
 };
 
 export function enqueueModeSwitchEvents(params: {
@@ -63,19 +63,19 @@ export function formatElevatedUnavailableText(params: {
 }): string {
   const lines: string[] = [];
   lines.push(
-    `elevated is not available right now (runtime=${params.runtimeSandboxed ? "sandboxed" : "direct"}).`,
+    `提升模式当前不可用 (runtime=${params.runtimeSandboxed ? "sandboxed" : "direct"}).`,
   );
   const failures = params.failures ?? [];
   if (failures.length > 0) {
-    lines.push(`Failing gates: ${failures.map((f) => `${f.gate} (${f.key})`).join(", ")}`);
+    lines.push(`失败的门控: ${failures.map((f) => `${f.gate} (${f.key})`).join(", ")}`);
   } else {
     lines.push(
-      "Fix-it keys: tools.elevated.enabled, tools.elevated.allowFrom.<provider>, agents.list[].tools.elevated.*",
+      "修复键: tools.elevated.enabled, tools.elevated.allowFrom.<provider>, agents.list[].tools.elevated.*",
     );
   }
   if (params.sessionKey) {
     lines.push(
-      `See: ${formatCliCommand(`openaeon sandbox explain --session ${params.sessionKey}`)}`,
+      `参见: ${formatCliCommand(`openaeon sandbox explain --session ${params.sessionKey}`)}`,
     );
   }
   return lines.join("\n");
