@@ -1,6 +1,6 @@
 ---
 name: github
-description: "GitHub operations via `gh` CLI: issues, PRs, CI runs, code review, API queries. Use when: (1) checking PR status or CI, (2) creating/commenting on issues, (3) listing/filtering PRs or issues, (4) viewing run logs. NOT for: complex web UI interactions requiring manual browser flows (use browser tooling when available), bulk operations across many repos (script with gh api), or when gh auth is not configured."
+description: "通过 gh CLI 进行 GitHub 操作：issues、PRs、CI 运行、代码审查、API 查询。使用场景：(1) 检查 PR 状态或 CI，(2) 创建/评论 issues，(3) 列出/过滤 PRs 或 issues，(4) 查看运行日志。不适用于：需要手动浏览器流程的复杂 web UI 交互（可使用浏览器工具时）、跨多仓库的批量操作（使用 gh api 脚本），或未配置 gh 认证时。"
 metadata:
   {
     "openaeon":
