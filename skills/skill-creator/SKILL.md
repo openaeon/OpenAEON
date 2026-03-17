@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.
+description: 创建或更新 AgentSkills。用于设计、结构化或打包包含脚本、引用和资源的技能。
 ---
 
 # Skill Creator
