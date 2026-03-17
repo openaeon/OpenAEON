@@ -6,7 +6,7 @@
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-OpenAEON-181717?style=for-the-badge&logo=github)](https://github.com/openaeon/OpenAEON)
 
-[English](README_en.md) | **中文**
+ **中文** | [English](README_en.md)
 
 ### **AEON PROPHET — 逻辑层面的物种级进化**
 
