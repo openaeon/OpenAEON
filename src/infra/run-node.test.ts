@@ -66,4 +66,55 @@ describe("run-node script", () => {
       });
     },
   );
+
+  it.runIf(process.platform !== "win32")(
+    "replaces symlink dist root before triggering tsdown build",
+    async () => {
+      await withTempDir(async (tmp) => {
+        const linkedDistTarget = path.join(tmp, "linked-dist");
+        const distLinkPath = path.join(tmp, "dist");
+        await fs.mkdir(linkedDistTarget, { recursive: true });
+        await fs.symlink(linkedDistTarget, distLinkPath);
+
+        const observedDuringBuild: Array<{ isSymlink: boolean; isDirectory: boolean }> = [];
+        const spawn = (cmd: string) => {
+          if (cmd === "pnpm") {
+            if (!fsSync.existsSync(distLinkPath)) {
+              fsSync.mkdirSync(distLinkPath, { recursive: true });
+            }
+            const stat = fsSync.lstatSync(distLinkPath);
+            observedDuringBuild.push({
+              isSymlink: stat.isSymbolicLink(),
+              isDirectory: stat.isDirectory(),
+            });
+          }
+          return {
+            on: (event: string, cb: (code: number | null, signal: string | null) => void) => {
+              if (event === "exit") {
+                queueMicrotask(() => cb(0, null));
+              }
+              return undefined;
+            },
+          };
+        };
+
+        const { runNodeMain } = await import("../../scripts/run-node.mjs");
+        const exitCode = await runNodeMain({
+          cwd: tmp,
+          args: ["--version"],
+          env: {
+            ...process.env,
+            OPENAEON_FORCE_BUILD: "1",
+            OPENAEON_RUNNER_LOG: "0",
+          },
+          spawn,
+          execPath: process.execPath,
+          platform: process.platform,
+        });
+
+        expect(exitCode).toBe(0);
+        expect(observedDuringBuild).toEqual([{ isSymlink: false, isDirectory: true }]);
+      });
+    },
+  );
 });

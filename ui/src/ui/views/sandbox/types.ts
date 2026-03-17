@@ -17,6 +17,7 @@ export type SandboxProps = {
   error: string | null;
   onRefresh: () => void;
   onForceRestart?: () => void;
+  onSessionFocus?: (sessionKey: string) => void;
   /** Live task plan from the main agent's planner file. Optional. */
   taskPlan?: TaskPlanSnapshot | null;
   /** Live chat messages sent by agents */

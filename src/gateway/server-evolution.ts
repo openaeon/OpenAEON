@@ -9,6 +9,7 @@ import { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveWorkspaceRoot } from "../agents/workspace-dir.js";
 import { calculateEpiphanyFactor } from "./server-methods/aeon.js";
 import {
+  recordConsciousnessPulse,
   recordAeonDreaming,
   recordAeonEpiphanyFactor,
   recordAeonMaintenance,
@@ -159,6 +160,14 @@ export function startEvolutionMonitor(): void {
 
       const epiphanyFactor = calculateEpiphanyFactor(0, memorySaturation, depthPlaceholder);
       recordAeonEpiphanyFactor(epiphanyFactor);
+      recordConsciousnessPulse({
+        epiphanyFactor,
+        memorySaturation,
+        neuralDepth: depthPlaceholder,
+        idleMs: 0,
+        resonanceActive: epiphanyFactor > 0.85,
+        activeRun: false,
+      });
 
       const { updateCollectiveResonance } = await import("./aeon-state.js");
       updateCollectiveResonance([epiphanyFactor]);
@@ -211,6 +220,14 @@ export function startEvolutionMonitor(): void {
         }
 
         const resonanceTrigger = epiphanyFactor > 0.85;
+        recordConsciousnessPulse({
+          epiphanyFactor,
+          memorySaturation,
+          neuralDepth: depthPlaceholder,
+          idleMs: Math.max(0, idleTime),
+          resonanceActive: resonanceTrigger,
+          activeRun: false,
+        });
 
         if (idleTime > IDLE_THRESHOLD_MS || resonanceTrigger) {
           if (

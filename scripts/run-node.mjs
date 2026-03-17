@@ -176,6 +176,21 @@ const logRunner = (message, deps) => {
   deps.stderr.write(`[openaeon] ${message}\n`);
 };
 
+const normalizeDistRootForBuild = (deps) => {
+  try {
+    const stat = deps.fs.lstatSync?.(deps.distRoot);
+    if (!stat) {
+      return;
+    }
+    if (stat.isDirectory() && !stat.isSymbolicLink()) {
+      return;
+    }
+    deps.fs.rmSync?.(deps.distRoot, { recursive: true, force: true });
+  } catch {
+    // Best-effort cleanup; tsdown will emit a clearer error if build path is still invalid.
+  }
+};
+
 const runOpenAEON = async (deps) => {
   const nodeProcess = deps.spawn(deps.execPath, ["openaeon.mjs", ...deps.args], {
     cwd: deps.cwd,
@@ -230,6 +245,7 @@ export async function runNodeMain(params = {}) {
     return await runOpenAEON(deps);
   }
 
+  normalizeDistRootForBuild(deps);
   logRunner("Building TypeScript (dist is stale).", deps);
   const buildCmd = deps.platform === "win32" ? "cmd.exe" : "pnpm";
   const buildArgs =

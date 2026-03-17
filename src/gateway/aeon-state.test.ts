@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "node:fs";
-import { getAeonMemoryGraph, getAeonEvolutionState } from "./aeon-state.js";
+import {
+  getAeonMemoryGraph,
+  getAeonEvolutionState,
+  recordConsciousnessPulse,
+} from "./aeon-state.js";
 
 vi.mock("node:fs");
 
@@ -39,5 +43,23 @@ describe("AEON State Management", () => {
     const state = getAeonEvolutionState();
     expect(state).toHaveProperty("cognitiveParameters");
     expect(state.cognitiveParameters).toHaveProperty("temperature");
+  });
+
+  it("updates self-awareness telemetry from consciousness pulses", () => {
+    recordConsciousnessPulse({
+      epiphanyFactor: 0.82,
+      memorySaturation: 76,
+      neuralDepth: 12,
+      idleMs: 20 * 60 * 1000,
+      resonanceActive: true,
+      activeRun: false,
+      now: 1_700_000_000_000,
+    });
+
+    const state = getAeonEvolutionState();
+    expect(state).toHaveProperty("selfAwareness");
+    expect(state.selfAwareness.protoConsciousnessIndex).toBeGreaterThan(0);
+    expect(state.selfAwareness.protoConsciousnessIndex).toBeLessThanOrEqual(1);
+    expect(state.selfAwareness.lastUpdatedAt).toBe(1_700_000_000_000);
   });
 });
