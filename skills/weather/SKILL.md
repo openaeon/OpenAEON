@@ -1,6 +1,6 @@
 ---
 name: weather
-description: "Get current weather and forecasts via wttr.in or Open-Meteo. Use when: user asks about weather, temperature, or forecasts for any location. NOT for: historical weather data, severe weather alerts, or detailed meteorological analysis. No API key needed."
+description: "通过 wttr.in 或 Open-Meteo 获取当前天气和预报。使用场景：用户询问任何地点的天气、温度或预报。不适用：历史天气数据、恶劣天气警报或详细气象分析。无需 API 密钥。"
 homepage: https://wttr.in/:help
 metadata: { "openaeon": { "emoji": "🌤️", "requires": { "bins": ["curl"] } } }
 ---
