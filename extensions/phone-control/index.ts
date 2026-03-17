@@ -329,7 +329,7 @@ export default function register(api: OpenAEONPluginApi) {
 
   api.registerCommand({
     name: "phone",
-    description: "Arm/disarm high-risk phone node commands (camera/screen/writes).",
+    description: "启用/禁用高风险手机节点命令（摄像头/屏幕/写入）",
     acceptsArgs: true,
     handler: async (ctx) => {
       const args = ctx.args?.trim() ?? "";
