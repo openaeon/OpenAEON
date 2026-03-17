@@ -376,35 +376,35 @@ export async function handleDirectiveOnly(
   if (directives.hasThinkDirective && directives.thinkLevel) {
     parts.push(
       directives.thinkLevel === "off"
-        ? "Thinking disabled."
-        : `Thinking level set to ${directives.thinkLevel}.`,
+        ? "思考已禁用。"
+        : `思考级别设为 ${directives.thinkLevel}。`,
     );
   }
   if (directives.hasVerboseDirective && directives.verboseLevel) {
     parts.push(
       directives.verboseLevel === "off"
-        ? formatDirectiveAck("Verbose logging disabled.")
+        ? formatDirectiveAck("详细日志已禁用。")
         : directives.verboseLevel === "full"
-          ? formatDirectiveAck("Verbose logging set to full.")
-          : formatDirectiveAck("Verbose logging enabled."),
+          ? formatDirectiveAck("详细日志已设为 full。")
+          : formatDirectiveAck("详细日志已启用。"),
     );
   }
   if (directives.hasReasoningDirective && directives.reasoningLevel) {
     parts.push(
       directives.reasoningLevel === "off"
-        ? formatDirectiveAck("Reasoning visibility disabled.")
+        ? formatDirectiveAck("推理可见性已禁用。")
         : directives.reasoningLevel === "stream"
-          ? formatDirectiveAck("Reasoning stream enabled (Telegram only).")
-          : formatDirectiveAck("Reasoning visibility enabled."),
+          ? formatDirectiveAck("推理流式已启用（仅 Telegram）。")
+          : formatDirectiveAck("推理可见性已启用。"),
     );
   }
   if (directives.hasElevatedDirective && directives.elevatedLevel) {
     parts.push(
       directives.elevatedLevel === "off"
-        ? formatDirectiveAck("Elevated mode disabled.")
+        ? formatDirectiveAck("提升模式已禁用。")
         : directives.elevatedLevel === "full"
-          ? formatDirectiveAck("Elevated mode set to full (auto-approve).")
-          : formatDirectiveAck("Elevated mode set to ask (approvals may still apply)."),
+          ? formatDirectiveAck("提升模式已设为 full（自动批准）。")
+          : formatDirectiveAck("提升模式已设为 ask（可能仍需批准）。"),
     );
     if (shouldHintDirectRuntime) {
       parts.push(formatElevatedRuntimeHint());
@@ -425,12 +425,12 @@ export async function handleDirectiveOnly(
       execParts.push(`node=${directives.execNode}`);
     }
     if (execParts.length > 0) {
-      parts.push(formatDirectiveAck(`Exec defaults set (${execParts.join(", ")}).`));
+      parts.push(formatDirectiveAck(`Exec 默认值已设置 (${execParts.join(", ")}).`));
     }
   }
   if (shouldDowngradeXHigh) {
     parts.push(
-      `Thinking level set to high (xhigh not supported for ${resolvedProvider}/${resolvedModel}).`,
+      `思考级别设为 high（${resolvedProvider}/${resolvedModel} 不支持 xhigh）。`,
     );
   }
   if (modelSelection) {
