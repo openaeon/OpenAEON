@@ -1,6 +1,6 @@
 ---
 name: healthcheck
-description: Host security hardening and risk-tolerance configuration for OpenAEON deployments. Use when a user asks for security audits, firewall/SSH/update hardening, risk posture, exposure review, OpenAEON cron scheduling for periodic checks, or version status checks on a machine running OpenAEON (laptop, workstation, Pi, VPS).
+description: OpenAEON 部署的主机安全加固和风险容忍配置。当用户要求安全审计、防火墙/SSH/更新加固、风险态势、暴露面审查、OpenAEON 定时任务检查或版本状态检查时使用。
 ---
 
 # OpenAEON Host Hardening
