@@ -236,7 +236,7 @@ OpenAEON supports deep synchronization with mobile nodes (Android/iOS).
 
 Explore the mathematical and philosophical foundations of the project.
 
-👉 **[Deep-Dive: PRINCIPLES.md](/docs/concepts/principles.md)**
+👉 **[Deep-Dive: PRINCIPLES.md](/docs/concepts/principles_en.md)**
 
 ---
 
