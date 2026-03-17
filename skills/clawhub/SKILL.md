@@ -1,6 +1,6 @@
 ---
 name: clawhub
-description: Use the ClawHub CLI to search, install, update, and publish agent skills from clawhub.com. Use when you need to fetch new skills on the fly, sync installed skills to latest or a specific version, or publish new/updated skill folders with the npm-installed clawhub CLI.
+description: 使用 ClawHub CLI 从 clawhub.com 搜索、安装、更新和发布技能。需要时获取新技能，同步已安装技能到最新版本，或使用 npm 安装的 clawhub CLI 发布新的/更新的技能文件夹。
 metadata:
   {
     "openaeon":
