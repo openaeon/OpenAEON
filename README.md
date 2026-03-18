@@ -4,7 +4,7 @@
 
 # 🌌 OpenAEON
 
-[![GitHub Repository](https://img.shields.io/badge/GitHub-OpenAEON-181717?style=for-the-badge&logo=github)](https://github.com/openaeon/OpenAEON)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-OpenAEON-181717?style=for-the-badge&logo=github)](https://github.com/gu2003li/OpenAEON)
 
  **中文** | [English](README_en.md)
 
