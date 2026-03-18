@@ -108,10 +108,22 @@ function formatCompletionSourceLine(
 }
 
 function isCompletionProfileHeader(line: string): boolean {
-  return line.trim() === "# OPENAEON Completion";
+  return /^#\s*open(?:aeon|claw)\s+completion\s*$/i.test(line.trim());
+}
+
+function isLegacyOpenClawCompletionLine(line: string): boolean {
+  return (
+    line.includes(".openclaw/completions/openclaw.zsh") ||
+    line.includes("openclaw completion") ||
+    line.includes(".openclaw/completions/openclaw.bash") ||
+    line.includes(".openclaw/completions/openclaw.fish")
+  );
 }
 
 function isCompletionProfileLine(line: string, binName: string, cachePath: string | null): boolean {
+  if (isLegacyOpenClawCompletionLine(line)) {
+    return true;
+  }
   if (line.includes(`${binName} completion`)) {
     return true;
   }
@@ -380,6 +392,13 @@ function generateZshCompletion(program: Command): string {
   const rootCmd = program.name();
   const script = `
 #compdef ${rootCmd}
+
+# Some environments source completion scripts before running compinit.
+# Guard against missing compdef so completion doesn't break shell startup.
+if ! command -v compdef >/dev/null 2>&1; then
+  autoload -Uz compinit
+  compinit
+fi
 
 _${rootCmd}_root_completion() {
   local -a commands
