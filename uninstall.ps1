@@ -1,5 +1,5 @@
 # OpenAEON Uninstaller for Windows
-# Usage: iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/uninstall.ps1 | iex
+# Usage: iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/uninstall.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
