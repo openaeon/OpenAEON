@@ -168,16 +168,17 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
 2. **Clone & Build**:
 
    ```bash
-   git clone https://github.com/openaeon/OpenAEON.git
-   cd OpenAEON && pnpm install
-   pnpm build
-   ```
-   ```bash
-   # This warehouse
    git clone https://github.com/gu2003li/OpenAEON.git
    cd OpenAEON && pnpm install
    pnpm build
    ```
+   ```bash
+   # Upper reaches
+   git clone https://github.com/openaeon/OpenAEON.git
+   cd OpenAEON && pnpm install
+   pnpm build
+   ```
+
 3. **Initialize**:
 
    ```bash
