@@ -168,15 +168,8 @@ iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1 |
 2. **克隆与编译**:
 
    ```bash
-   git clone https://github.com/gu2003li/OpenAEON.git
-   cd OpenAEON && pnpm install
-   pnpm build
-   ```
-   ```bash
-   # 上游
    git clone https://github.com/openaeon/OpenAEON.git
-   cd OpenAEON && pnpm install
-   pnpm build
+   cd OpenAEON && pnpm install && pnpm build && pnpm ui:build
    ```
 
 3. **初始化**:
@@ -208,10 +201,10 @@ iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1 |
 
 ```bash
 # macOS / Linux / WSL2
-curl -fsSL https://raw.githubusercontent.com/openaeon/OpenAEON/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/gu2003li/OpenAEON/main/uninstall.sh | bash
 
 # Windows (PowerShell)
-iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/uninstall.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/uninstall.ps1 | iex
 ```
 
 > [!NOTE]
