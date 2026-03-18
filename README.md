@@ -147,10 +147,10 @@ OpenAEON 使用一种被称为 **Dreaming（睡眠模式）** 的复杂闲置演
 
 ```bash
 # macOS / Linux / WSL2
-curl -fsSL https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash
 
 # Windows (PowerShell)
-iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1 | iex
 ```
 
 ### 👨‍💻 高级安装
