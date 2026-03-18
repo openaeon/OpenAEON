@@ -32,6 +32,22 @@
 
 ---
 
+## 🖼 界面截图（暗色模式，中文 UI）
+
+### 聊天页（`/chat?session=main`，中文界面）
+
+![OpenAEON Chat Dark 中文](docs/images/ui-chat-main-dark-zh.png)
+
+### 沙盘页（`/sandbox?session=main`，中文界面）
+
+![OpenAEON Sandbox Dark 中文](docs/images/ui-sandbox-dark-zh.png)
+
+### AEON 页（`/aeon`，中文界面）
+
+![OpenAEON AEON Dark 中文](docs/images/ui-aeon-dark-zh.png)
+
+---
+
 ## 🧬 什么是 OpenAEON
 
 **OpenAEON**（原 OpenClaw）是一个实验性的 **AI 认知架构**，旨在超越传统的智能体框架。它将代码从静态执行系统转变为一个**自我进化的逻辑生命体**。
