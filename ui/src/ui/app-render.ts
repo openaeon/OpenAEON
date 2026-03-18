@@ -570,6 +570,10 @@ export function renderApp(state: AppViewState) {
                 onForceRestart: () => {
                   void state.handleSendChat("/new", { restoreDraft: true });
                 },
+                onSessionFocus: (next) => {
+                  state.sessionKey = next;
+                  void loadSandboxTaskPlan(state);
+                },
                 onRecruitAgent: () => state.handleRecruitModalOpen(),
                 onRecruitModalClose: () => state.handleRecruitModalClose(),
                 onAvatarSelect: (agentId, avatarId) =>
