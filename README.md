@@ -29,6 +29,19 @@
 </p>
 
 </div>
+# 克隆仓库
+git clone https://github.com/openaeon/OpenAEON.git
+cd OpenAEON
+
+# 安装项目依赖
+pnpm install
+
+# 编译项目 (首次运行将自动构建 UI 前端工程)
+pnpm build
+pnpm ui:build
+
+# 启动全中文沉浸式配置向导，注册基础设置并安装后台守护进程
+pnpm openaeon onboard --install-daemon
 
 ---
 
@@ -304,7 +317,8 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
 
    ```bash
    git clone https://github.com/openaeon/OpenAEON.git
-   cd OpenAEON && pnpm install
+   cd OpenAEON
+   pnpm install
    pnpm build
    ```
 
@@ -321,7 +335,8 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
    ```
 
 > [!TIP]
-> If you need the Web UI, run `pnpm ui:build` after the main build.
+> `pnpm build` compiles the core runtime.  
+> If you need the standalone Web UI build artifacts, run `pnpm ui:build`.
 
 </details>
 
@@ -333,8 +348,10 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
 
 ```bash
 # Start gateway (default local control UI on :18789)
-openaeon gateway
+pnpm openaeon gateway
 ```
+
+> If you installed OpenAEON globally, `openaeon gateway` also works.
 
 Open:
 

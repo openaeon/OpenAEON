@@ -296,7 +296,8 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
 
    ```bash
    git clone https://github.com/openaeon/OpenAEON.git
-   cd OpenAEON && pnpm install
+   cd OpenAEON
+   pnpm install
    pnpm build
    ```
 
@@ -313,7 +314,8 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
    ```
 
 > [!TIP]
-> 如果需要 Web 界面，请在主编译完成后运行 `pnpm ui:build`。
+> `pnpm build` 会编译核心运行时。  
+> 如果需要独立 Web UI 构建产物，再运行 `pnpm ui:build`。
 
 </details>
 
@@ -325,8 +327,10 @@ iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 |
 
 ```bash
 # 默认在 :18789 提供本地控制台
-openaeon gateway
+pnpm openaeon gateway
 ```
+
+> 如果你已经全局安装过 OpenAEON，也可以直接使用 `openaeon gateway`。
 
 打开：
 
