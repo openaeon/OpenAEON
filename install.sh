@@ -2497,9 +2497,6 @@ main() {
                 echo ""
                 exec </dev/tty
                 exec "$claw" onboard --install-daemon
-            fi
-            ui_info "No TTY; run openaeon onboard --install-daemon to finish setup"
-            return 0
         fi
     fi
 
