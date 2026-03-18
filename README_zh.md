@@ -309,6 +309,163 @@ AEON 模式是 OpenAEON 长会话能力的亮点：
 3. 若交付状态持续为 `persist_failed`，先检查 `aeon.execution.lookup` 与网关日志，再判断是否模型问题。
 4. 若刷新后状态看起来不一致，先刷新会话状态，并确认 `mode.eternal.source`（`session` 或 `default`）。
 
+### 进化迭代实操手册（当前可直接用）
+
+如果你要的是真正可执行的 AEON 进化链路，而不只是视觉效果，可按这个循环：
+
+1. **先观测运行态**  
+   调 `aeon.status`，重点看：
+   - `telemetry.cognitiveState`（`maintenanceDecision`、`guardrailDecision`、`epistemicLabel`）
+   - `execution.delivery.state`
+   - `memory.persistence`（`checkpoint`、`lastDistillAt`、`totalEntries`）
+2. **触发记忆蒸馏**  
+   在聊天输入 `/seal`（别名：`/distill`），把记忆蒸馏进逻辑门。
+3. **解释当前为什么这么决策**  
+   调 `aeon.decision.explain`，查看 `decisionCard` 与 `impactLens`。
+4. **追踪长/中/短期目标漂移**  
+   调 `aeon.intent.trace`，检查 mission/session/turn 漂移分数。
+5. **审计价值与安全裁决**  
+   调 `aeon.ethics.evaluate`，查看价值优先级、trusted 状态、guardrail 裁决。
+6. **确认结果是否真正落盘**  
+   调 `aeon.execution.lookup`，确认最终记录是否 `persisted`（若是 `persist_failed` 则按 reasonCode 排障）。
+7. **回放思考流做复盘**  
+   调 `aeon.thinking.stream`，按 cursor 增量回放事件时间线。
+
+AEON 进化最小 RPC 集合：
+
+- `aeon.status`
+- `aeon.decision.explain`
+- `aeon.intent.trace`
+- `aeon.ethics.evaluate`
+- `aeon.memory.trace`
+- `aeon.execution.lookup`
+- `aeon.thinking.stream`
+
+### 场景模板（可直接照着跑）
+
+1. **过夜研究场景（连续性优先）**
+   - 先开启永恒模式（`/eternal on`）。
+   - 下达任务时明确产物要求（报告路径、摘要格式）。
+   - 睡前先确认 `execution.delivery.state` 没卡在中间态。
+   - 次日检查：
+     - 用 `aeon.execution.lookup` 找最新落盘记录。
+     - 用 `aeon.memory.trace` 看 checkpoint 是否推进。
+     - 用 `aeon.thinking.stream` 回放过夜推理轨迹。
+2. **文档/产出场景（交付优先）**
+   - 每个阶段都要求返回最终产物路径，避免“做了没落盘”。
+   - 里程碑后执行 `/seal`，把稳定结论蒸馏进逻辑门。
+   - 验收点：
+     - `aeon.decision.explain` 的理由链完整（`why`、`whyNot`、`rollbackPlan`）。
+     - `aeon.execution.lookup` 出现最终 `persisted` 记录与 artifact refs。
+3. **多代理汇总场景（审计优先）**
+   - 执行前把目标拆成 mission/session/turn 三层。
+   - 汇总阶段用 `aeon.intent.trace` 监控目标漂移。
+   - 高影响输出前用 `aeon.ethics.evaluate` 校验价值优先级与 trusted 状态。
+   - 最终闸门：
+     - delivery 已落盘
+     - intent 漂移在可接受范围
+     - 无未处理 guardrail 阻断原因
+
+### 主代理委派与子代理模型路由配置
+
+OpenAEON 支持“主代理编排 + 子代理模型分工”，可以让主代理把不同子任务委派给特定模型处理。
+
+快速命令方式：
+
+- `/subagents spawn <agentId> <task> [--model <provider/model>] [--thinking <level>]`
+- 示例：
+  - `/subagents spawn research 收集来源并总结风险权衡 --model anthropic/claude-sonnet-4-6 --thinking high`
+  - `/subagents spawn fast 先出一版要点摘要 --model openai/gpt-5.2 --thinking low`
+
+配置方式（全局默认 + 按 agent 覆盖）：
+
+```json5
+{
+  agents: {
+    defaults: {
+      subagents: {
+        model: "openai/gpt-5.2",
+        thinking: "medium",
+        runTimeoutSeconds: 900,
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 5,
+      },
+    },
+    list: [
+      {
+        id: "main",
+        subagents: {
+          allowAgents: ["research", "fast"],
+        },
+      },
+      {
+        id: "research",
+        model: { primary: "anthropic/claude-opus-4-6" },
+        subagents: {
+          model: "anthropic/claude-sonnet-4-6",
+          thinking: "high",
+        },
+      },
+      {
+        id: "fast",
+        model: { primary: "openai/gpt-5.2-mini" },
+        subagents: { thinking: "low" },
+      },
+    ],
+  },
+}
+```
+
+子代理模型选择优先级（运行时实际顺序）：
+
+1. 显式覆盖（`--model` / `sessions_spawn.model`）
+2. 目标 agent 的 `agents.list[].subagents.model`
+3. 全局 `agents.defaults.subagents.model`
+4. 目标 agent 主模型（`agents.list[].model`）
+5. 全局主模型（`agents.defaults.model.primary`）
+6. 运行时兜底默认模型（`provider/model`）
+
+常见问题：
+
+- `agentId is not allowed for sessions_spawn`：在 `agents.list[].subagents.allowAgents` 里放行（或用 `["*"]`）。
+- 非法 `--thinking` 会被拒绝。
+- 模型 patch 失败时子代理不会启动；需要检查模型白名单/配置和 provider 鉴权。
+
+### 对话内委派语法（用户实际怎么说）
+
+用户可以在聊天里直接用 `/subagents` 发出委派：
+
+```bash
+/subagents spawn <agentId> <task> [--model <provider/model>] [--thinking <level>]
+```
+
+典型流程：
+
+1. 先起一个研究子代理：
+
+```bash
+/subagents spawn research 调研 SOXL 趋势、催化因素与风险，并附来源链接 --thinking high
+```
+
+2. 再起一个写作/汇总子代理：
+
+```bash
+/subagents spawn writer 基于 research 结果生成最终报告 --model openai/gpt-5.2 --thinking low
+```
+
+3. 跟踪与补充指令：
+
+```bash
+/subagents list
+/subagents info 1
+/subagents send 1 补充行业库存周期分析
+/subagents log 1 200
+```
+
+可放在用户引导里的提示句：
+
+- “如果需要并行委派，请使用 `/subagents spawn <agentId> <task> [--model ...]`。”
+
 ---
 
 ## 🛠 安装教程

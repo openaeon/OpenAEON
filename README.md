@@ -317,6 +317,163 @@ Recommended usage profile:
 3. If delivery keeps showing `persist_failed`, first check `aeon.execution.lookup` and gateway logs before assuming model failure.
 4. If mode state looks inconsistent after page reload, refresh session status and confirm `mode.eternal.source` (`session` vs `default`).
 
+### Evolution Iteration Playbook (How to use it today)
+
+Use this loop when you want practical AEON evolution, not just visuals:
+
+1. **Observe runtime state**  
+   Call `aeon.status` and check:
+   - `telemetry.cognitiveState` (`maintenanceDecision`, `guardrailDecision`, `epistemicLabel`)
+   - `execution.delivery.state`
+   - `memory.persistence` (`checkpoint`, `lastDistillAt`, `totalEntries`)
+2. **Trigger memory distillation**  
+   In chat: `/seal` (alias: `/distill`) to distill memory into logic gates.
+3. **Inspect why the system chose current policy**  
+   Call `aeon.decision.explain` to read `decisionCard` + `impactLens`.
+4. **Trace long/short/immediate intent drift**  
+   Call `aeon.intent.trace` and review mission/session/turn drift scores.
+5. **Audit value and safety adjudication**  
+   Call `aeon.ethics.evaluate` to inspect value-order, trust, and guardrail adjudication.
+6. **Confirm outcomes are actually persisted**  
+   Call `aeon.execution.lookup` and ensure final records are `persisted` (or investigate `persist_failed` reason codes).
+7. **Replay thinking stream for postmortem**  
+   Call `aeon.thinking.stream` for cursor-based event replay and timeline reconstruction.
+
+Minimal RPC set for AEON iteration:
+
+- `aeon.status`
+- `aeon.decision.explain`
+- `aeon.intent.trace`
+- `aeon.ethics.evaluate`
+- `aeon.memory.trace`
+- `aeon.execution.lookup`
+- `aeon.thinking.stream`
+
+### Scenario Templates (Copy and run)
+
+1. **Overnight research run (continuity-first)**
+   - Turn on Eternal mode (`/eternal on`).
+   - Start the task with explicit artifact expectations (report path, summary format).
+   - Before sleep: verify `execution.delivery.state` is not stuck at transient states.
+   - After wake-up:
+     - Check `aeon.execution.lookup` for latest persisted records.
+     - Check `aeon.memory.trace` for checkpoint advance.
+     - Replay `aeon.thinking.stream` for overnight reasoning timeline.
+2. **Doc/output production run (delivery-first)**
+   - Keep scope narrow and request final artifact path in every major step.
+   - Trigger `/seal` after milestone completion to distill stable findings.
+   - Validate:
+     - `aeon.decision.explain` shows coherent rationale (`why`, `whyNot`, `rollbackPlan`).
+     - `aeon.execution.lookup` includes final `persisted` record + artifact refs.
+3. **Multi-agent synthesis run (audit-first)**
+   - Split goals into mission/session/turn layers before execution.
+   - During synthesis, use `aeon.intent.trace` to detect drift.
+   - Use `aeon.ethics.evaluate` to verify value-order and trust status before high-impact outputs.
+   - Final gate:
+     - delivery persisted
+     - intent drift acceptable
+     - no unresolved guardrail block reason
+
+### Main Agent Delegation + Sub-agent Model Routing
+
+OpenAEON supports model-specialized delegation so the main agent can orchestrate and route sub-tasks to different sub-agent models.
+
+Quick command path:
+
+- `/subagents spawn <agentId> <task> [--model <provider/model>] [--thinking <level>]`
+- Examples:
+  - `/subagents spawn research Gather source links and summarize risk tradeoffs --model anthropic/claude-sonnet-4-6 --thinking high`
+  - `/subagents spawn fast Draft first-pass bullet summary --model openai/gpt-5.2 --thinking low`
+
+Config path (defaults + per-agent override):
+
+```json5
+{
+  agents: {
+    defaults: {
+      subagents: {
+        model: "openai/gpt-5.2",
+        thinking: "medium",
+        runTimeoutSeconds: 900,
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 5,
+      },
+    },
+    list: [
+      {
+        id: "main",
+        subagents: {
+          allowAgents: ["research", "fast"],
+        },
+      },
+      {
+        id: "research",
+        model: { primary: "anthropic/claude-opus-4-6" },
+        subagents: {
+          model: "anthropic/claude-sonnet-4-6",
+          thinking: "high",
+        },
+      },
+      {
+        id: "fast",
+        model: { primary: "openai/gpt-5.2-mini" },
+        subagents: { thinking: "low" },
+      },
+    ],
+  },
+}
+```
+
+Sub-agent model resolution priority (actual runtime order):
+
+1. Explicit spawn override (`--model` / `sessions_spawn.model`)
+2. Target agent `agents.list[].subagents.model`
+3. Global `agents.defaults.subagents.model`
+4. Target agent primary model (`agents.list[].model`)
+5. Global primary model (`agents.defaults.model.primary`)
+6. Runtime fallback default (`provider/model`)
+
+Common pitfalls:
+
+- `agentId is not allowed for sessions_spawn` → add it to `agents.list[].subagents.allowAgents` (or `["*"]`).
+- Invalid `--thinking` values are rejected.
+- If model patch is rejected, the child run does not start; check model allowlist/config and provider auth.
+
+### In-Chat Delegation Syntax (What users type)
+
+Users can delegate directly in conversation with `/subagents`:
+
+```bash
+/subagents spawn <agentId> <task> [--model <provider/model>] [--thinking <level>]
+```
+
+Typical flow:
+
+1. Spawn a research sub-agent:
+
+```bash
+/subagents spawn research Investigate SOXL trend, catalysts, and risk factors with source links --thinking high
+```
+
+2. Spawn a writing/report sub-agent:
+
+```bash
+/subagents spawn writer Produce the final report from research findings --model openai/gpt-5.2 --thinking low
+```
+
+3. Track and steer:
+
+```bash
+/subagents list
+/subagents info 1
+/subagents send 1 Add an industry inventory-cycle section
+/subagents log 1 200
+```
+
+User-facing guidance sentence (for onboarding/help text):
+
+- "If you want parallel delegation, use `/subagents spawn <agentId> <task> [--model ...]`."
+
 ---
 
 ## 🛠 Installation
