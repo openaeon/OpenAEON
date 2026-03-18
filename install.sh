@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # OpenAEON Installer for macOS and Linux
-# Usage: curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash
+# Usage: curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash
 
 BOLD='\033[1m'
 ACCENT='\033[38;2;255;77;77m'       # coral-bright  #ff4d4d
@@ -258,7 +258,8 @@ detect_os_or_die() {
     if [[ "$OS" == "unknown" ]]; then
         ui_error "Unsupported operating system"
         echo "This installer supports macOS and Linux (including WSL)."
-        echo "For Windows, use: iwr -useb https://openaeon.ai/install.ps1 | iex"
+       echo "For Windows, use: iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1 | iex"
+
         exit 1
     fi
 
@@ -967,7 +968,7 @@ print_usage() {
 OpenAEON installer (macOS + Linux)
 
 Usage:
-  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash -s -- [options]
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash -s -- [options]
 
 Options:
   --install-method, --method npm|git   Install via npm (default) or from a git checkout
@@ -997,9 +998,9 @@ Environment variables:
   SHARP_IGNORE_GLOBAL_LIBVIPS=0|1    Default: 1 (avoid sharp building against global libvips)
 
 Examples:
-  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash
-  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash -s -- --no-onboard
-  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash -s -- --install-method git --no-onboard
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash -s -- --no-onboard
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash -s -- --install-method git --no-onboard
 EOF
 }
 
@@ -1239,7 +1240,7 @@ print_homebrew_admin_fix() {
     echo "  2) Ask an Administrator to grant admin rights, then sign out/in:"
     echo "     sudo dseditgroup -o edit -a ${current_user} -t user admin"
     echo "Then retry:"
-    echo "  curl -fsSL https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash"
+    echo "  curl -fsSL https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash"
 }
 
 install_homebrew() {
@@ -1956,7 +1957,7 @@ resolve_openaeon_bin() {
 
 install_openaeon_from_git() {
     local repo_dir="$1"
-    local repo_url="https://github.com/openaeon/OpenAEON.git"
+    local repo_url="https://github.com/gu2003li/OpenAEON.git"
 
     if [[ -d "$repo_dir/.git" ]]; then
         ui_info "Installing OpenAEON from git checkout: ${repo_dir}"
@@ -2445,7 +2446,7 @@ main() {
         ui_kv "Checkout" "$final_git_dir"
         ui_kv "Wrapper" "${PREFIX:-$HOME/.openaeon}/bin/openaeon"
         ui_kv "Update command" "openaeon update --restart"
-        ui_kv "Switch to npm" "curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.sh | bash -s -- --install-method npm"
+        ui_kv "Switch to npm" "curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.sh | bash -s -- --install-method npm"
     elif [[ "$is_upgrade" == "true" ]]; then
         ui_info "Upgrade complete"
         if [[ -r /dev/tty && -w /dev/tty ]]; then
