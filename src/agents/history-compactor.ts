@@ -41,8 +41,13 @@ export function compressHistory(messages: AgentMessage[]): AgentMessage[] {
         log.debug(`Compressing sequence of ${sequenceLength} successful tool calls.`);
         compressed.push({
           role: "assistant",
-          content: `[COMPRESSED HISTORY: ${sequenceLength} successful tool calls]\n${sequenceSummary.trim()}`,
-        } as any);
+          content: [
+            {
+              type: "text",
+              text: `[COMPRESSED HISTORY: ${sequenceLength} successful tool calls]\n${sequenceSummary.trim()}`,
+            },
+          ],
+        } as AgentMessage);
         i = sequenceEnd;
         continue;
       }
