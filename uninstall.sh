@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # OpenAEON Uninstaller for macOS and Linux
-# Usage: curl -fsSL https://raw.githubusercontent.com/openaeon/OpenAEON/main/uninstall.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/gu2003li/OpenAEON/main/uninstall.sh | bash
 
 BOLD='\033[1m'
 ACCENT='\033[38;2;255;77;77m'
