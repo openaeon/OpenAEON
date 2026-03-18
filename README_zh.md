@@ -264,6 +264,51 @@ OpenAEON 当前是多运行面板协同系统：
 
 这些接口驱动 Chat、Sandbox、AEON 页面显示真实运行状态。
 
+### AEON 模式（永恒模式）— 当前可用法
+
+AEON 模式是 OpenAEON 长会话能力的亮点：
+
+- 以**会话维度**持久化 eternal 标记，并与 Chat/Sandbox/AEON 三端 UI 同步。
+- 通过会话补丁与本地状态恢复，在刷新/重连后保持状态。
+- 可在 `aeon.status` 的 `mode.eternal` 中观测（`enabled`、`source`、`updatedAt`）。
+
+当前语义（重要）：
+
+- 现在的 AEON 模式属于**会话/运行时协调模式**，不是“无约束自治增强”开关。
+- 安全与策略仍由护栏和策略遥测决定（`guardrailDecision`、`maintenanceDecision`、`epistemicLabel`、delivery 状态）。
+
+如何开启/关闭：
+
+1. Chat/Sandbox 内 UI 按钮（`Enable Eternal` / `Disable Eternal`）。
+2. 聊天命令：`/eternal on`、`/eternal off`、`/eternal toggle`。
+3. 页面 URL 注入：`?eternal=1`（也支持 `true|on|yes`）。
+
+如何确认是否生效：
+
+- 看 UI 状态条：`Eternal: ON/OFF`。
+- 看 API 返回：
+
+```json
+{
+  "method": "aeon.status",
+  "result": {
+    "mode": {
+      "eternal": {
+        "enabled": true,
+        "source": "session"
+      }
+    }
+  }
+}
+```
+
+推荐使用策略：
+
+1. 需要长会话、过夜运行、刷新后保持连续性时，建议**开启**。
+2. 一次性短任务、希望完全手动可控时，建议**关闭**。
+3. 若交付状态持续为 `persist_failed`，先检查 `aeon.execution.lookup` 与网关日志，再判断是否模型问题。
+4. 若刷新后状态看起来不一致，先刷新会话状态，并确认 `mode.eternal.source`（`session` 或 `default`）。
+
 ---
 
 ## 🛠 安装教程

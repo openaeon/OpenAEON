@@ -272,6 +272,51 @@ Core read/inspection methods currently available:
 
 These are used by Chat, Sandbox, and AEON views to render real runtime state instead of static decorations.
 
+### AEON Mode (Eternal Mode) — Practical Usage
+
+AEON mode is a highlight of OpenAEON’s long-running workflow:
+
+- It persists an **eternal flag per session** and keeps Chat/Sandbox/AEON UI in sync.
+- It survives refresh/reconnect through session patching + local/UI hydration.
+- It is observable in `aeon.status` under `mode.eternal` (`enabled`, `source`, `updatedAt`).
+
+Current behavior (important):
+
+- AEON mode is currently a **session/runtime coordination mode**, not a raw “unsafe autonomy boost” switch.
+- Safety/decision behavior is still governed by guardrails + policy telemetry (`guardrailDecision`, `maintenanceDecision`, `epistemicLabel`, delivery state).
+
+How to enable/disable:
+
+1. UI toggle in Chat/Sandbox (`Enable Eternal` / `Disable Eternal`).
+2. Chat command: `/eternal on`, `/eternal off`, `/eternal toggle`.
+3. URL bootstrap: `?eternal=1` (or `true|on|yes`) when opening a session page.
+
+How to verify:
+
+- In UI status chips: `Eternal: ON/OFF`.
+- Via API:
+
+```json
+{
+  "method": "aeon.status",
+  "result": {
+    "mode": {
+      "eternal": {
+        "enabled": true,
+        "source": "session"
+      }
+    }
+  }
+}
+```
+
+Recommended usage profile:
+
+1. Turn it **ON** for long-running sessions, overnight execution, or when you need continuity across refresh/reconnect.
+2. Keep it **OFF** for short one-shot tasks where deterministic/manual control is preferred.
+3. If delivery keeps showing `persist_failed`, first check `aeon.execution.lookup` and gateway logs before assuming model failure.
+4. If mode state looks inconsistent after page reload, refresh session status and confirm `mode.eternal.source` (`session` vs `default`).
+
 ---
 
 ## 🛠 Installation
