@@ -1,6 +1,6 @@
 # OpenAEON Installer for Windows
-# Usage: iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 | iex
-#        & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1))) -Tag beta -NoOnboard -DryRun
+# Usage: iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1 | iex
+#        & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1))) -Tag beta -NoOnboard -DryRun
 
 param(
     [string]$Tag = "latest",
@@ -256,7 +256,7 @@ function Install-OpenAEON {
                 Write-Host "  https://git-scm.com/download/win" -ForegroundColor Cyan
             } else {
                 Write-Host "Re-run with verbose output to see the full error:" -ForegroundColor Yellow
-                Write-Host "  iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/install.ps1 | iex" -ForegroundColor Cyan
+                Write-Host "  iwr -useb https://raw.githubusercontent.com/gu2003li/OpenAEON/main/install.ps1 | iex" -ForegroundColor Cyan
             }
             $npmOutput | ForEach-Object { Write-Host $_ }
             exit 1
@@ -279,7 +279,7 @@ function Install-OpenAEONFromGit {
     Require-Git
     Ensure-Pnpm
 
-    $repoUrl = "https://github.com/openaeon/OpenAEON.git"
+    $repoUrl = "https://github.com/gu2003li/OpenAEON.git"
     Write-Host "[*] Installing OpenAEON from GitHub ($repoUrl)..." -ForegroundColor Yellow
 
     if (-not (Test-Path $RepoDir)) {
