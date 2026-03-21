@@ -89,6 +89,32 @@ export const FIELD_HELP: Record<string, string> = {
     "Explicit gateway-level tool allowlist when you want a narrow set of tools available at runtime. Use this for locked-down environments where tool scope must be tightly controlled.",
   "gateway.tools.deny":
     "Explicit gateway-level tool denylist to block risky tools even if lower-level policies allow them. Use deny rules for emergency response and defense-in-depth hardening.",
+  "gateway.lanes":
+    "Logical broadcast lane policy for chat, agent, and tool streams. Use this to prioritize critical agent/tool traffic while keeping UI chat updates responsive.",
+  "gateway.lanes.chat_lane":
+    "Policy for user-facing chat lane broadcasts. Tune drop/queue behavior to avoid slow-consumer stalls during long sessions.",
+  "gateway.lanes.agent_lane":
+    "Policy for orchestration and execution-control events. Keep this lane conservative and reliable to preserve state-machine continuity.",
+  "gateway.lanes.tool_lane":
+    "Policy for high-priority tool and agent telemetry events. Prioritize this lane when tool progress must remain real-time.",
+  "gateway.lanes.chat_lane.maxInFlight": "Maximum concurrent dispatch slots for chat lane events.",
+  "gateway.lanes.chat_lane.queueLimit": "Maximum buffered chat lane events before overload handling.",
+  "gateway.lanes.chat_lane.timeoutMs": "Dispatch timeout budget in milliseconds for chat lane events.",
+  "gateway.lanes.chat_lane.retryBudget": "Retry attempts for chat lane send failures.",
+  "gateway.lanes.chat_lane.dropIfSlow":
+    "Drop chat lane events for slow consumers instead of back-pressuring other lanes.",
+  "gateway.lanes.agent_lane.maxInFlight": "Maximum concurrent dispatch slots for agent lane events.",
+  "gateway.lanes.agent_lane.queueLimit": "Maximum buffered agent lane events before overload handling.",
+  "gateway.lanes.agent_lane.timeoutMs": "Dispatch timeout budget in milliseconds for agent lane events.",
+  "gateway.lanes.agent_lane.retryBudget": "Retry attempts for agent lane send failures.",
+  "gateway.lanes.agent_lane.dropIfSlow":
+    "Drop agent lane events for slow consumers instead of retrying/holding back pressure.",
+  "gateway.lanes.tool_lane.maxInFlight": "Maximum concurrent dispatch slots for tool lane events.",
+  "gateway.lanes.tool_lane.queueLimit": "Maximum buffered tool lane events before overload handling.",
+  "gateway.lanes.tool_lane.timeoutMs": "Dispatch timeout budget in milliseconds for tool lane events.",
+  "gateway.lanes.tool_lane.retryBudget": "Retry attempts for tool lane send failures.",
+  "gateway.lanes.tool_lane.dropIfSlow":
+    "Drop tool lane events for slow consumers instead of retrying/holding back pressure.",
   "gateway.channelHealthCheckMinutes":
     "Interval in minutes for automatic channel health probing and status updates. Use lower intervals for faster detection, or higher intervals to reduce periodic probe noise.",
   "gateway.tailscale":
@@ -133,6 +159,38 @@ export const FIELD_HELP: Record<string, string> = {
   "gateway.remote.sshTarget":
     "Remote gateway over SSH (tunnels the gateway port to localhost). Format: user@host or user@host:port.",
   "gateway.remote.sshIdentity": "Optional SSH identity file path (passed to ssh -i).",
+  aeon:
+    "AEON cognitive runtime controls including guardrails, evidence-driven policy vectors, and autonomous synthesis limits. Use conservative defaults for production safety.",
+  "aeon.autospawn":
+    "Autonomous synthesis spawn policy controls for contradiction-triggered sub-agent runs. Keep limits conservative to avoid runaway recursive work.",
+  "aeon.autospawn.enabled":
+    "Global switch for contradiction-driven automatic synthesis spawning in AEON maintenance cycles.",
+  "aeon.autospawn.cooldownMinutes":
+    "Minimum cooldown window between automatic synthesis spawns in the same session scope.",
+  "aeon.autospawn.perSessionWindowMinutes":
+    "Rolling window length for per-session autospawn budget calculations.",
+  "aeon.autospawn.perSessionLimit":
+    "Maximum automatic synthesis runs allowed within the per-session rolling window.",
+  "aeon.autospawn.perHourLimit":
+    "Maximum automatic synthesis runs allowed per hour in a session scope.",
+  "aeon.autospawn.maxConcurrent":
+    "Maximum concurrent autospawn synthesis runs per session scope.",
+  "aeon.autospawn.failureThreshold":
+    "Failure count threshold that opens the autospawn circuit breaker until recovery conditions are met.",
+  "aeon.policy":
+    "Policy profile templates for C-vector weighting and resource budgets (LLM call caps, pipeline concurrency, latency ceilings).",
+  "aeon.policy.defaultProfile":
+    'Default policy profile used when no explicit override is set ("conservative", "balanced", or "aggressive").',
+  "aeon.policy.profiles":
+    "Named policy profiles that define C-vector weighting and runtime budgets for autonomous maintenance/deconfliction decisions.",
+  "aeon.policy.profiles.*.cVector":
+    "C-vector weighting for safety/truth/latency/cost/learning used by AEON gate decisions.",
+  "aeon.policy.profiles.*.maxLlmCallsPerHour":
+    "Hourly budget cap for LLM arbitration calls under the selected policy profile.",
+  "aeon.policy.profiles.*.maxConcurrentPipelines":
+    "Maximum simultaneously active AEON autonomous pipelines allowed by the profile.",
+  "aeon.policy.profiles.*.maxPipelineLatencyMs":
+    "Latency budget cap for a single autonomous pipeline before forced downgrade.",
   "talk.provider": 'Active Talk provider id (for example "elevenlabs").',
   "talk.providers":
     "Provider-specific Talk settings keyed by provider id. During migration, prefer this over legacy talk.* keys.",
@@ -607,6 +665,14 @@ export const FIELD_HELP: Record<string, string> = {
   "tools.web.search.maxResults": "Default number of results to return (1-10).",
   "tools.web.search.timeoutSeconds": "Timeout in seconds for web_search requests.",
   "tools.web.search.cacheTtlMinutes": "Cache TTL in minutes for web_search results.",
+  "tools.web.search.browserFallback.enabled":
+    "Enable browser-based fallback when web_search provider APIs are unavailable (default: true).",
+  "tools.web.search.browserFallback.engineUrl":
+    'Browser search URL template. Supports `{query}` placeholder (default: "https://duckduckgo.com/?q=").',
+  "tools.web.search.browserFallback.timeoutSeconds":
+    "Timeout in seconds for browser fallback operations.",
+  "tools.web.search.browserFallback.autoStart":
+    "Auto-start browser control if it is not running during fallback (default: true).",
   "tools.web.search.gemini.apiKey":
     "Gemini API key for Google Search grounding (fallback: GEMINI_API_KEY env var).",
   "tools.web.search.gemini.model": 'Gemini model override (default: "gemini-2.5-flash").',
@@ -623,6 +689,10 @@ export const FIELD_HELP: Record<string, string> = {
     "Perplexity base URL override (default: https://openrouter.ai/api/v1 or https://api.perplexity.ai).",
   "tools.web.search.perplexity.model":
     'Perplexity model override (default: "perplexity/sonar-pro").',
+  "tools.web.privateNetwork":
+    "Private-network policy for web tools. By default, private/internal targets are blocked unless explicitly allowlisted.",
+  "tools.web.privateNetwork.allowlist":
+    "Allowlisted hostnames/IPs that web tools may access even when private-network protections are enabled.",
   "tools.web.fetch.enabled": "Enable the web_fetch tool (lightweight HTTP fetch).",
   "tools.web.fetch.maxChars": "Max characters returned by web_fetch (truncated).",
   "tools.web.fetch.maxCharsCap":
@@ -862,6 +932,12 @@ export const FIELD_HELP: Record<string, string> = {
   ui: "UI presentation settings for accenting and assistant identity shown in control surfaces. Use this for branding and readability customization without changing runtime behavior.",
   "ui.seamColor":
     "Primary accent/seam color used by UI surfaces for emphasis, badges, and visual identity cues. Use high-contrast values that remain readable across light/dark themes.",
+  "ui.chat":
+    "Chat-surface behavior and performance tuning controls.",
+  "ui.chat.performanceMode":
+    'Chat rendering performance preset: "performance", "balanced", or "visual". Use "balanced" as default for stable long sessions with moderate effects.',
+  "ui.chat.subagentMatchMode":
+    "Strategy for matching sub-agents to existing sessions. 'owner_first' prioritizes the designated owner. 'balanced' uses a weighted scoring engine. 'fuzzy' allows broader matching including subject and recent activity.",
   "ui.assistant":
     "Assistant display identity settings for name and avatar shown in UI surfaces. Keep these values aligned with your operator-facing persona and support expectations.",
   "ui.assistant.name":

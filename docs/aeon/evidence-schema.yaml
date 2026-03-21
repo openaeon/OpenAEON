@@ -1,0 +1,30 @@
+version: 1
+eventRequiredFields:
+  - ts
+  - type
+  - module
+  - source
+typeEnum:
+  - execution_success
+  - execution_failure
+  - rollback
+  - conflict_detected
+  - manual_intervention
+  - memory_write_valid
+  - memory_write_invalid
+  - deconfliction_llm_success
+  - deconfliction_fallback
+  - autospawn_success
+  - autospawn_failure
+moduleEnum:
+  - logic-gates
+  - memory
+  - server-evolution
+  - gateway-chat
+  - unknown
+sourceEnum:
+  - logic_refinement
+  - evolution_monitor
+  - singularity
+  - chat_risk_gate
+  - unknown

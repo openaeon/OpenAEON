@@ -1,14 +1,28 @@
 import { html, nothing } from "lit";
 import { t } from "../../../../i18n/index.ts";
 import type { ChatLayoutProps } from "../../chat-layout.ts";
+import { getVisiblePlanTodos } from "./subagent-view-model.ts";
+
+type PlanTodo = {
+  id: string;
+  title: string;
+  status: string;
+  result?: string;
+  dependsOn?: string[];
+  ownerAgent?: string;
+};
 
 export function renderStickyPlanBar(props: ChatLayoutProps) {
   const plan = props?.taskPlan;
   if (!plan || !plan.todos || plan.todos.length === 0) {
     return nothing;
   }
-  const done = plan.todos.filter((t: { status: string }) => t.status === "done").length;
-  const total = plan.todos.length;
+  const visibleTodos = getVisiblePlanTodos(plan);
+  if (visibleTodos.length === 0) {
+    return nothing;
+  }
+  const done = visibleTodos.filter((t) => t.status === "done").length;
+  const total = visibleTodos.length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const allDone = done === total;
   const phase = plan.phase || "execution";
@@ -61,14 +75,32 @@ export function renderPlanSidebar(props: ChatLayoutProps) {
   if (!plan || !plan.todos || plan.todos.length === 0) {
     return nothing;
   }
+  return renderPlanExecutionLayer(props, { wrapPanel: true });
+}
+
+export function renderPlanExecutionLayer(
+  props: ChatLayoutProps,
+  options?: { wrapPanel?: boolean },
+) {
+  const plan = props?.taskPlan;
+  if (!plan || !plan.todos || plan.todos.length === 0) {
+    return nothing;
+  }
+  const visibleTodos = getVisiblePlanTodos(plan);
+  if (visibleTodos.length === 0) {
+    return nothing;
+  }
   const phase = plan.phase || "execution";
+  const graph = plan.executionGraph;
+  const blockedBy = graph?.blockedBy ?? {};
+  const readySet = new Set(graph?.readyTodoIds ?? []);
+  const blockedSet = new Set(graph?.blockedTodoIds ?? []);
   const isPlanning = phase === "planning";
-  const done = plan.todos.filter((t: { status: string }) => t.status === "done").length;
-  const total = plan.todos.length;
+  const done = visibleTodos.filter((t) => t.status === "done").length;
+  const total = visibleTodos.length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-  return html`
-    <div class="plan-sidebar-panel fractal-panel">
+  const content = html`
       <div class="plan-sidebar-header matrix-header">
         <span class="plan-sidebar-title aeon-title">${t("chat.sidebarPlan")}</span>
         <span class="plan-sidebar-phase plan-sidebar-phase--${phase}">${phase.toUpperCase()}</span>
@@ -87,13 +119,31 @@ export function renderPlanSidebar(props: ChatLayoutProps) {
       </div>
 
       <div class="plan-sidebar-todos matrix-nodelist">
-        ${plan.todos.map(
-          (todo: { id: string; title: string; status: string; result?: string }) => html`
+        ${visibleTodos.map(
+          (todo) => html`
             <div class="plan-sidebar-todo-container matrix-node">
               <div class="plan-sidebar-todo plan-sidebar-todo--${todo.status} matrix-node-box">
                 <span class="plan-sidebar-todo-icon node-status-icon">${todo.status === "done" ? "❖" : todo.status === "in_progress" ? "∿" : "⚬"}</span>
                 <span class="plan-sidebar-todo-text node-text">${todo.title}</span>
               </div>
+              ${
+                todo.status !== "done" && (readySet.has(todo.id) || blockedSet.has(todo.id))
+                  ? html`
+                    <div class="plan-sidebar-todo-result matrix-node-result">
+                      <div class="plan-sidebar-todo-result-title aeon-subtitle">
+                        ${readySet.has(todo.id) ? "READY" : "BLOCKED"}
+                      </div>
+                      <div class="plan-sidebar-todo-result-content data-text">
+                        ${
+                          readySet.has(todo.id)
+                            ? "无依赖阻塞，可立即执行"
+                            : `等待依赖: ${(blockedBy[todo.id] ?? []).join(", ")}`
+                        }
+                      </div>
+                    </div>
+                  `
+                  : nothing
+              }
               ${
                 todo.status === "done" && todo.result
                   ? html`
@@ -129,6 +179,9 @@ export function renderPlanSidebar(props: ChatLayoutProps) {
             `
             : nothing
       }
-    </div>
   `;
+  if (options?.wrapPanel === false) {
+    return content;
+  }
+  return html`<div class="plan-sidebar-panel fractal-panel">${content}</div>`;
 }

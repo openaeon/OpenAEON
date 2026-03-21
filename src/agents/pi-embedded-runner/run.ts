@@ -7,6 +7,10 @@ import { distillMemory } from "../tools/memory-distill-tool.js";
 import { emitAgentEvent } from "../../infra/agent-events.js";
 import { getActiveEmbeddedRunHandle } from "./runs.js";
 import { loadConfig } from "../../config/config.js";
+import {
+  diagnoseCognitiveGap,
+  getAeonEvolutionState,
+} from "../../gateway/server-evolution.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import type { PluginHookBeforeAgentStartResult } from "../../plugins/types.js";
 import { enqueueCommandInLane } from "../../process/command-queue.js";
@@ -680,9 +684,24 @@ export async function runEmbeddedPiAgent(
             });
           }
 
+          // Layer 10: Redline Risk Mitigation (风险回退)
+          // If redline risk is critical, force downgrade or pause to prevent hallucinations.
+          const evolutionState = getAeonEvolutionState({
+            sessionKey: params.sessionId, // Fallback to sessionId for scope
+            agentId: workspaceResolution.agentId,
+          });
+          if (evolutionState.selfModification.redlineBreachRisk > 0.8) {
+            log.warn(`[redline] critical risk detected (${evolutionState.selfModification.redlineBreachRisk}); forcing thinking level downgrade to "low"`);
+            thinkLevel = "low";
+          }
+
           // Phase 2: Automated Self-Sealing (心脏跃迁)
-          // Proactively trigger memory distillation if saturation is high or chaos is critical.
-          if (!aborted && !promptError && (chaosScore ?? 0) >= 8) {
+          // Proactively trigger memory distillation if saturation is high, chaos is critical, or gaps are identified.
+          const gapCheck = diagnoseCognitiveGap({
+            sessionKey: params.sessionId,
+            agentId: workspaceResolution.agentId,
+          });
+          if (!aborted && !promptError && ((chaosScore ?? 0) >= 8 || gapCheck.severity > 0.6)) {
             log.info(
               `[self-seal] critical chaos (${chaosScore}); triggering background memory distillation`,
             );

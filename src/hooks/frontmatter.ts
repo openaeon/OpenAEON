@@ -74,6 +74,9 @@ export function resolveOPENAEONMetadata(
   };
 }
 
+/** @deprecated Use resolveOPENAEONMetadata. */
+export const resolveOpenClawMetadata = resolveOPENAEONMetadata;
+
 export function resolveHookInvocationPolicy(
   frontmatter: ParsedHookFrontmatter,
 ): HookInvocationPolicy {

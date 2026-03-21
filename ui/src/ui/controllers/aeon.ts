@@ -20,6 +20,7 @@ export type AeonState = {
   aeonEternalModeSource: "url" | "session" | "local" | "default";
   aeonEternalHydratedSessionKey: string | null;
   aeonActiveTab: "logic" | "memory";
+  aeonViewMode: "narrative" | "evidence";
   aeonManualVisible: boolean;
 };
 
@@ -99,8 +100,8 @@ export async function loadAeonLogic(state: AeonState) {
 
     state.aeonLogicContent = contentRes?.file?.content ?? null;
     state.aeonSystemStatus = statusRes;
-    if (state.aeonSystemStatus) {
-      const baseEvolution = state.aeonSystemStatus.evolution ?? {};
+    if (state.aeonSystemStatus?.evolution) {
+      const baseEvolution = state.aeonSystemStatus.evolution;
       state.aeonSystemStatus = {
         ...state.aeonSystemStatus,
         evolution: {
@@ -130,4 +131,8 @@ export async function loadAeonLogic(state: AeonState) {
 
 export function handleAeonTabChange(state: AeonState, tab: "logic" | "memory") {
   state.aeonActiveTab = tab;
+}
+
+export function handleAeonViewModeChange(state: AeonState, mode: "narrative" | "evidence") {
+  state.aeonViewMode = mode;
 }

@@ -8,6 +8,9 @@ import { resolveWorkspaceRoot } from "../workspace-dir.js";
 vi.mock("../../config/config.js");
 vi.mock("../workspace-dir.js");
 vi.mock("node:fs/promises");
+vi.mock("./agent-step.js", () => ({
+  runAgentStep: vi.fn().mockRejectedValue(new Error("offline")),
+}));
 
 describe("Logic Refinement Tool", () => {
   const mockWorkspace = "/mock/workspace";
@@ -36,10 +39,12 @@ describe("Logic Refinement Tool", () => {
       action: "audit",
       peanoRange: [0.0, 0.4],
     })) as any;
+    const data = result.details as any;
+    const text = String(result.content?.[0]?.text ?? "");
 
-    expect(result.data.findings.totalAxioms).toBe(1);
-    expect(result.data.findings.redundancies).toHaveLength(0);
-    expect(result.text).toContain("Audit complete");
+    expect(data.findings.totalAxioms).toBe(1);
+    expect(data.findings.redundancies).toHaveLength(0);
+    expect(text).toContain('"status": "ok"');
   });
 
   it("should perform full audit when no range is provided", async () => {
@@ -52,8 +57,24 @@ describe("Logic Refinement Tool", () => {
 
     const tool = createLogicRefinementTool();
     const result = (await tool.execute("test-call", { action: "audit" })) as any;
+    const data = result.details as any;
 
-    expect(result.data.findings.totalAxioms).toBe(2);
+    expect(data.findings.totalAxioms).toBe(2);
+  });
+
+  it("returns structured conflicts for contradiction candidates", async () => {
+    const now = Date.now();
+    const mockContent = [
+      `System is always safe <!-- {"ts": ${now}, "id":"a1", "module":"gateway", "peano":{"index":0.2}} -->`,
+      `System is never safe <!-- {"ts": ${now}, "id":"a2", "module":"agents", "peano":{"index":0.21}} -->`,
+    ].join("\n");
+    vi.mocked(fs.readFile).mockResolvedValue(mockContent);
+
+    const tool = createLogicRefinementTool();
+    const result = (await tool.execute("test-call", { action: "audit" })) as any;
+    const data = result.details as any;
+    expect(Array.isArray(data.findings.conflicts)).toBe(true);
+    expect(data.findings.deconfliction.pipelineType).toBe("deconfliction");
   });
 
   it("should crystallize a logic gate", async () => {
@@ -65,9 +86,11 @@ describe("Logic Refinement Tool", () => {
       action: "crystallize",
       target: "Axiom 1",
     })) as any;
+    const data = result.details as any;
+    const text = String(result.content?.[0]?.text ?? "");
 
-    expect(result.status).toBe("ok");
-    expect(result.text).toContain("Crystallized logic gate");
+    expect(data.status).toBe("ok");
+    expect(text).toContain("Crystallized logic gate");
     expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
       logicGatesPath,
       expect.stringContaining('"crystallized":true'),
@@ -86,8 +109,9 @@ describe("Logic Refinement Tool", () => {
 
     const tool = createLogicRefinementTool();
     const result = (await tool.execute("test-call", { action: "prune" })) as any;
+    const data = result.details as any;
 
-    expect(result.data.prunedCount).toBe(1); // Only Axiom 2 should be pruned
+    expect(data.prunedCount).toBe(1); // Only Axiom 2 should be pruned
     expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
       logicGatesPath,
       expect.stringContaining("Axiom 1"),
@@ -107,7 +131,8 @@ describe("Logic Refinement Tool", () => {
 
     const tool = createLogicRefinementTool();
     const result = (await tool.execute("test-call", { action: "prune" })) as any;
+    const data = result.details as any;
 
-    expect(result.data.prunedCount).toBe(1); // Only Axiom 2 should be pruned
+    expect(data.prunedCount).toBe(1); // Only Axiom 2 should be pruned
   });
 });

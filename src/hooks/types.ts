@@ -35,7 +35,15 @@ export type ParsedHookFrontmatter = Record<string, string>;
 export type Hook = {
   name: string;
   description: string;
-  source: "openaeon-bundled" | "openaeon-managed" | "openaeon-workspace" | "openaeon-plugin";
+  source:
+    | "openaeon-bundled"
+    | "openaeon-managed"
+    | "openaeon-workspace"
+    | "openaeon-plugin"
+    | "openclaw-bundled"
+    | "openclaw-managed"
+    | "openclaw-workspace"
+    | "openclaw-plugin";
   pluginId?: string;
   filePath: string; // Path to HOOK.md
   baseDir: string; // Directory containing hook

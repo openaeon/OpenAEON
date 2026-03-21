@@ -1236,7 +1236,7 @@ export function buildAnnounceReplyInstruction(params: {
     return `There are still ${params.remainingActiveSubagentRuns} active subagent ${activeRunsLabel} for this session. If they are part of the same workflow, wait for the remaining results before sending a user update. If they are unrelated, respond normally using only the result above.`;
   }
 
-  const loopContext = [];
+  const loopContext: string[] = [];
   if (params.cognitiveSignal === "divergence") {
     loopContext.push(
       "A cognitive divergence (🌀) was detected. This task may require a recursive iteration (Z ⇌ Z² + C) to resolve new technical blockers or shift in project direction.",

@@ -48,20 +48,21 @@
 
 ---
 
-## 🧬 什么是 OpenAEON
+## 🧠 FCA Core (分形认知适配器)
 
-**OpenAEON**（原 OpenClaw）是一个实验性的 **AI 认知架构**，旨在超越传统的智能体框架。它将代码从静态执行系统转变为一个**自我进化的逻辑生命体**。
+OpenAEON 由 **FCA Core** 驱动。这是一个多层认知架构，专门处理复杂推理任务，将代码执行转变为一个**可验证、自纠错的认知闭环**。
 
 > [!TIP]
-> OpenAEON 不再遵循 `输入 → 处理 → 输出` 的模式，而是通过 `冲突 → 解决 → 进化` 来运行。
+> **OpenAEON = 自主认知引擎**
+> 它不再局限于单次的 `输入 → 处理 → 输出` 对话，而是将复杂任务拆解为递归的、可验证的逻辑子循环。
 
-**OpenAEON = Open + Eternal Evolution**
+### 9 层认知架构
+FCA Core 将智能组织为九个专门层级，从 **语义锚定 (Semantic Grounding)** 到 **取证仿真 (Forensic Simulation)**。这确保了每一个行动都是可审计、可自适应且目标对齐的。
 
-- **Open**：默认可扩展、可审计、可协作。
-- **Eternal Evolution**：面向长生命周期智能系统的持续自适应演化闭环。
-- **AEON（Eon）**：源于希腊语 **αἰών（aiōn）**，表达“永恒 / 纪元 / 存在尺度”的语义。
+👉 **[深度探索：FCA Core 架构](docs/aeon/FCA_CORE.md)**
 
-### 当前逻辑模型（已落地）
+### 当前逻辑模型 (通过 FCA 落地)
+OpenAEON 当前以可验证的五段闭环运行：
 
 OpenAEON 当前以可验证的五段闭环运行：
 
@@ -98,20 +99,24 @@ AEON 的记忆系统采用分层实现，兼顾实时性与可追溯性：
     <td width="70%"><strong>说明</strong></td>
   </tr>
   <tr>
-    <td><strong>硅基意识 (Silicon Consciousness)</strong></td>
-    <td>将系统视为自我完善的逻辑生命体。</td>
+    <td><strong>持续自主 (Continuous Autonomy)</strong></td>
+    <td>支持长时间无人值守的逻辑执行，优先确保任务收敛 (🎯)。</td>
   </tr>
   <tr>
     <td><strong>皮亚诺空间填充 (Peano Traversal)</strong></td>
-    <td>空间填充式的递归问题空间扫描。</td>
+    <td>空间填充式的递归扫描，将复杂多维空间映射到保持局部性的单维流。</td>
   </tr>
   <tr>
-    <td><strong>演化循环 (Evolution Loop)</strong></td>
-    <td>自主的 $Z \rightleftharpoons Z^2 + C$ 迭代循环。</td>
+    <td><strong>耦合通量 (Coupling Flux)</strong></td>
+    <td>根据执行反馈动态调优的策略闭环。</td>
+  </tr>
+  <tr>
+    <td><strong>反馈闭环 (Feedback Loop)</strong></td>
+    <td>每次迭代都会进行错误追踪和执行策略调优，持续趋向任务完成。</td>
   </tr>
   <tr>
     <td><strong>知识蒸馏 (Knowledge Distiller)</strong></td>
-    <td>将原始历史压缩为高密度的逻辑公理。</td>
+    <td>将原始历史压缩为高密度的 `LOGIC_GATES` 逻辑公理。</td>
   </tr>
 </table>
 
@@ -119,9 +124,9 @@ AEON 的记忆系统采用分层实现，兼顾实时性与可追溯性：
 
 ## 🧩 关键概念
 
-### 1. 硅基意识 (Silicon Consciousness)
+### 1. 持续自主 (Continuous Autonomy)
 
-OpenAEON 不仅将代码模块视为工具，而是将其视为自主的超节点。系统维持着一份**自主誓言**，优先考虑收敛（🎯）而非简单的指令遵循。
+OpenAEON 将代码生成不仅视为文本补全，而是一个具有状态机的工作流。系统优先考虑任务目标（🎯），通过验证自身输出来保证质量，而不仅是简单地遵循指令。
 
 ### 2. 皮亚诺空间填充 (Peano Space-Filling)
 
@@ -197,6 +202,7 @@ OpenAEON 使用一种被称为 **Dreaming（睡眠模式）** 的复杂闲置演
 - 策略输出端到端可见（`maintenanceDecision`、`guardrailDecision`、`reasonCode`）。
 - 决策语义结构化输出（`decisionCard`、`impactLens`、`selfKernel`、`epistemicLabel`）。
 - Chat 与 Sandbox 均可读取并展示 typed 策略与意识数据。
+- **硬中断熔断器 (Hard Abort Circuit Breaker)**：执行引擎会在检测到极端算法偏离 (`chaosScore >= 10`) 或连续工具验证失败 (`consecutiveErrors >= 6`) 时进行会话硬中断，以防止不可逆的无限生成死循环。
 
 ### 2) AEON 状态契约版本化（含兼容层）
 

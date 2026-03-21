@@ -11,6 +11,7 @@ import type { ResolvedGatewayAuth } from "./auth.js";
 import type { ChatAbortControllerEntry } from "./chat-abort.js";
 import type { ControlUiRootState } from "./control-ui.js";
 import type { HooksConfigResolved } from "./hooks.js";
+import { updateAeonLaneTelemetry } from "./aeon-state.js";
 import { isLoopbackHost, resolveGatewayListenHosts } from "./net.js";
 import {
   createGatewayBroadcaster,
@@ -104,7 +105,22 @@ export async function createGatewayRuntimeState(params: {
   }
 
   const clients = new Set<GatewayWsClient>();
-  const { broadcast, broadcastToConnIds } = createGatewayBroadcaster({ clients });
+  const { broadcast, broadcastToConnIds, getLaneSnapshots } = createGatewayBroadcaster({
+    clients,
+    lanes: params.cfg.gateway?.lanes,
+  });
+  const laneMirrorTimer = setInterval(() => {
+    const snapshots = getLaneSnapshots();
+    if (snapshots.length === 0) {
+      return;
+    }
+    updateAeonLaneTelemetry({
+      chat_lane: snapshots.find((entry) => entry.laneType === "chat_lane"),
+      agent_lane: snapshots.find((entry) => entry.laneType === "agent_lane"),
+      tool_lane: snapshots.find((entry) => entry.laneType === "tool_lane"),
+    });
+  }, 1000);
+  laneMirrorTimer.unref?.();
 
   const handleHooksRequest = createGatewayHooksRequestHandler({
     deps: params.deps,

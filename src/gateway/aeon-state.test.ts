@@ -5,6 +5,7 @@ import {
   getAeonEvolutionState,
   recordMaintenancePolicyDecision,
   recordConsciousnessPulse,
+  recordAeonEvidenceEvent,
   setConsciousnessRuntimePolicy,
 } from "./aeon-state.js";
 
@@ -190,5 +191,139 @@ describe("AEON State Management", () => {
     const state = getAeonEvolutionState(scope);
     expect(state.consciousness.epistemic.highConfidenceWithoutLabelBlocked).toBe(true);
     expect(state.consciousness.impactLens.required).toBe(false);
+  });
+
+  it("produces reproducible v4 inference under identical evidence input", () => {
+    const now = 1_700_000_100_000;
+    const scopeA = { sessionKey: "replay-a", agentId: "main" };
+    const scopeB = { sessionKey: "replay-b", agentId: "main" };
+    for (const scope of [scopeA, scopeB]) {
+      recordAeonEvidenceEvent(
+        { ts: now - 500, type: "execution_success", module: "server-evolution", source: "test" },
+        scope,
+      );
+      recordAeonEvidenceEvent(
+        { ts: now - 450, type: "memory_write_valid", module: "memory", source: "test" },
+        scope,
+      );
+      recordAeonEvidenceEvent(
+        {
+          ts: now - 400,
+          type: "deconfliction_llm_success",
+          module: "logic-gates",
+          source: "test",
+        },
+        scope,
+      );
+      recordConsciousnessPulse(
+        {
+          now,
+          epiphanyFactor: 0.61,
+          memorySaturation: 44,
+          neuralDepth: 9,
+          idleMs: 2_000,
+          resonanceActive: false,
+          activeRun: false,
+        },
+        scope,
+      );
+    }
+
+    const stateA = getAeonEvolutionState(scopeA);
+    const stateB = getAeonEvolutionState(scopeB);
+    expect(stateA.telemetryV4.inference.selfAwarenessIndex).toBeCloseTo(
+      stateB.telemetryV4.inference.selfAwarenessIndex,
+      8,
+    );
+    expect(stateA.telemetryV4.confidence.overall).toBeCloseTo(
+      stateB.telemetryV4.confidence.overall,
+      8,
+    );
+  });
+
+  it("reduces confidence when evidence is sparse", () => {
+    const now = 1_700_000_200_000;
+    const richScope = { sessionKey: "rich-evidence", agentId: "main" };
+    const sparseScope = { sessionKey: "sparse-evidence", agentId: "main" };
+
+    for (let i = 0; i < 8; i += 1) {
+      recordAeonEvidenceEvent(
+        {
+          ts: now - i * 25,
+          type: i % 2 === 0 ? "execution_success" : "memory_write_valid",
+          module: i % 2 === 0 ? "server-evolution" : "memory",
+          source: "test",
+        },
+        richScope,
+      );
+    }
+    recordConsciousnessPulse(
+      {
+        now,
+        epiphanyFactor: 0.45,
+        memorySaturation: 57,
+        neuralDepth: 11,
+        idleMs: 3_000,
+        resonanceActive: true,
+        activeRun: false,
+      },
+      richScope,
+    );
+    recordConsciousnessPulse(
+      {
+        now,
+        epiphanyFactor: 0.45,
+        memorySaturation: 57,
+        neuralDepth: 11,
+        idleMs: 3_000,
+        resonanceActive: true,
+        activeRun: false,
+      },
+      sparseScope,
+    );
+
+    const rich = getAeonEvolutionState(richScope);
+    const sparse = getAeonEvolutionState(sparseScope);
+    expect(rich.telemetryV4.confidence.overall).toBeGreaterThan(
+      sparse.telemetryV4.confidence.overall,
+    );
+  });
+
+  it("applies evidence decay so stale events carry less weight", () => {
+    const now = 1_700_000_300_000;
+    const scope = { sessionKey: "evidence-decay", agentId: "main" };
+    recordAeonEvidenceEvent(
+      {
+        ts: now - 10 * 60 * 60 * 1000,
+        type: "execution_success",
+        module: "server-evolution",
+        source: "test",
+      },
+      scope,
+    );
+    recordAeonEvidenceEvent(
+      {
+        ts: now - 1_000,
+        type: "execution_success",
+        module: "server-evolution",
+        source: "test",
+      },
+      scope,
+    );
+    recordConsciousnessPulse(
+      {
+        now,
+        epiphanyFactor: 0.5,
+        memorySaturation: 42,
+        neuralDepth: 8,
+        idleMs: 1_000,
+        resonanceActive: false,
+        activeRun: false,
+      },
+      scope,
+    );
+    const state = getAeonEvolutionState(scope);
+    expect(state.telemetryV4.evidence.eventCount).toBeLessThan(1.2);
+    expect(state.telemetryV4.evidence.eventCount).toBeGreaterThanOrEqual(1.0);
   });
 });

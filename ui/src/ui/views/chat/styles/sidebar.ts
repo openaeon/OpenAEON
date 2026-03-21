@@ -10,12 +10,11 @@ export const chatSidebarStyles = css`
     border: 1px solid var(--glass-border, rgba(139, 92, 246, 0.2));
     border-radius: 16px;
     box-shadow: 0 8px 32px var(--glass-shadow, rgba(0, 0, 0, 0.4));
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition:
-      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 0.4s ease;
+    transition: opacity 0.2s ease;
+    min-height: 0;
   }
 
   :host-context([data-theme="light"]) .chat-sidebar {
@@ -162,17 +161,62 @@ export const chatSidebarStyles = css`
     padding: 24px 20px;
     gap: 20px;
     background: transparent;
-    animation: slideInSidebar 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: none;
   }
-  @keyframes slideInSidebar {
-    from {
-      transform: translateX(30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
+
+  .orchestration-sidebar {
+    display: grid;
+    grid-template-rows: minmax(280px, 48%) minmax(240px, 52%);
+    gap: 12px;
+    padding: 14px 12px;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .orchestration-section {
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(2, 6, 23, 0.7));
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .orchestration-section__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  }
+
+  .orchestration-section .data-desc {
+    margin: 8px 10px 0;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .orchestration-section__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .sidebar-empty {
+    border: 1px dashed rgba(148, 163, 184, 0.28);
+    border-radius: 10px;
+    padding: 12px;
+    color: #94a3b8;
+    font-size: 12px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.42);
+  }
+
+  .orchestration-section__body--plan .matrix-header {
+    display: none;
   }
 
   .matrix-header {
@@ -327,81 +371,24 @@ export const chatSidebarStyles = css`
   .subagent-list {
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 10px;
     position: relative;
-    padding-left: 48px;
-    margin-top: 24px;
-    padding-bottom: 40px;
-  }
-
-  /* The Animated Neural Spine */
-  .subagent-list::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 24px;
-    bottom: 0;
-    width: 2px;
-    background: linear-gradient(
-      180deg,
-      rgba(139, 92, 246, 0.4) 0%,
-      rgba(16, 185, 129, 0.6) 50%,
-      rgba(59, 130, 246, 0.4) 100%
-    );
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-    z-index: 1;
-  }
-
-  /* Fractal Connection Paths (Recursive Bezier Visual) */
-  .node-path-svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .fractal-line {
-    fill: none;
-    stroke: url(#fractal-gradient);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
-    animation: fractalDraw 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.5));
-  }
-
-  @keyframes fractalDraw {
-    to {
-      stroke-dashoffset: 0;
-    }
+    padding-left: 0;
+    margin-top: 0;
+    padding-bottom: 2px;
   }
 
   .node-card {
     position: relative;
-    padding: 20px;
-    border-radius: 14px;
-    background: var(--node-bg, rgba(8, 8, 24, 0.75));
-    backdrop-filter: blur(20px);
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--node-bg, rgba(8, 8, 24, 0.64));
+    backdrop-filter: blur(8px);
     border: 1px solid rgba(139, 92, 246, 0.2);
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 2;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-    animation: nodeEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  @keyframes nodeEnter {
-    from {
-      transform: translateX(20px) scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0) scale(1);
-      opacity: 1;
-    }
+    animation: none;
   }
 
   /* Recursive Color Indexing based on depth (provided via data-depth) */
@@ -448,45 +435,14 @@ export const chatSidebarStyles = css`
     transition: opacity 0.4s ease;
   }
 
-  /* Breathing Aura Animation */
-  .node-card {
-    animation: fractalPulse 4s infinite ease-in-out;
-  }
-
-  @keyframes fractalPulse {
-    0%,
-    100% {
-      box-shadow:
-        0 10px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(0, 0, 0, 0);
-    }
-    50% {
-      box-shadow:
-        0 10px 40px rgba(0, 0, 0, 0.6),
-        0 0 30px var(--fractal-glow, rgba(139, 92, 246, 0.2));
-    }
-  }
-
-  /* Connection Portal (Dot) */
   .node-card::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: -26px;
-    transform: translateY(-50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--fractal-accent, #c084fc);
-    box-shadow: 0 0 15px var(--fractal-accent, #c084fc);
-    z-index: 3;
-    border: 2px solid #080818;
+    content: none;
   }
 
   .subagent-card--active.node-card {
     background: rgba(13, 13, 40, 0.9);
     border-color: var(--fractal-accent, #c084fc);
-    transform: scale(1.02) translateX(5px);
+    transform: none;
   }
   .subagent-card--active.node-card::before {
     opacity: 1;
@@ -501,15 +457,7 @@ export const chatSidebarStyles = css`
     font-size: 20px;
     color: var(--fractal-accent, #c084fc);
     text-shadow: 0 0 10px var(--fractal-accent, #c084fc);
-    animation: spinSlow 8s linear infinite;
-  }
-  @keyframes spinSlow {
-    from {
-      transform: rotate(0);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    animation: none;
   }
 
   .node-name {
@@ -537,7 +485,7 @@ export const chatSidebarStyles = css`
     color: #94a3b8;
     margin-top: 12px;
     line-height: 1.6;
-    padding-left: 32px;
+    padding-left: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -554,8 +502,8 @@ export const chatSidebarStyles = css`
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 16px;
-    padding-left: 32px;
+    margin-top: 8px;
+    padding-left: 0;
   }
   .data-chip {
     font-family: var(--font-mono, monospace);
@@ -574,18 +522,33 @@ export const chatSidebarStyles = css`
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--fractal-accent, #c084fc), transparent);
-    animation: scanline 3s ease-in-out infinite;
+    animation: none;
   }
   :host-context([data-theme="light"]) .node-pulse {
     --pulse-color: #8b5cf6;
   }
-  @keyframes scanline {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
+  .chat[data-performance-mode="balanced"] .flux-fill::after,
+  .chat[data-performance-mode="balanced"] .node-card,
+  .chat[data-performance-mode="balanced"] .node-icon,
+  .chat[data-performance-mode="balanced"] .node-pulse,
+  .chat[data-performance-mode="balanced"] .plan-sidebar-todo--in_progress .node-status-icon {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .chat[data-performance-mode="performance"] .chat-sidebar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(2, 6, 23, 0.9);
+  }
+
+  .chat[data-performance-mode="performance"] .orchestration-section,
+  .chat[data-performance-mode="performance"] .node-card,
+  .chat[data-performance-mode="performance"] .matrix-progress,
+  .chat[data-performance-mode="performance"] .matrix-node-box {
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* ---- Buttons & Completion ---- */

@@ -36,19 +36,29 @@ x-i18n:
   发送消息，随时随地获取智能体响应。通过插件可添加 Mattermost 等更多渠道。
 </p>
 
-<Columns>
-  <Card title="入门指南" href="/start/getting-started" icon="rocket">
-    安装 OpenAEON 并在几分钟内启动 Gateway 网关。
-  </Card>
-  <Card title="运行向导" href="/start/wizard" icon="sparkles">
-    通过 `openaeon onboard` 和配对流程进行引导式设置。
-  </Card>
-  <Card title="打开控制界面" href="/web/control-ui" icon="layout-dashboard">
-    启动浏览器仪表板，管理聊天、配置和会话。
-  </Card>
-</Columns>
+## 分形认知引擎 (Fractal Cognitive Engine)
 
-OpenAEON 通过单个 Gateway 网关进程将聊天应用连接到 Pi 等编程智能体。它为 OpenAEON 助手提供支持，并支持本地或远程部署。
+OpenAEON 不仅仅是一个多渠道网关；它更是一个**自主认知引擎**。它由 **FCA Core (分形认知适配器)** 驱动，这是一个多层架构，将简单的 AI 交互转化为递归、可验证的逻辑闭环。
+
+### 🧠 核心哲学
+OpenAEON 不进行简单的线性对话处理，而是将复杂任务拆解为可验证的子循环。它利用 **皮亚诺空间填充遍历 (Peano Space-Filling Traversal)** 将高维度的复杂问题映射为紧凑的认知流，确保不留任何推理死角。
+
+### 🏗 9 层架构
+系统构建在九个专门的智能层级之上：
+- **语义锚定 (Semantic Grounding)**：将输入映射到高维令牌。
+- **拓扑分析 (Topology Analytics)**：理解上下文的语义亲近度。
+- **分形分解 (Fractal Decomposition)**：递归式的目标拆解。
+- **决策裁决 (Decision Adjudication)**：策略与红线对齐。
+- **策略通量 (Strategy Flux)**：实时的策略与执行评估闭环调优。
+- **取证仿真 (Forensic Simulation)**：错误回放与思维溯源。
+
+👉 **[深度探索：FCA Core 架构](/aeon/FCA_CORE)**
+
+## 什么是 OpenAEON？
+
+OpenAEON 是一个**自托管网关**，它将你最喜欢的聊天应用（WhatsApp、Telegram、Discord、iMessage 等）连接到 AI 编程智能体。你只需在自己的机器上运行一个 Gateway 进程，它就成为了你的消息应用与一个始终在线、自我进化的 AI 助手之间的桥梁。
+
+**它是为谁设计的？** 开发人员和高级用户，他们希望拥有一个可以随时随地发消息的个人 AI 助手，同时又不愿放弃对数据的控制，也不愿依赖托管服务。
 
 ## 工作原理
 

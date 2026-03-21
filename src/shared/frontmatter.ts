@@ -137,3 +137,6 @@ export function parseOPENAEONManifestInstallBase(
   }
   return spec;
 }
+
+/** @deprecated Use resolveOPENAEONManifestBlock. */
+export const resolveOpenClawManifestBlock = resolveOPENAEONManifestBlock;

@@ -716,6 +716,9 @@ export function loadOPENAEONPlugins(options: PluginLoadOptions = {}): PluginRegi
   return registry;
 }
 
+/** @deprecated Use loadOPENAEONPlugins. */
+export const loadOpenClawPlugins = loadOPENAEONPlugins;
+
 function safeRealpathOrResolve(value: string): string {
   try {
     return fs.realpathSync(value);

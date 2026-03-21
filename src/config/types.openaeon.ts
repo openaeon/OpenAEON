@@ -50,11 +50,43 @@ export type AeonImpactConfig = {
   highImpactThreshold?: number;
 };
 
+export type AeonAutospawnConfig = {
+  enabled?: boolean;
+  cooldownMinutes?: number;
+  perSessionWindowMinutes?: number;
+  perSessionLimit?: number;
+  perHourLimit?: number;
+  maxConcurrent?: number;
+  failureThreshold?: number;
+};
+
+export type AeonCouplingVector = {
+  safety?: number;
+  truth?: number;
+  latency?: number;
+  cost?: number;
+  learning?: number;
+};
+
+export type AeonPolicyProfile = {
+  cVector?: AeonCouplingVector;
+  maxLlmCallsPerHour?: number;
+  maxConcurrentPipelines?: number;
+  maxPipelineLatencyMs?: number;
+};
+
+export type AeonPolicyConfig = {
+  defaultProfile?: "conservative" | "balanced" | "aggressive";
+  profiles?: Partial<Record<"conservative" | "balanced" | "aggressive", AeonPolicyProfile>>;
+};
+
 export type AeonConfig = {
   guardrails?: AeonGuardrailsConfig;
   consciousnessCharter?: AeonConsciousnessCharterConfig;
   epistemics?: AeonEpistemicsConfig;
   impact?: AeonImpactConfig;
+  autospawn?: AeonAutospawnConfig;
+  policy?: AeonPolicyConfig;
 };
 
 export type OPENAEONConfig = {
@@ -112,6 +144,12 @@ export type OPENAEONConfig = {
   ui?: {
     /** Accent color for OPENAEON UI chrome (hex). */
     seamColor?: string;
+    chat?: {
+      /** Chat rendering profile: performance-first, balanced, or visual-first. */
+      performanceMode?: "performance" | "balanced" | "visual";
+      /** Sub-agent matching strategy: owner-first, balanced, or fuzzy. */
+      subagentMatchMode?: "owner_first" | "balanced" | "fuzzy";
+    };
     assistant?: {
       /** Assistant display name for UI surfaces. */
       name?: string;
@@ -144,6 +182,11 @@ export type OPENAEONConfig = {
   memory?: MemoryConfig;
   aeon?: AeonConfig;
 };
+
+/** @deprecated Backward-compatible alias. */
+export type OpenAEONConfig = OPENAEONConfig;
+/** @deprecated Backward-compatible alias. */
+export type OpenClawConfig = OPENAEONConfig;
 
 export type ConfigValidationIssue = {
   path: string;

@@ -2491,16 +2491,20 @@ main() {
                 should_open_dashboard=true
                 ui_info "Config already present; skipping onboarding"
                 skip_onboard=true
+            else
+                if [[ -t 0 ]]; then
+                    ui_info "Starting guided setup (onboarding)..."
+                    echo ""
+                    exec </dev/tty
+                    exec "$claw" onboard --install-daemon
+                else
+                    ui_info "No TTY; run openaeon onboard --install-daemon to finish setup"
+                    return 0
+                fi
             fi
-                ui_info "Starting guided setup (onboarding)..."
-                echo ""
-                exec </dev/tty
-                exec "$claw" onboard --install-daemon
-            fi
-            ui_info "No TTY; run openaeon onboard --install-daemon to finish setup"
-            return 0
         fi
     fi
+
 
     if command -v openaeon &> /dev/null; then
         local claw="${OPENAEON_BIN:-}"

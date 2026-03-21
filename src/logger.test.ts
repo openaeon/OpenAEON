@@ -75,10 +75,10 @@ describe("logger helpers", () => {
     resetLogger();
     setLoggerOverride({ level: "info" }); // force default file path with enabled file logging
     const today = localDateString(new Date());
-    const todayPath = path.join(DEFAULT_LOG_DIR, `openclaw-${today}.log`);
+    const todayPath = path.join(DEFAULT_LOG_DIR, `openaeon-${today}.log`);
 
     // create an old file to be pruned
-    const oldPath = path.join(DEFAULT_LOG_DIR, "openclaw-2000-01-01.log");
+    const oldPath = path.join(DEFAULT_LOG_DIR, "openaeon-2000-01-01.log");
     fs.mkdirSync(DEFAULT_LOG_DIR, { recursive: true });
     fs.writeFileSync(oldPath, "old");
     fs.utimesSync(oldPath, new Date(0), new Date(0));
@@ -122,34 +122,26 @@ describe("globals", () => {
 });
 
 describe("stripRedundantSubsystemPrefixForConsole", () => {
-  it("drops known subsystem prefixes", () => {
+  it("reduces subsystem paths for console labels", () => {
     const cases = [
-      { input: "discord: hello", subsystem: "discord", expected: "hello" },
-      { input: "WhatsApp: hello", subsystem: "whatsapp", expected: "hello" },
-      { input: "discord gateway: closed", subsystem: "discord", expected: "gateway: closed" },
-      {
-        input: "[discord] connection stalled",
-        subsystem: "discord",
-        expected: "connection stalled",
-      },
+      { subsystem: "gateway/discord", expected: "discord" },
+      { subsystem: "providers/whatsapp", expected: "whatsapp" },
+      { subsystem: "gateway/channels/discord", expected: "discord" },
+      { subsystem: "gateway/providers/deep/path", expected: "deep/path" },
     ];
 
     for (const testCase of cases) {
-      expect(stripRedundantSubsystemPrefixForConsole(testCase.input, testCase.subsystem)).toBe(
-        testCase.expected,
-      );
+      expect(stripRedundantSubsystemPrefixForConsole(testCase.subsystem)).toBe(testCase.expected);
     }
   });
 
-  it("keeps messages that do not start with the subsystem", () => {
-    expect(stripRedundantSubsystemPrefixForConsole("discordant: hello", "discord")).toBe(
-      "discordant: hello",
-    );
+  it("keeps simple subsystem names unchanged", () => {
+    expect(stripRedundantSubsystemPrefixForConsole("discord")).toBe("discord");
   });
 });
 
 function pathForTest() {
-  const file = path.join(os.tmpdir(), `openclaw-log-${crypto.randomUUID()}.log`);
+  const file = path.join(os.tmpdir(), `openaeon-log-${crypto.randomUUID()}.log`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   return file;
 }

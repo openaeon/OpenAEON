@@ -103,6 +103,10 @@ export type {
   PluginLogger,
   ProviderAuthContext,
   ProviderAuthResult,
+  OpenAEONPluginConfigSchema,
+  OpenAEONPluginApi,
+  OpenAEONPluginService,
+  OpenAEONPluginServiceContext,
 } from "../plugins/types.js";
 export type {
   GatewayRequestHandler,
@@ -113,7 +117,7 @@ export type { PluginRuntime, RuntimeLogger } from "../plugins/runtime/types.js";
 export { normalizePluginHttpPath } from "../plugins/http-path.js";
 export { registerPluginHttpRoute } from "../plugins/http-registry.js";
 export { emptyPluginConfigSchema } from "../plugins/config-schema.js";
-export type { OPENAEONConfig } from "../config/config.js";
+export type { OPENAEONConfig, OpenAEONConfig, OpenClawConfig } from "../config/config.js";
 /** @deprecated Use OPENAEONConfig instead */
 export type { OPENAEONConfig as ClawdbotConfig } from "../config/config.js";
 export { isDangerousNameMatchingEnabled } from "../config/dangerous-name-matching.js";
@@ -258,6 +262,8 @@ export type {
   WindowsSpawnResolution,
 } from "./windows-spawn.js";
 export { resolvePreferredOPENAEONTmpDir } from "../infra/tmp-openaeon-dir.js";
+/** @deprecated Use resolvePreferredOPENAEONTmpDir */
+export { resolvePreferredOPENAEONTmpDir as resolvePreferredOpenAEONTmpDir } from "../infra/tmp-openaeon-dir.js";
 export {
   runPluginCommandWithTimeout,
   type PluginCommandRunOptions,

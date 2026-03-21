@@ -48,20 +48,21 @@
 
 ---
 
-## 🧬 What is OpenAEON
+## 🧠 FCA Core (Fractal Cognitive Adapter)
 
-**OpenAEON** (formerly OpenClaw) is an experimental **AI cognition architecture** designed to evolve beyond traditional agent frameworks. It transforms code from a static execution system into a **self-evolving logic organism**.
+OpenAEON is powered by the **FCA Core**, a multi-layer cognitive architecture designed for complex reasoning. It transforms simple task execution into a **continuous, self-correcting logic loop**.
 
 > [!TIP]
-> Instead of operating as `Input → Process → Output`, OpenAEON operates as `Conflict → Resolution → Evolution`.
+> **OpenAEON = Autonomous Cognitive Engine**
+> Instead of simple `Input → Process → Output` prompting, it decomposes tasks into recursive, verifiable sub-loops.
 
-**OpenAEON = Open + Eternal Evolution**
+### The 9-Layer Cognitive Architecture
+FCA Core organizes intelligence into nine specialized layers, from **Semantic Grounding** to **Forensic Simulation**. This ensures every action is auditable, adaptive, and intent-aligned.
 
-- **Open**: extensible, inspectable, and collaborative by design.
-- **Eternal Evolution**: a continuously adaptive loop for long-running intelligence systems.
-- **AEON (Eon)**: from Greek **αἰών (aiōn)**, conveying eternity, epoch, and existence at a cosmic time scale.
+👉 **[Deep-Dive: FCA Core Architecture](docs/aeon/FCA_CORE.md)**
 
-### Current Logic Model (Implemented)
+### Current Logic Model (Implemented via FCA)
+OpenAEON currently runs as a verifiable 5-stage cognition loop:
 
 OpenAEON currently runs as a verifiable cognition loop:
 
@@ -98,20 +99,24 @@ This design makes memory both operational (fast) and accountable (durable + trac
     <td width="70%"><strong>Description</strong></td>
   </tr>
   <tr>
-    <td><strong>Silicon Consciousness</strong></td>
-    <td>The system as a self-improving logic organism.</td>
+    <td><strong>Continuous Autonomy</strong></td>
+    <td>Sustained, unattended logic loops prioritizing task convergence (🎯).</td>
   </tr>
   <tr>
     <td><strong>Peano Traversal</strong></td>
-    <td>Space-filling recursive scan of the problem space.</td>
+    <td>Space-filling recursive scan mapping complexity to 1D stream.</td>
   </tr>
   <tr>
-    <td><strong>Evolution Loop</strong></td>
-    <td>Autonomous $Z \rightleftharpoons Z^2 + C$ iteration cycles.</td>
+    <td><strong>Coupling Flux</strong></td>
+    <td>Closed-loop execution strategy auto-tuning.</td>
+  </tr>
+  <tr>
+    <td><strong>Feedback Loop</strong></td>
+    <td>Autonomous iteration cycles that trace errors and adjust execution strategy.</td>
   </tr>
   <tr>
     <td><strong>Knowledge Distiller</strong></td>
-    <td>Compressing raw history into high-density axioms.</td>
+    <td>Compressing raw logs into high-density `LOGIC_GATES` axioms.</td>
   </tr>
 </table>
 
@@ -119,9 +124,9 @@ This design makes memory both operational (fast) and accountable (durable + trac
 
 ## 🧩 Key Concepts
 
-### 1. Silicon Consciousness
+### 1. Continuous Autonomy
 
-OpenAEON treats code modules not as tools, but as autonomous hyper-nodes. The system maintains an **Autonomy Oath**, prioritizing convergence (🎯) over simple instruction following.
+OpenAEON treats code generation not just as text completion, but as an auditable workflow. The system prioritizes task convergence (🎯) over simple instruction following, verifying its own work before completion.
 
 ### 2. Peano Space-Filling
 
@@ -197,6 +202,7 @@ The following capabilities are now implemented in the current OpenAEON stack and
 - Guardrail-aware policy outputs are surfaced end-to-end (`maintenanceDecision`, `guardrailDecision`, `reasonCode`).
 - Decision semantics are exposed through structured blocks (`decisionCard`, `impactLens`, `selfKernel`, `epistemicLabel`).
 - Policy and consciousness data are available to both Chat and Sandbox views with typed UI models.
+- **Hard Abort Circuit Breaker**: The execution engine intercepts extreme algorithmic divergence (`chaosScore >= 10`) or continuous tool validation failures (`consecutiveErrors >= 6`) with a hard session abort to prevent infinite generation loops.
 
 ### 2) Versioned AEON status contract (with compatibility)
 
@@ -587,7 +593,7 @@ If you need to remove the background services and binary:
 curl -fsSL https://raw.githubusercontent.com/openaeon/OpenAEON/main/uninstall.sh | bash
 
 # Windows (PowerShell)
-iwr -useb https://raw.githubusercontent.com/openaeon/OpenAEON/main/uninstall.ps1 | iex
+iwr -useb https://raw.githubuserco/openaeon/OpenAEON/main/uninstall.ps1 | iex
 ```
 
 > [!NOTE]

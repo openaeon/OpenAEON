@@ -26,6 +26,20 @@ export type ChatHost = {
   refreshSessionsAfterChat: Set<string>;
 };
 
+const CHAT_RESET_MARKER_KEY = "openaeon.chat.reset.v1";
+
+function writeSessionResetMarker(sessionKey: string, at: number): void {
+  try {
+    const raw = localStorage.getItem(CHAT_RESET_MARKER_KEY);
+    const parsed =
+      raw && raw.trim().length > 0 ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    parsed[sessionKey] = at;
+    localStorage.setItem(CHAT_RESET_MARKER_KEY, JSON.stringify(parsed));
+  } catch {
+    // best-effort marker only
+  }
+}
+
 export const CHAT_SESSIONS_ACTIVE_MINUTES = 120;
 
 export function isChatBusy(host: ChatHost) {
@@ -196,6 +210,7 @@ export async function handleSendChat(
 
   const refreshSessions = isChatResetCommand(message);
   if (refreshSessions) {
+    writeSessionResetMarker(host.sessionKey, Date.now());
     const s = host as unknown as import("./app-view-state.ts").AppViewState;
     s.sandboxTaskPlan = null;
     s.sandboxTaskPlanLoading = false;

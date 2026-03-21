@@ -270,6 +270,15 @@ export const ToolsWebSearchSchema = z
     maxResults: z.number().int().positive().optional(),
     timeoutSeconds: z.number().int().positive().optional(),
     cacheTtlMinutes: z.number().nonnegative().optional(),
+    browserFallback: z
+      .object({
+        enabled: z.boolean().optional(),
+        engineUrl: z.string().optional(),
+        timeoutSeconds: z.number().int().positive().optional(),
+        autoStart: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
     perplexity: z
       .object({
         apiKey: z.string().optional().register(sensitive),
@@ -322,6 +331,12 @@ export const ToolsWebSchema = z
   .object({
     search: ToolsWebSearchSchema,
     fetch: ToolsWebFetchSchema,
+    privateNetwork: z
+      .object({
+        allowlist: z.array(z.string()).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .optional();

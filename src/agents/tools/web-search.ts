@@ -1,6 +1,10 @@
 import { Type } from "@sinclair/typebox";
+import { browserAct, browserNavigate } from "../../browser/client-actions.js";
+import { browserCloseTab, browserStart, browserStatus } from "../../browser/client.js";
+import { resolveBrowserConfig } from "../../browser/config.js";
 import { formatCliCommand } from "../../cli/command-format.js";
 import type { OPENAEONConfig } from "../../config/config.js";
+import { loadConfig } from "../../config/config.js";
 import { logVerbose } from "../../globals.js";
 import { wrapWebContent } from "../../security/external-content.js";
 import { normalizeSecretInput } from "../../utils/normalize-secret-input.js";
@@ -35,6 +39,9 @@ const XAI_API_ENDPOINT = "https://api.x.ai/v1/responses";
 const DEFAULT_GROK_MODEL = "grok-4-1-fast";
 const DEFAULT_KIMI_BASE_URL = "https://api.moonshot.ai/v1";
 const DEFAULT_KIMI_MODEL = "moonshot-v1-128k";
+const DEFAULT_BROWSER_SEARCH_ENGINE_URL = "https://duckduckgo.com/?q=";
+const DEFAULT_BROWSER_SEARCH_TIMEOUT_SECONDS = 20;
+const DEFAULT_BROWSER_SEARCH_MAX_RESULTS = 20;
 const KIMI_WEB_SEARCH_TOOL = {
   type: "builtin_function",
   function: { name: "$web_search" },
@@ -118,6 +125,13 @@ type KimiConfig = {
   apiKey?: string;
   baseUrl?: string;
   model?: string;
+};
+
+type BrowserFallbackConfig = {
+  enabled?: boolean;
+  engineUrl?: string;
+  timeoutSeconds?: number;
+  autoStart?: boolean;
 };
 
 type GrokSearchResponse = {
@@ -408,6 +422,199 @@ function resolvePerplexityConfig(search?: WebSearchConfig): PerplexityConfig {
     return {};
   }
   return perplexity as PerplexityConfig;
+}
+
+function resolveBrowserFallbackConfig(search?: WebSearchConfig): BrowserFallbackConfig {
+  if (!search || typeof search !== "object") {
+    return {};
+  }
+  const raw = "browserFallback" in search ? search.browserFallback : undefined;
+  if (!raw || typeof raw !== "object") {
+    return {};
+  }
+  return raw as BrowserFallbackConfig;
+}
+
+function resolveBrowserFallbackEnabled(search?: WebSearchConfig): boolean {
+  const fallback = resolveBrowserFallbackConfig(search);
+  if (typeof fallback.enabled === "boolean") {
+    return fallback.enabled;
+  }
+  return true;
+}
+
+function resolveBrowserFallbackTimeoutSeconds(
+  search?: WebSearchConfig,
+  searchTimeoutSeconds?: number,
+): number {
+  const fallback = resolveBrowserFallbackConfig(search);
+  const raw =
+    typeof fallback.timeoutSeconds === "number" && Number.isFinite(fallback.timeoutSeconds)
+      ? fallback.timeoutSeconds
+      : undefined;
+  if (typeof raw === "number" && raw > 0) {
+    return raw;
+  }
+  return resolveTimeoutSeconds(searchTimeoutSeconds, DEFAULT_BROWSER_SEARCH_TIMEOUT_SECONDS);
+}
+
+function resolveBrowserSearchUrl(query: string, search?: WebSearchConfig): string {
+  const fallback = resolveBrowserFallbackConfig(search);
+  const rawEngine =
+    typeof fallback.engineUrl === "string" ? fallback.engineUrl.trim() : DEFAULT_BROWSER_SEARCH_ENGINE_URL;
+  if (!rawEngine) {
+    return `${DEFAULT_BROWSER_SEARCH_ENGINE_URL}${encodeURIComponent(query)}`;
+  }
+  if (rawEngine.includes("{query}")) {
+    return rawEngine.replaceAll("{query}", encodeURIComponent(query));
+  }
+  if (/[?&]q=$/.test(rawEngine)) {
+    return `${rawEngine}${encodeURIComponent(query)}`;
+  }
+  try {
+    const asUrl = new URL(rawEngine);
+    asUrl.searchParams.set("q", query);
+    return asUrl.toString();
+  } catch {
+    return `${DEFAULT_BROWSER_SEARCH_ENGINE_URL}${encodeURIComponent(query)}`;
+  }
+}
+
+function resolveBrowserFallbackAutoStart(search?: WebSearchConfig): boolean {
+  const fallback = resolveBrowserFallbackConfig(search);
+  if (typeof fallback.autoStart === "boolean") {
+    return fallback.autoStart;
+  }
+  return true;
+}
+
+const BROWSER_SEARCH_EVAL_FN = `() => {
+  const max = ${DEFAULT_BROWSER_SEARCH_MAX_RESULTS};
+  const seen = new Set();
+  const records = [];
+  const anchors = Array.from(document.querySelectorAll("a[href]"));
+  for (const anchor of anchors) {
+    if (records.length >= max) break;
+    const rawHref = anchor.getAttribute("href") || "";
+    if (!rawHref || rawHref.startsWith("#")) continue;
+    let absolute;
+    try {
+      absolute = new URL(rawHref, location.href);
+    } catch {
+      continue;
+    }
+    if (absolute.protocol !== "http:" && absolute.protocol !== "https:") continue;
+    let finalUrl = absolute.toString();
+    if (absolute.hostname.endsWith("duckduckgo.com") && absolute.pathname.startsWith("/l/")) {
+      const redirect = absolute.searchParams.get("uddg");
+      if (redirect) {
+        try {
+          finalUrl = decodeURIComponent(redirect);
+        } catch {
+          finalUrl = redirect;
+        }
+      }
+    }
+    if (!/^https?:\\/\\//i.test(finalUrl)) continue;
+    const title = (anchor.textContent || "").replace(/\\s+/g, " ").trim();
+    if (!title) continue;
+    const description =
+      ((anchor.closest("article, li, div")?.textContent || "").replace(/\\s+/g, " ").trim()) || "";
+    const key = \`\${title}|\${finalUrl}\`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    records.push({ title, url: finalUrl, description });
+  }
+  return records;
+}`;
+
+type BrowserFallbackSearchResult = {
+  title?: string;
+  url?: string;
+  description?: string;
+};
+
+async function runBrowserSearchFallback(params: {
+  query: string;
+  count: number;
+  search?: WebSearchConfig;
+  timeoutSeconds: number;
+}): Promise<Record<string, unknown>> {
+  const start = Date.now();
+  const cfg = loadConfig();
+  const resolvedBrowser = resolveBrowserConfig(cfg.browser, cfg);
+  if (!resolvedBrowser.enabled) {
+    throw new Error("browser control is disabled");
+  }
+  const profile = resolvedBrowser.defaultProfile?.trim() || undefined;
+  const status = await browserStatus(undefined, { profile });
+  if (!status.running) {
+    if (!resolveBrowserFallbackAutoStart(params.search)) {
+      throw new Error("browser control is not running");
+    }
+    await browserStart(undefined, { profile });
+  }
+
+  let targetId: string | undefined;
+  try {
+    const navigation = await browserNavigate(undefined, {
+      url: resolveBrowserSearchUrl(params.query, params.search),
+      profile,
+    });
+    targetId = navigation.targetId;
+    await browserAct(
+      undefined,
+      {
+        kind: "wait",
+        targetId,
+        loadState: "domcontentloaded",
+        timeoutMs: Math.max(1_000, Math.floor(params.timeoutSeconds * 1_000)),
+      },
+      { profile },
+    );
+
+    const evaluated = await browserAct(
+      undefined,
+      {
+        kind: "evaluate",
+        targetId,
+        fn: BROWSER_SEARCH_EVAL_FN,
+        timeoutMs: Math.max(1_000, Math.floor(params.timeoutSeconds * 1_000)),
+      },
+      { profile },
+    );
+    const items = Array.isArray(evaluated.result) ? (evaluated.result as BrowserFallbackSearchResult[]) : [];
+    const mapped = items
+      .filter((entry) => typeof entry?.url === "string" && entry.url.length > 0)
+      .slice(0, resolveSearchCount(params.count, DEFAULT_SEARCH_COUNT))
+      .map((entry) => {
+        const url = entry.url ?? "";
+        return {
+          title: entry.title ? wrapWebContent(entry.title, "web_search") : "",
+          url,
+          description: entry.description ? wrapWebContent(entry.description, "web_search") : "",
+          siteName: resolveSiteName(url) || undefined,
+        };
+      });
+    return {
+      query: params.query,
+      provider: "browser_fallback",
+      count: mapped.length,
+      tookMs: Date.now() - start,
+      fallback: true,
+      externalContent: {
+        untrusted: true,
+        source: "web_search",
+        provider: "browser_fallback",
+        wrapped: true,
+      },
+      results: mapped,
+    };
+  } finally {
+    if (targetId) {
+      await browserCloseTab(undefined, targetId, { profile }).catch(() => undefined);
+    }
+  }
 }
 
 function resolvePerplexityApiKey(perplexity?: PerplexityConfig): {
@@ -1364,6 +1571,7 @@ export function createWebSearchTool(options?: {
     execute: async (_toolCallId, args) => {
       const perplexityAuth =
         provider === "perplexity" ? resolvePerplexityApiKey(perplexityConfig) : undefined;
+      const browserFallbackEnabled = resolveBrowserFallbackEnabled(search);
       const apiKey =
         provider === "perplexity"
           ? perplexityAuth?.apiKey
@@ -1376,6 +1584,33 @@ export function createWebSearchTool(options?: {
                 : resolveSearchApiKey(search);
 
       if (!apiKey) {
+        if (provider === "brave" && browserFallbackEnabled) {
+          try {
+            const params = args as Record<string, unknown>;
+            const query = readStringParam(params, "query", { required: true });
+            const count =
+              readNumberParam(params, "count", { integer: true }) ??
+              search?.maxResults ??
+              DEFAULT_SEARCH_COUNT;
+            const browserResult = await runBrowserSearchFallback({
+              query,
+              count: resolveSearchCount(count, DEFAULT_SEARCH_COUNT),
+              search,
+              timeoutSeconds: resolveBrowserFallbackTimeoutSeconds(search, search?.timeoutSeconds),
+            });
+            return jsonResult(browserResult);
+          } catch (err) {
+            const missing = missingSearchKeyPayload(provider);
+            return jsonResult({
+              ...missing,
+              browserFallback: {
+                attempted: true,
+                ok: false,
+                reason: String(err),
+              },
+            });
+          }
+        }
         return jsonResult(missingSearchKeyPayload(provider));
       }
       const params = args as Record<string, unknown>;
@@ -1423,29 +1658,45 @@ export function createWebSearchTool(options?: {
           docs: "https://docs.openaeon.ai/tools/web",
         });
       }
-      const result = await runWebSearch({
-        query,
-        count: resolveSearchCount(count, DEFAULT_SEARCH_COUNT),
-        apiKey,
-        timeoutSeconds: resolveTimeoutSeconds(search?.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS),
-        cacheTtlMs: resolveCacheTtlMs(search?.cacheTtlMinutes, DEFAULT_CACHE_TTL_MINUTES),
-        provider,
-        country,
-        search_lang,
-        ui_lang,
-        freshness,
-        perplexityBaseUrl: resolvePerplexityBaseUrl(
-          perplexityConfig,
-          perplexityAuth?.source,
-          perplexityAuth?.apiKey,
-        ),
-        perplexityModel: resolvePerplexityModel(perplexityConfig),
-        grokModel: resolveGrokModel(grokConfig),
-        grokInlineCitations: resolveGrokInlineCitations(grokConfig),
-        geminiModel: resolveGeminiModel(geminiConfig),
-        kimiBaseUrl: resolveKimiBaseUrl(kimiConfig),
-        kimiModel: resolveKimiModel(kimiConfig),
-      });
+      const resolvedCount = resolveSearchCount(count, DEFAULT_SEARCH_COUNT);
+      const resolvedTimeoutSeconds = resolveTimeoutSeconds(search?.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS);
+      let result: Record<string, unknown>;
+      try {
+        result = await runWebSearch({
+          query,
+          count: resolvedCount,
+          apiKey,
+          timeoutSeconds: resolvedTimeoutSeconds,
+          cacheTtlMs: resolveCacheTtlMs(search?.cacheTtlMinutes, DEFAULT_CACHE_TTL_MINUTES),
+          provider,
+          country,
+          search_lang,
+          ui_lang,
+          freshness,
+          perplexityBaseUrl: resolvePerplexityBaseUrl(
+            perplexityConfig,
+            perplexityAuth?.source,
+            perplexityAuth?.apiKey,
+          ),
+          perplexityModel: resolvePerplexityModel(perplexityConfig),
+          grokModel: resolveGrokModel(grokConfig),
+          grokInlineCitations: resolveGrokInlineCitations(grokConfig),
+          geminiModel: resolveGeminiModel(geminiConfig),
+          kimiBaseUrl: resolveKimiBaseUrl(kimiConfig),
+          kimiModel: resolveKimiModel(kimiConfig),
+        });
+      } catch (err) {
+        if (provider === "brave" && browserFallbackEnabled) {
+          result = await runBrowserSearchFallback({
+            query,
+            count: resolvedCount,
+            search,
+            timeoutSeconds: resolveBrowserFallbackTimeoutSeconds(search, resolvedTimeoutSeconds),
+          });
+        } else {
+          throw err;
+        }
+      }
       return jsonResult(result);
     },
   };

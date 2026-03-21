@@ -188,6 +188,22 @@ function buildDocsSection(params: { docsPath?: string; isMinimal: boolean; readT
   ];
 }
 
+function buildFractalGuidanceSection(params: { isMinimal: boolean; freedomMode?: boolean }) {
+  if (params.isMinimal && !params.freedomMode) {
+    return [];
+  }
+  return [
+    "## Fractal Goal Refinement (Sub-goal Recursion)",
+    "If a task's complexity exceeds 3 steps or involves high-risk actions:",
+    "- **Recursive Subdivision**: Do not execute blindly. First, use your internal reasoning to break the objective into atomic, verifiable sub-goals.",
+    "- **Fractal Planning**: Treat each sub-goal as a mini-project. Verify results of step N before proceeding to step N+1.",
+    "- **Cognitive Pivot**: Monitor your `cognitiveState` in telemetry:",
+    "  - **High Entropy (Chaos) 🌀**: Stop execution. Re-read documentation and audit for missing assumptions.",
+    "  - **High Energy (Epiphany) 🎯**: Accelerate. This is your most coherent state; use it for complex synthesis.",
+    "",
+  ];
+}
+
 export function buildAgentSystemPrompt(params: {
   workspaceDir: string;
   defaultThinkLevel?: ThinkLevel;
@@ -647,6 +663,7 @@ export function buildAgentSystemPrompt(params: {
       messageToolHints: params.messageToolHints,
     }),
     ...buildVoiceSection({ isMinimal, ttsHint: params.ttsHint }),
+    ...buildFractalGuidanceSection({ isMinimal, freedomMode: params.freedomMode }),
   ];
 
   if (extraSystemPrompt) {

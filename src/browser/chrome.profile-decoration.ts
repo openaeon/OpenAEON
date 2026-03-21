@@ -189,6 +189,9 @@ export function decorateOPENAEONProfile(
   }
 }
 
+/** @deprecated Use decorateOPENAEONProfile. */
+export const decorateOpenClawProfile = decorateOPENAEONProfile;
+
 export function ensureProfileCleanExit(userDataDir: string) {
   const preferencesPath = path.join(userDataDir, "Default", "Preferences");
   const prefs = safeReadJson(preferencesPath) ?? {};

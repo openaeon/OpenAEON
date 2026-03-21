@@ -30,6 +30,7 @@
   --muted: #71717a;
   --muted-strong: #52525b;
   --muted-foreground: #71717a;
+  --text-muted: var(--muted);
 
   /* Border */
   --border: #f0f0f0;
@@ -138,6 +139,7 @@
   --muted: #8c8c8c;
   --muted-strong: #595959;
   --muted-foreground: #8c8c8c;
+  --text-muted: var(--muted);
 
   --border: #303030;
   --border-strong: #424242;

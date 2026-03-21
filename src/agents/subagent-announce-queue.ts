@@ -55,6 +55,13 @@ type AnnounceQueueState = {
 };
 
 const ANNOUNCE_QUEUES = new Map<string, AnnounceQueueState>();
+const NON_RETRYABLE_DELIVERY_CHANNEL_MESSAGE =
+  "delivery channel is required: pass --channel/--reply-channel or use a main session with a previous channel";
+
+function isNonRetryableAnnounceDrainError(error: unknown): boolean {
+  const text = String(error ?? "");
+  return text.includes(NON_RETRYABLE_DELIVERY_CHANNEL_MESSAGE);
+}
 
 export function resetAnnounceQueuesForTests() {
   // Test isolation: other suites may leave a draining queue behind in the worker.
@@ -187,6 +194,18 @@ function scheduleAnnounceDrain(key: string) {
       // Drain succeeded — reset failure counter.
       queue.consecutiveFailures = 0;
     } catch (err) {
+      if (isNonRetryableAnnounceDrainError(err)) {
+        // Fatal for this queue context: retrying will never succeed until caller provides
+        // delivery channel context. Drop pending items to avoid infinite log storms.
+        queue.items.length = 0;
+        queue.summaryLines.length = 0;
+        queue.droppedCount = 0;
+        queue.consecutiveFailures = 0;
+        defaultRuntime.error?.(
+          `announce queue drain aborted for ${key}: ${String(err)} (dropped pending items)`,
+        );
+        return;
+      }
       queue.consecutiveFailures++;
       // Exponential backoff on consecutive failures: 2s, 4s, 8s, ... capped at 60s.
       const errorBackoffMs = Math.min(1000 * Math.pow(2, queue.consecutiveFailures), 60_000);

@@ -41,6 +41,7 @@ export const ChatSendParamsSchema = Type.Object(
     timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
     idempotencyKey: NonEmptyString,
     modelOptions: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+    confirmDangerousCodeEdit: Type.Optional(Type.Boolean()),
   },
   { additionalProperties: false },
 );

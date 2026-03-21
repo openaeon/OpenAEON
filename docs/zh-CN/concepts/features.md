@@ -33,6 +33,9 @@ x-i18n:
   <Card title="移动节点" icon="smartphone">
     iOS 和 Android 节点，支持 Canvas。
   </Card>
+  <Card title="FCA Core" icon="brain">
+    9 层分形认知架构，支持皮亚诺空间填充遍历。
+  </Card>
 </Columns>
 
 ## 完整列表
@@ -53,6 +56,10 @@ x-i18n:
 - WebChat 和 macOS 菜单栏应用
 - iOS 节点，支持配对和 Canvas 界面
 - Android 节点，支持配对、Canvas、聊天和相机
+- **FCA Core**: 分形认知适配器，具备多层逻辑映射能力
+- **皮亚诺遍历 (Peano Traversal)**: 保持局部性的认知空间扫描技术
+- **耦合通量 (Coupling Flux)**: 通过 `CouplingVector` 实现的策略权重闭环调优
+- **取证仿真 (Forensic Simulation)**: 支持思维轨迹的前向回溯与反向仿真
 
 <Note>
 旧版 Claude、Codex、Gemini 和 Opencode 路径已被移除。Pi 是唯一的编程智能体路径。

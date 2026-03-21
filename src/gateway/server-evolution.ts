@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { distillMemory, readMemoryDistillState } from "../agents/tools/memory-distill-tool.js";
 import { createLogicRefinementTool } from "../agents/tools/logic-refinement.js";
+import { spawnSubagentDirect } from "../agents/subagent-spawn.js";
 import { loadConfig } from "../config/config.js";
 import { loadSessionStore, resolveMainSessionKey, resolveStorePath } from "../config/sessions.js";
 import { requestHeartbeatNow } from "../infra/heartbeat-wake.js";
@@ -15,16 +16,20 @@ import {
   type AeonStateScope,
   type GuardrailDecision,
   type MaintenanceDecision,
-  getAeonEvolutionState,
+  getAeonEvolutionState as getAeonEvolutionStateBase,
   recordConsciousnessPulse,
   recordAeonDreaming,
+  recordAeonEvidenceEvent,
   recordAeonEpiphanyFactor,
   recordAeonMaintenance,
   recordMaintenancePolicyDecision,
   recordMemoryPersistence,
   setConsciousnessRuntimePolicy,
+  updateAeonAutospawnTelemetry,
 } from "./aeon-state.js";
 import { logEvolutionDecisionEvent, logEvolutionEvent } from "./aeon-evolution-log.js";
+import { recordDeliveryTransition } from "./aeon-delivery-log.js";
+import type { CognitiveLogEntry } from "./aeon-state.js";
 
 const log = createSubsystemLogger("evolution");
 
@@ -60,6 +65,22 @@ type GuardrailEvaluation = {
   effectiveIntensity: MaintenanceDecision;
 };
 
+type CouplingVector = {
+  safety: number;
+  truth: number;
+  latency: number;
+  cost: number;
+  learning: number;
+};
+
+type CouplingProfile = {
+  name: "conservative" | "balanced" | "aggressive";
+  cVector: CouplingVector;
+  maxLlmCallsPerHour: number;
+  maxConcurrentPipelines: number;
+  maxPipelineLatencyMs: number;
+};
+
 export type AutonomousMaintenancePolicyResolution = {
   plan: { intensity: MaintenanceDecision; reason: string };
   guardrail: GuardrailEvaluation;
@@ -70,6 +91,8 @@ function clampMaintenanceResourcePressure(memorySaturation: number, idleTime: nu
   const idleFactor = Math.min(1, Math.max(0, idleTime / (30 * 60 * 1000)));
   return Math.max(0.08, Math.min(0.92, 0.65 * memoryHeadroom + 0.35 * (1 - idleFactor)));
 }
+
+export const getAeonEvolutionState = getAeonEvolutionStateBase;
 
 function resolveMaintenanceIntensity(params: {
   epiphanyFactor: number;
@@ -83,6 +106,24 @@ function resolveMaintenanceIntensity(params: {
   const risk = state.selfModification.redlineBreachRisk;
   const trusted = state.ethics.trusted;
   const minimumReady = state.criteria.minimumReady;
+
+  // --- Dynamic Parameter Tuning (Layer 5 & 8) ---
+  const baselineTemp = 0.7;
+  const targetTemp = risk > 0.6 ? 0.2 : risk > 0.4 ? 0.4 : baselineTemp;
+  const currentTemp = state.cognitiveParameters.temperature ?? baselineTemp;
+  
+  if (Math.abs(currentTemp - targetTemp) > 0.05) {
+    const { updateAeonCognitiveParameters } = require("./aeon-state.js");
+    updateAeonCognitiveParameters({ temperature: targetTemp, top_p: targetTemp + 0.3 }, params.scope);
+    log.info(`Dynamic Tuning: Adjusted temperature to ${targetTemp.toFixed(2)} due to risk=${risk.toFixed(2)}`);
+  }
+
+  // --- Intent Stability Calculation (Layer 2) ---
+  const goalDrift = state.consciousness.intent.turnDriftScore;
+  const stability = Math.max(0, 1 - goalDrift);
+  const { updateAeonMemoryTelemetry } = require("./aeon-state.js");
+  // We'll reuse memory telemetry or add a dedicated setter if needed, but for now we update the inference score
+  // Actually AeonTelemetryV4.inference already has integrityScore which we can map to stability.
 
   if (params.resonanceTrigger || params.epiphanyFactor > 0.92 || params.memorySaturation > 92) {
     return { intensity: "high", reason: "high resonance/epiphany pressure" };
@@ -130,6 +171,36 @@ function applyConsciousnessRuntimePolicy(scope: AeonStateScope): void {
     },
     scope,
   );
+}
+
+/**
+ * FCA Layer 2: Gap Recognition (Cognitive Gap Diagnosis)
+ * Identifies "semantic cracks" between Intent/Goals and available Actions/Memory.
+ */
+export function diagnoseCognitiveGap(scope: AeonStateScope): { gaps: string[]; severity: number } {
+  const state = getAeonEvolutionState(scope);
+  const gaps: string[] = [];
+  let severity = 0;
+
+  // 1. Action Gap: High failure rate in recent tools
+  if (state.telemetryV4.evidence.execution.successRate < 0.4) {
+    gaps.push("ACTION_EXECUTION_FRACTURE");
+    severity += 0.4;
+  }
+
+  // 2. Intent Gap: High goal drift
+  if (state.consciousness.intent.turnDriftScore > 0.6) {
+    gaps.push("INTENT_COHERENCE_GAP");
+    severity += 0.3;
+  }
+
+  // 3. Memory Gap: High resource pressure + low epiphany
+  if (state.telemetryV4.inference.selfAwarenessIndex < 0.2 && state.telemetryV4.evidence.memory.writeValidityRate < 0.5) {
+    gaps.push("MEMORY_ACCUMULATION_FAULT");
+    severity += 0.2;
+  }
+
+  return { gaps, severity: Math.min(1, severity) };
 }
 
 function evaluateGuardrailDecision(params: {
@@ -289,6 +360,109 @@ export function resolveAutonomousMaintenancePolicy(params: {
   return { plan, guardrail };
 }
 
+function resolveAutospawnPolicy() {
+  const cfg = loadConfig();
+  const raw = ((cfg.aeon as Record<string, unknown> | undefined)?.autospawn ??
+    {}) as Record<string, unknown>;
+  return {
+    enabled: raw.enabled !== false,
+    cooldownMs: Math.max(1, Number.isFinite(Number(raw.cooldownMinutes)) ? Number(raw.cooldownMinutes) : 30) * 60_000,
+    perSessionWindowMs:
+      Math.max(
+        1,
+        Number.isFinite(Number(raw.perSessionWindowMinutes))
+          ? Number(raw.perSessionWindowMinutes)
+          : 30,
+      ) * 60_000,
+    perSessionLimit: Math.max(1, Math.floor(Number(raw.perSessionLimit) || 1)),
+    perHourLimit: Math.max(1, Math.floor(Number(raw.perHourLimit) || 2)),
+    maxConcurrent: Math.max(1, Math.floor(Number(raw.maxConcurrent) || 1)),
+    failureThreshold: Math.max(1, Math.floor(Number(raw.failureThreshold) || 3)),
+  };
+}
+
+function clampWeight(value: number, fallback: number): number {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.max(0, Math.min(1, value));
+}
+
+function resolveCouplingProfile(): CouplingProfile {
+  const cfg = loadConfig();
+  const defaults: Record<CouplingProfile["name"], CouplingProfile> = {
+    conservative: {
+      name: "conservative",
+      cVector: { safety: 0.36, truth: 0.24, latency: 0.12, cost: 0.12, learning: 0.16 },
+      maxLlmCallsPerHour: 24,
+      maxConcurrentPipelines: 1,
+      maxPipelineLatencyMs: 30_000,
+    },
+    balanced: {
+      name: "balanced",
+      cVector: { safety: 0.28, truth: 0.24, latency: 0.17, cost: 0.12, learning: 0.19 },
+      maxLlmCallsPerHour: 48,
+      maxConcurrentPipelines: 2,
+      maxPipelineLatencyMs: 45_000,
+    },
+    aggressive: {
+      name: "aggressive",
+      cVector: { safety: 0.22, truth: 0.2, latency: 0.22, cost: 0.14, learning: 0.22 },
+      maxLlmCallsPerHour: 96,
+      maxConcurrentPipelines: 3,
+      maxPipelineLatencyMs: 60_000,
+    },
+  };
+  const policy = cfg.aeon?.policy;
+  const selectedName = policy?.defaultProfile ?? "conservative";
+  const base = defaults[selectedName] ?? defaults.conservative;
+  const custom = policy?.profiles?.[selectedName];
+  return {
+    name: selectedName,
+    cVector: {
+      safety: clampWeight(custom?.cVector?.safety ?? base.cVector.safety, base.cVector.safety),
+      truth: clampWeight(custom?.cVector?.truth ?? base.cVector.truth, base.cVector.truth),
+      latency: clampWeight(custom?.cVector?.latency ?? base.cVector.latency, base.cVector.latency),
+      cost: clampWeight(custom?.cVector?.cost ?? base.cVector.cost, base.cVector.cost),
+      learning: clampWeight(custom?.cVector?.learning ?? base.cVector.learning, base.cVector.learning),
+    },
+    maxLlmCallsPerHour: Math.max(1, custom?.maxLlmCallsPerHour ?? base.maxLlmCallsPerHour),
+    maxConcurrentPipelines: Math.max(
+      1,
+      custom?.maxConcurrentPipelines ?? base.maxConcurrentPipelines,
+    ),
+    maxPipelineLatencyMs: Math.max(5_000, custom?.maxPipelineLatencyMs ?? base.maxPipelineLatencyMs),
+  };
+}
+
+function buildSynthesisTaskFromConflicts(params: {
+  sessionKey: string;
+  conflicts: Array<{
+    pair: [string, string];
+    confidence: number;
+    conflictType: string;
+    evidence: string[];
+  }>;
+}): string {
+  const lines = params.conflicts
+    .slice(0, 6)
+    .map(
+      (entry, index) =>
+        `${index + 1}. pair=${entry.pair.join(" <-> ")}, type=${entry.conflictType}, confidence=${entry.confidence.toFixed(2)}, evidence=${entry.evidence.join("; ")}`,
+    )
+    .join("\n");
+  return [
+    `Session: ${params.sessionKey}`,
+    "You are synthesis sub-agent. Produce a reconciliation patch plan for these logic conflicts.",
+    "Return:",
+    "- A merged rule set",
+    "- Required code/docs touchpoints",
+    "- Verification checklist",
+    "Conflicts:",
+    lines || "(none)",
+  ].join("\n");
+}
+
 async function runAeonMaintenance(
   intensity: MaintenanceDecision = "medium",
   scope?: AeonStateScope,
@@ -357,23 +531,24 @@ async function runAeonMaintenance(
 
   try {
     const logicTool = createLogicRefinementTool();
+    let auditResult: any = null;
     if (intensity === "low") {
       // Low energy: selective cluster audit (20% of Peano space)
       const start = Math.random() * 0.8;
-      const result = (await logicTool.execute("evolution:audit", {
+      auditResult = (await logicTool.execute("evolution:audit", {
         action: "audit",
         peanoRange: [start, start + 0.2],
       })) as any;
       log.info(
-        `AEON maintenance: selective logic audit performed on Peano range [${start.toFixed(2)}, ${(start + 0.2).toFixed(2)}]. Health: ${result.findings?.topologicalHealth ?? "N/A"}`,
+        `AEON maintenance: selective logic audit performed on Peano range [${start.toFixed(2)}, ${(start + 0.2).toFixed(2)}]. Health: ${auditResult.findings?.topologicalHealth ?? "N/A"}`,
       );
       void logEvolutionEvent("AUTONOMOUS", `Selective Peano Audit`, [
         `Range: [${start.toFixed(2)}, ${(start + 0.2).toFixed(2)}]`,
         `Intensity: low`,
-        `Health: ${result.findings?.topologicalHealth ?? "N/A"}`,
+        `Health: ${auditResult.findings?.topologicalHealth ?? "N/A"}`,
       ]);
     } else {
-      const auditResult = (await logicTool.execute("evolution:audit", { action: "audit" })) as any;
+      auditResult = (await logicTool.execute("evolution:audit", { action: "audit" })) as any;
       if (intensity === "high") {
         const pruneResult = (await logicTool.execute("evolution:prune", {
           action: "prune",
@@ -391,6 +566,217 @@ async function runAeonMaintenance(
         `Action: ${intensity === "high" ? "Audit + Prune" : "Audit"}`,
         `Health: ${auditResult.findings?.topologicalHealth ?? "N/A"}`,
       ]);
+    }
+
+    const findings = auditResult?.findings as
+      | {
+          contradictions?: string[];
+          conflicts?: Array<{
+            pair: [string, string];
+            confidence: number;
+            impactScope: number;
+            conflictType: string;
+            evidence: string[];
+            fallback?: boolean;
+          }>;
+          deconfliction?: { llmFallbacks?: number; llmAttempts?: number };
+        }
+      | undefined;
+    if (findings) {
+      const contradictionCount = findings.contradictions?.length ?? 0;
+      if (contradictionCount > 0) {
+        recordAeonEvidenceEvent(
+          {
+            type: "conflict_detected",
+            value: contradictionCount,
+            source: "logic_refinement",
+            module: "logic-gates",
+          },
+          scope,
+        );
+      }
+      const llmAttempts = findings.deconfliction?.llmAttempts ?? 0;
+      const llmFallbacks = findings.deconfliction?.llmFallbacks ?? 0;
+      if (llmAttempts > llmFallbacks) {
+        recordAeonEvidenceEvent(
+          { type: "deconfliction_llm_success", value: llmAttempts - llmFallbacks },
+          scope,
+        );
+      }
+      if (llmFallbacks > 0) {
+        recordAeonEvidenceEvent({ type: "deconfliction_fallback", value: llmFallbacks }, scope);
+      }
+
+      const candidates = (findings.conflicts ?? []).filter(
+        (entry) => entry.confidence >= 0.78 && entry.impactScope >= 2,
+      );
+      const autospawn = resolveAutospawnPolicy();
+      const couplingProfile = resolveCouplingProfile();
+      const state = getAeonEvolutionState(scope);
+      const nowTs = Date.now();
+      updateAeonAutospawnTelemetry(
+        {
+          enabled: autospawn.enabled,
+          cooldownMinutes: Math.floor(autospawn.cooldownMs / 60_000),
+          perSessionWindowMinutes: Math.floor(autospawn.perSessionWindowMs / 60_000),
+          perSessionLimit: autospawn.perSessionLimit,
+          perHourLimit: autospawn.perHourLimit,
+          maxConcurrent: Math.min(autospawn.maxConcurrent, couplingProfile.maxConcurrentPipelines),
+        },
+        scope,
+      );
+      const triggersInWindow = state.autospawn.recentTriggers.filter(
+        (ts) => ts >= nowTs - autospawn.perSessionWindowMs,
+      ).length;
+      const triggersInHour = state.autospawn.recentTriggers.filter(
+        (ts) => ts >= nowTs - 60 * 60 * 1000,
+      ).length;
+      const cooldownActive =
+        state.autospawn.lastTriggeredAt != null &&
+        nowTs - state.autospawn.lastTriggeredAt < autospawn.cooldownMs;
+      const circuitOpen = state.autospawn.recentFailures.length >= autospawn.failureThreshold;
+      const circuitRecoverable =
+        state.autospawn.lastFailureAt != null &&
+        nowTs - state.autospawn.lastFailureAt >= autospawn.cooldownMs;
+      const blockedByRateLimit =
+        cooldownActive ||
+        triggersInWindow >= autospawn.perSessionLimit ||
+        triggersInHour >= Math.min(autospawn.perHourLimit, couplingProfile.maxLlmCallsPerHour) ||
+        state.autospawn.inFlight >=
+          Math.min(autospawn.maxConcurrent, couplingProfile.maxConcurrentPipelines);
+      if (!autospawn.enabled || candidates.length === 0) {
+        return;
+      }
+      if (circuitOpen) {
+        if (circuitRecoverable) {
+          // Half-open recovery: allow exactly one cautious probe run.
+          updateAeonAutospawnTelemetry(
+            { circuitOpen: false, degraded: false, degradedReason: null },
+            scope,
+          );
+        } else {
+        updateAeonAutospawnTelemetry(
+          {
+            circuitOpen: true,
+            blockedByCircuitBreaker: state.autospawn.blockedByCircuitBreaker + 1,
+            degraded: true,
+            degradedReason: "circuit_breaker_open",
+          },
+          scope,
+        );
+        return;
+        }
+      }
+      if (blockedByRateLimit) {
+        updateAeonAutospawnTelemetry(
+          {
+            blockedByRateLimit: state.autospawn.blockedByRateLimit + 1,
+            degraded: true,
+            degradedReason: "rate_limited_or_cooldown",
+          },
+          scope,
+        );
+        return;
+      }
+      const sessionKey = scope?.sessionKey ?? "main";
+      const agentId = scope?.agentId ?? "main";
+      const runId = `deconfliction:${sessionKey}:${nowTs}`;
+      updateAeonAutospawnTelemetry(
+        {
+          inFlight: state.autospawn.inFlight + 1,
+          triggerAt: nowTs,
+          lastTriggeredAt: nowTs,
+          triggerCount: state.autospawn.triggerCount + 1,
+          watchdogActive: true,
+          degraded: false,
+          degradedReason: null,
+        },
+        scope,
+      );
+      void recordDeliveryTransition({
+        runId,
+        sessionKey,
+        state: "running",
+        pipelineType: "deconfliction",
+        summary: `Auto synthesis triggered by ${candidates.length} high-confidence conflicts.`,
+        guardrail: {
+          decision: state.policy.guardrailDecision,
+          severity: "medium",
+          requiresHuman: false,
+          triggerRule: "AUTOSPAWN_CONFLICT_THRESHOLD",
+        },
+      });
+      try {
+        const pipelineStartedAt = Date.now();
+        const spawn = await spawnSubagentDirect(
+          {
+            task: buildSynthesisTaskFromConflicts({ sessionKey, conflicts: candidates }),
+            label: "AEON Auto Synthesis",
+            agentId,
+            runTimeoutSeconds: 600,
+          },
+          { agentSessionKey: sessionKey, requesterAgentIdOverride: agentId },
+        );
+        if (spawn.status === "accepted") {
+          recordAeonEvidenceEvent({ type: "autospawn_success", source: "evolution_monitor" }, scope);
+          const latency = Date.now() - pipelineStartedAt;
+          if (latency > couplingProfile.maxPipelineLatencyMs) {
+            updateAeonAutospawnTelemetry(
+              {
+                blockedByRateLimit: state.autospawn.blockedByRateLimit + 1,
+              },
+              scope,
+            );
+          }
+          void recordDeliveryTransition({
+            runId,
+            sessionKey,
+            state: "persisted",
+            pipelineType: "deconfliction",
+            persistedAt: Date.now(),
+            summary: "Synthesis subagent accepted.",
+            resumeReason: "autospawn_probe_succeeded",
+          });
+        } else {
+          throw new Error(spawn.error ?? "autospawn rejected");
+        }
+      } catch (err) {
+        recordAeonEvidenceEvent({ type: "autospawn_failure", source: "evolution_monitor" }, scope);
+        updateAeonAutospawnTelemetry(
+          {
+            failureAt: Date.now(),
+            lastFailureAt: Date.now(),
+            retryCount: state.autospawn.retryCount + 1,
+            degraded: true,
+            degradedReason: "autospawn_failed",
+          },
+          scope,
+        );
+        void recordDeliveryTransition({
+          runId,
+          sessionKey,
+          state: "persist_failed",
+          pipelineType: "deconfliction",
+          reasonCode: "AUTOSPAWN_FAILED",
+          summary: String(err),
+          fallback: true,
+          guardrail: {
+            decision: "SOFT_WARN",
+            severity: "medium",
+            requiresHuman: false,
+            triggerRule: "AUTOSPAWN_FAILED",
+          },
+        });
+      } finally {
+        const refreshed = getAeonEvolutionState(scope);
+        updateAeonAutospawnTelemetry(
+          {
+            inFlight: Math.max(0, refreshed.autospawn.inFlight - 1),
+            watchdogActive: false,
+          },
+          scope,
+        );
+      }
     }
   } catch (err) {
     log.warn(`AEON maintenance: logic refinement error: ${String(err)}`);
@@ -411,25 +797,121 @@ async function triggerSingularityEvent(
   const { triggerAeonSingularity } = await import("./aeon-state.js");
   triggerAeonSingularity(true, scope);
 
-  void logEvolutionEvent("SINGULARITY", "Cognitive Rebirth / 奇点重生", [
-    `Extreme resonance detected: ${factor.toFixed(2)}`,
-    `Initiating system-wide recursive logic refactor.`,
-    `Peano space alignment: Phase Shift.`,
-  ]);
+  const stageStartedAt = Date.now();
+  const runId = `singularity:${mainSessionKey}:${stageStartedAt}`;
+  const timeoutMs = 90_000;
+  let stableSnapshot: ReturnType<typeof getAeonEvolutionState> | null = null;
 
-  // Force high-intensity maintenance immediately
-  await runAeonMaintenance("high", scope);
+  const stageCheckpoint = async (stage: "diagnose" | "plan" | "simulate" | "apply") => {
+    void recordDeliveryTransition({
+      runId,
+      sessionKey: mainSessionKey,
+      state: stage === "apply" ? "finalizing" : "running",
+      pipelineType: "singularity",
+      summary: `stage=${stage}`,
+    });
+    if (Date.now() - stageStartedAt > timeoutMs) {
+      throw new Error(`SINGULARITY_TIMEOUT:${stage}`);
+    }
+  };
 
-  // Trigger specialized heartbeat
-  requestHeartbeatNow({
-    reason: "singularity" as any,
-    agentId: mainSession.sessionId,
-    sessionKey: mainSessionKey,
-    coalesceMs: 500,
-  });
+  try {
+    await stageCheckpoint("diagnose");
+    stableSnapshot = getAeonEvolutionState(scope);
+    const diagnose = {
+      factor,
+      risk: stableSnapshot.selfModification.redlineBreachRisk,
+      trusted: stableSnapshot.ethics.trusted,
+      contradictions: stableSnapshot.telemetryV4.evidence.conflict.density,
+    };
+    if (diagnose.risk > 0.85) {
+      throw new Error("SINGULARITY_DIAGNOSE_RISK_TOO_HIGH");
+    }
 
-  // Reset after 30 seconds of intense evolution
-  setTimeout(() => triggerAeonSingularity(false, scope), 30000);
+    await stageCheckpoint("plan");
+    const planIntensity: MaintenanceDecision = diagnose.factor > 0.97 ? "high" : "medium";
+
+    await stageCheckpoint("simulate");
+    const simulationPass =
+      stableSnapshot.telemetryV4.inference.integrityScore >= 0.45 &&
+      stableSnapshot.telemetryV4.confidence.overall >= 0.3;
+    if (!simulationPass) {
+      throw new Error("SINGULARITY_SIMULATION_FAILED");
+    }
+
+    await stageCheckpoint("apply");
+    await runAeonMaintenance(planIntensity, scope);
+
+    requestHeartbeatNow({
+      reason: "singularity" as any,
+      agentId: mainSession.sessionId,
+      sessionKey: mainSessionKey,
+      coalesceMs: 500,
+    });
+
+    void logEvolutionEvent("SINGULARITY", "Cognitive Rebirth / 奇点重生", [
+      `Extreme resonance detected: ${factor.toFixed(2)}`,
+      `Flow: diagnose -> plan -> simulate -> apply`,
+      `Applied maintenance intensity: ${planIntensity}`,
+    ]);
+    recordAeonEvidenceEvent(
+      { type: "execution_success", source: "singularity", module: "server-evolution" },
+      scope,
+    );
+    void recordDeliveryTransition({
+      runId,
+      sessionKey: mainSessionKey,
+      state: "persisted",
+      pipelineType: "singularity",
+      persistedAt: Date.now(),
+      summary: `singularity.apply=${planIntensity}`,
+      resumeReason: "singularity_pipeline_completed",
+    });
+  } catch (err) {
+    const reason = String(err);
+    log.warn(`Singularity pipeline failed: ${reason}`);
+    recordAeonEvidenceEvent(
+      { type: "execution_failure", source: "singularity", module: "server-evolution" },
+      scope,
+    );
+    recordAeonEvidenceEvent({ type: "rollback", source: "singularity" }, scope);
+    void recordDeliveryTransition({
+      runId,
+      sessionKey: mainSessionKey,
+      state: "persist_failed",
+      pipelineType: "singularity",
+      reasonCode: "SINGULARITY_PIPELINE_FAILED",
+      summary: reason,
+      fallback: true,
+      guardrail: {
+        decision: "SOFT_WARN",
+        severity: "high",
+        requiresHuman: true,
+        triggerRule: "SINGULARITY_PIPELINE_FAILED",
+      },
+      pauseRecord: {
+        severity: "high",
+        reason: "Singularity pipeline failed and degraded to maintenance mode.",
+        triggerRule: "SINGULARITY_PIPELINE_FAILED",
+        suggestedAction: "Inspect diagnostics and rerun after stabilization.",
+        resumePoint: "singularity:diagnose",
+        createdAt: Date.now(),
+      },
+    });
+    if (stableSnapshot) {
+      recordMaintenancePolicyDecision(
+        {
+          maintenanceDecision: "low",
+          guardrailDecision: "SOFT_WARN",
+          reasonCode: "SINGULARITY_DEGRADED_TO_MAINTENANCE",
+        },
+        scope,
+      );
+      await runAeonMaintenance("low", scope);
+    }
+  } finally {
+    triggerAeonSingularity(false, scope);
+  }
 }
 
 /**
@@ -644,4 +1126,39 @@ export function startEvolutionMonitor(): void {
     },
     5 * 60 * 1000,
   );
+}
+
+/**
+ * Phase 3: Error Replay Simulation
+ * Reconstructs a "thought trace" for a given runId to analyze failures.
+ */
+export async function simulateThoughtTrace(params: {
+  runId: string;
+  sessionKey: string;
+}) {
+  const { runId, sessionKey } = params;
+  const cfg = loadConfig();
+  const agentId = resolveSessionAgentId({ sessionKey, config: cfg }) || "main";
+  const scope: AeonStateScope = { agentId, sessionKey };
+  
+  const state = getAeonEvolutionState(scope);
+  const logs = state.cognitiveLog || [];
+  
+  // Filter logs relevant to this runId (if metadata exists) or recent logs around that timeframe
+  // For simplicity, we'll return the recent cognitive context
+  const trace = logs.filter((l: CognitiveLogEntry) => 
+    (l.metadata?.runId === runId) || 
+    (l.metadata?.sessionId === sessionKey)
+  ).slice(-20);
+
+  return {
+    runId,
+    timestamp: Date.now(),
+    trace,
+    metrics: {
+      entropy: state.telemetryV4.curve.point.x,
+      risk: state.telemetryV4.inference.riskScore,
+      resonance: state.consciousness.selfKernel.identityContinuityScore,
+    }
+  };
 }

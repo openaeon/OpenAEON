@@ -283,6 +283,45 @@ export type OPENAEONPluginApi = {
   ) => void;
 };
 
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginConfigSchema = OPENAEONPluginConfigSchema;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginToolContext = OPENAEONPluginToolContext;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginToolFactory = OPENAEONPluginToolFactory;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginToolOptions = OPENAEONPluginToolOptions;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginHookOptions = OPENAEONPluginHookOptions;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginGatewayMethod = OPENAEONPluginGatewayMethod;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginCommandDefinition = OPENAEONPluginCommandDefinition;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginHttpHandler = OPENAEONPluginHttpHandler;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginHttpRouteHandler = OPENAEONPluginHttpRouteHandler;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginCliContext = OPENAEONPluginCliContext;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginCliRegistrar = OPENAEONPluginCliRegistrar;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginServiceContext = OPENAEONPluginServiceContext;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginService = OPENAEONPluginService;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginChannelRegistration = OPENAEONPluginChannelRegistration;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginDefinition = OPENAEONPluginDefinition;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginModule = OPENAEONPluginModule;
+/** @deprecated Backward-compatible type alias. */
+export type OpenAEONPluginApi = OPENAEONPluginApi;
+/** @deprecated Backward-compatible type alias. */
+export type OpenClawPluginServiceContext = OPENAEONPluginServiceContext;
+/** @deprecated Backward-compatible type alias. */
+export type OpenClawPluginService = OPENAEONPluginService;
+
 export type PluginOrigin = "bundled" | "global" | "workspace" | "config";
 
 export type PluginDiagnostic = {

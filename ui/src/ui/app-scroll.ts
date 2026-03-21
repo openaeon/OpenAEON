@@ -4,6 +4,7 @@ const NEAR_BOTTOM_THRESHOLD = 800;
 type ScrollHost = {
   updateComplete: Promise<unknown>;
   querySelector: (selectors: string) => Element | null;
+  renderRoot?: ParentNode;
   style: CSSStyleDeclaration;
   chatScrollFrame: number | null;
   chatScrollTimeout: number | null;
@@ -15,6 +16,17 @@ type ScrollHost = {
   topbarObserver: ResizeObserver | null;
 };
 
+function queryHostElement(host: ScrollHost, selector: string): Element | null {
+  const scopedRoot = host.renderRoot;
+  if (scopedRoot && typeof (scopedRoot as ParentNode).querySelector === "function") {
+    const hit = scopedRoot.querySelector(selector);
+    if (hit) {
+      return hit;
+    }
+  }
+  return host.querySelector(selector);
+}
+
 export function scheduleChatScroll(host: ScrollHost, force = false, smooth = false) {
   if (host.chatScrollFrame) {
     cancelAnimationFrame(host.chatScrollFrame);
@@ -24,16 +36,9 @@ export function scheduleChatScroll(host: ScrollHost, force = false, smooth = fal
     host.chatScrollTimeout = null;
   }
   const pickScrollTarget = () => {
-    const container = host.querySelector(".chat-thread") as HTMLElement | null;
+    const container = queryHostElement(host, ".chat-thread") as HTMLElement | null;
     if (container) {
-      const overflowY = getComputedStyle(container).overflowY;
-      const canScroll =
-        overflowY === "auto" ||
-        overflowY === "scroll" ||
-        container.scrollHeight - container.clientHeight > 1;
-      if (canScroll) {
-        return container;
-      }
+      return container;
     }
     return (document.scrollingElement ?? document.documentElement) as HTMLElement | null;
   };
@@ -100,16 +105,18 @@ export function scheduleLogsScroll(host: ScrollHost, force = false) {
     host.logsScrollFrame = requestAnimationFrame(() => {
       host.logsScrollFrame = null;
       const container = host.querySelector(".log-stream") as HTMLElement | null;
-      if (!container) {
+      const containerScoped = queryHostElement(host, ".log-stream") as HTMLElement | null;
+      const finalContainer = containerScoped ?? container;
+      if (!finalContainer) {
         return;
       }
       const distanceFromBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight;
+        finalContainer.scrollHeight - finalContainer.scrollTop - finalContainer.clientHeight;
       const shouldStick = force || distanceFromBottom < 80;
       if (!shouldStick) {
         return;
       }
-      container.scrollTop = container.scrollHeight;
+      finalContainer.scrollTop = finalContainer.scrollHeight;
     });
   });
 }
@@ -160,7 +167,7 @@ export function observeTopbar(host: ScrollHost) {
   if (typeof ResizeObserver === "undefined") {
     return;
   }
-  const topbar = host.querySelector(".topbar");
+  const topbar = queryHostElement(host, ".topbar");
   if (!topbar) {
     return;
   }

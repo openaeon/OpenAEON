@@ -132,6 +132,20 @@ describe("promptCustomApiConfig", () => {
     expect(JSON.parse(firstCall?.body ?? "{}")).toMatchObject({ max_tokens: 1 });
   });
 
+  it("uses gateway-safe min max_output_tokens for openai responses verification probes", async () => {
+    const prompter = createTestPrompter({
+      text: ["https://example.com/v1", "test-key", "detected-model", "custom", "alias"],
+      select: ["plaintext", "openai-responses"],
+    });
+    const fetchMock = stubFetchSequence([{ ok: true }]);
+
+    await runPromptCustomApi(prompter);
+
+    const firstCall = fetchMock.mock.calls[0]?.[1] as { body?: string } | undefined;
+    expect(firstCall?.body).toBeDefined();
+    expect(JSON.parse(firstCall?.body ?? "{}")).toMatchObject({ max_output_tokens: 16 });
+  });
+
   it("uses azure-specific headers and body for openai verification probes", async () => {
     const prompter = createTestPrompter({
       text: [
@@ -176,14 +190,18 @@ describe("promptCustomApiConfig", () => {
       text: ["https://example.com", "test-key", "detected-model", "custom", "alias"],
       select: ["plaintext", "unknown"],
     });
-    const fetchMock = stubFetchSequence([{ ok: false, status: 404 }, { ok: true }]);
+    const fetchMock = stubFetchSequence([
+      { ok: false, status: 404 }, // openai probe
+      { ok: false, status: 404 }, // openai-responses probe
+      { ok: true }, // anthropic probe
+    ]);
 
     await runPromptCustomApi(prompter);
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const secondCall = fetchMock.mock.calls[1]?.[1] as { body?: string } | undefined;
-    expect(secondCall?.body).toBeDefined();
-    expect(JSON.parse(secondCall?.body ?? "{}")).toMatchObject({ max_tokens: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const thirdCall = fetchMock.mock.calls[2]?.[1] as { body?: string } | undefined;
+    expect(thirdCall?.body).toBeDefined();
+    expect(JSON.parse(thirdCall?.body ?? "{}")).toMatchObject({ max_tokens: 1 });
   });
 
   it("re-prompts base url when unknown detection fails", async () => {
@@ -199,7 +217,12 @@ describe("promptCustomApiConfig", () => {
       ],
       select: ["plaintext", "unknown", "baseUrl", "plaintext"],
     });
-    stubFetchSequence([{ ok: false, status: 404 }, { ok: false, status: 404 }, { ok: true }]);
+    stubFetchSequence([
+      { ok: false, status: 404 }, // openai probe
+      { ok: false, status: 404 }, // openai-responses probe
+      { ok: false, status: 404 }, // anthropic probe -> detection fails and re-prompts
+      { ok: true }, // retry openai probe succeeds
+    ]);
     await runPromptCustomApi(prompter);
 
     expect(prompter.note).toHaveBeenCalledWith(
@@ -421,7 +444,8 @@ describe("applyCustomApiConfig", () => {
         modelId: "foo-large",
         compatibility: "invalid" as unknown as "openai",
       },
-      expectedMessage: 'Custom provider compatibility must be "openai" or "anthropic".',
+      expectedMessage:
+        'Custom provider compatibility must be "openai", "openai-responses" or "anthropic".',
     },
     {
       name: "explicit provider ids that normalize to empty",
@@ -470,7 +494,8 @@ describe("parseNonInteractiveCustomApiFlags", () => {
         modelId: "foo-large",
         compatibility: "xmlrpc",
       },
-      expectedMessage: 'Invalid --custom-compatibility (use "openai" or "anthropic").',
+      expectedMessage:
+        'Invalid --custom-compatibility (use "openai", "openai-responses" or "anthropic").',
     },
     {
       name: "invalid explicit provider ids",

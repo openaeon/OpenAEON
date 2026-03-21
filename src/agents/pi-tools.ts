@@ -18,6 +18,7 @@ import { listChannelAgentTools } from "./channel-tools.js";
 import { resolveImageSanitizationLimits } from "./image-sanitization.js";
 import type { ModelAuthMode } from "./model-auth.js";
 import { createOPENAEONTools } from "./openaeon-tools.js";
+import { wrapToolWithCognitiveTelemetry } from "./pi-tools.cognitive.js";
 import { wrapToolWithAbortSignal } from "./pi-tools.abort.js";
 import { wrapToolWithBeforeToolCallHook } from "./pi-tools.before-tool-call.js";
 import {
@@ -543,12 +544,21 @@ export function createOPENAEONCodingTools(options?: {
       loopDetection: resolveToolLoopDetectionConfig({ cfg: options?.config, agentId }),
     }),
   );
+  const withCognitive = withHooks.map((tool) =>
+    wrapToolWithCognitiveTelemetry(tool, {
+      agentId,
+      sessionKey: options?.sessionKey,
+    }),
+  );
   const withAbort = options?.abortSignal
-    ? withHooks.map((tool) => wrapToolWithAbortSignal(tool, options.abortSignal))
-    : withHooks;
+    ? withCognitive.map((tool) => wrapToolWithAbortSignal(tool, options.abortSignal))
+    : withCognitive;
 
   // NOTE: Keep canonical (lowercase) tool names here.
   // pi-ai's Anthropic OAuth transport remaps tool names to Claude Code-style names
   // on the wire and maps them back for tool dispatch.
   return withAbort;
 }
+
+/** @deprecated Use createOPENAEONCodingTools. */
+export const createOpenClawCodingTools = createOPENAEONCodingTools;

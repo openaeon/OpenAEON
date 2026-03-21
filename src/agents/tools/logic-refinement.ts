@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 import { Type } from "@sinclair/typebox";
 import { loadConfig } from "../../config/config.js";
 import { resolveWorkspaceRoot } from "../workspace-dir.js";
@@ -8,6 +9,7 @@ import { jsonResult } from "./common.js";
 import { calculatePeanoIndex } from "../../utils/peano.js";
 import { createEmbeddingProvider } from "../../memory/embeddings.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
+import { runAgentStep } from "./agent-step.js";
 
 const LogicRefinementSchema = Type.Object({
   action: Type.Enum(
@@ -32,6 +34,120 @@ const LogicRefinementSchema = Type.Object({
   ),
 });
 
+type ParsedAxiom = {
+  text: string;
+  meta: Record<string, any>;
+  line: string;
+  module: string;
+};
+
+type SemanticConflict = {
+  pair: [string, string];
+  confidence: number;
+  conflictType: "negation" | "policy-divergence" | "semantic-divergence" | "duplication";
+  evidence: string[];
+  affectedModules: string[];
+  impactScope: number;
+  fallback: boolean;
+  model?: string;
+  latencyMs?: number;
+  action: "merge" | "keep_both" | "prefer_latest" | "manual_review";
+};
+
+function normalizeText(input: string): string {
+  return input.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function extractModule(meta: Record<string, any>): string {
+  const candidates = [meta.module, meta.scope, meta.component, meta.path, meta.agentId];
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "unknown";
+}
+
+async function arbitrateConflict(params: {
+  left: ParsedAxiom;
+  right: ParsedAxiom;
+  heuristic: Omit<SemanticConflict, "fallback">;
+}): Promise<SemanticConflict> {
+  const startedAt = Date.now();
+  const sessionKey = `agent:main:deconfliction:${crypto.randomUUID()}`;
+  const prompt = JSON.stringify(
+    {
+      task: "Assess whether two axioms are in semantic conflict.",
+      left: params.left.text,
+      right: params.right.text,
+      expectedSchema: {
+        conflict: true,
+        confidence: 0.0,
+        conflictType: "semantic-divergence",
+        evidence: ["..."],
+        action: "manual_review",
+      },
+    },
+    null,
+    2,
+  );
+  try {
+    const response = await runAgentStep({
+      sessionKey,
+      message: prompt,
+      extraSystemPrompt:
+        "Return strict JSON only. No markdown. confidence in [0,1]. action one of merge|keep_both|prefer_latest|manual_review.",
+      timeoutMs: 12_000,
+      sourceTool: "logic_refinement",
+    });
+    const parsed = response ? (JSON.parse(response) as Record<string, unknown>) : null;
+    if (!parsed || parsed.conflict !== true) {
+      throw new Error("llm returned non-conflict");
+    }
+    const confidenceRaw = Number(parsed.confidence);
+    const confidence = Number.isFinite(confidenceRaw)
+      ? Math.max(0, Math.min(1, confidenceRaw))
+      : params.heuristic.confidence * 0.85;
+    const actionRaw = parsed.action;
+    const action: SemanticConflict["action"] =
+      actionRaw === "merge" ||
+      actionRaw === "keep_both" ||
+      actionRaw === "prefer_latest" ||
+      actionRaw === "manual_review"
+        ? actionRaw
+        : "manual_review";
+    const typeRaw = parsed.conflictType;
+    const conflictType: SemanticConflict["conflictType"] =
+      typeRaw === "negation" ||
+      typeRaw === "policy-divergence" ||
+      typeRaw === "semantic-divergence" ||
+      typeRaw === "duplication"
+        ? typeRaw
+        : params.heuristic.conflictType;
+    const evidence = Array.isArray(parsed.evidence)
+      ? parsed.evidence.filter((v): v is string => typeof v === "string").slice(0, 4)
+      : params.heuristic.evidence;
+    return {
+      ...params.heuristic,
+      confidence,
+      conflictType,
+      evidence: evidence.length > 0 ? evidence : params.heuristic.evidence,
+      action,
+      fallback: false,
+      model: `${DEFAULT_PROVIDER}/${DEFAULT_MODEL}`,
+      latencyMs: Date.now() - startedAt,
+    };
+  } catch {
+    return {
+      ...params.heuristic,
+      confidence: Math.max(0.05, params.heuristic.confidence * 0.85),
+      fallback: true,
+      model: undefined,
+      latencyMs: Date.now() - startedAt,
+    };
+  }
+}
+
 /**
  * AEON LOGIC REFINEMENT: Evolutionary Pruning Tool
  * Audits LOGIC_GATES.md for consistency and age-based relevance.
@@ -54,7 +170,7 @@ export function createLogicRefinementTool(): AgentTool {
       try {
         const content = await fs.readFile(logicGatesPath, "utf-8");
         const lines = content.split("\n").filter((l) => l.trim().length > 0);
-        let axioms: { text: string; meta: any; line: string }[] = [];
+        let axioms: ParsedAxiom[] = [];
 
         for (const line of lines) {
           const metaMatch = line.match(/<!-- (.*?) -->/);
@@ -62,14 +178,16 @@ export function createLogicRefinementTool(): AgentTool {
             try {
               axioms.push({
                 text: line.replace(metaMatch[0], "").trim(),
-                meta: JSON.parse(metaMatch[1]),
+                meta: JSON.parse(metaMatch[1]) as Record<string, any>,
                 line,
+                module: "unknown",
               });
             } catch {
               // Ignore malformed meta
             }
           }
         }
+        axioms = axioms.map((entry) => ({ ...entry, module: extractModule(entry.meta) }));
 
         // Apply Peano filtering if range provided
         if (peanoRange) {
@@ -89,43 +207,91 @@ export function createLogicRefinementTool(): AgentTool {
             reports.push(`Detected ${staleAxioms.length} axioms older than 7 days.`);
           }
 
-          // Improved Contradiction & Redundancy Check
           const contradictions: string[] = [];
           const redundancies: string[] = [];
+          const candidateConflicts: Array<{
+            left: ParsedAxiom;
+            right: ParsedAxiom;
+            heuristic: Omit<SemanticConflict, "fallback">;
+          }> = [];
 
           for (let i = 0; i < axioms.length; i++) {
-            const textI = axioms[i].text.toLowerCase();
+            const left = axioms[i];
+            const textI = normalizeText(left.text);
             for (let j = i + 1; j < axioms.length; j++) {
-              const textJ = axioms[j].text.toLowerCase();
+              const right = axioms[j];
+              const textJ = normalizeText(right.text);
+              const affectedModules = Array.from(new Set([left.module, right.module]));
+              const impactScope = affectedModules.length;
+              const evidence: string[] = [];
+              let conflictType: SemanticConflict["conflictType"] | null = null;
+              let confidence = 0;
+              let action: SemanticConflict["action"] = "manual_review";
 
-              // 1. "Not" contradiction
-              if (textI.includes("not ") && textI.replace("not ", "") === textJ) {
-                contradictions.push(`Contradiction: "${axioms[i].text}" vs "${axioms[j].text}"`);
-              } else if (textJ.includes("not ") && textJ.replace("not ", "") === textI) {
-                contradictions.push(`Contradiction: "${axioms[j].text}" vs "${axioms[i].text}"`);
-              }
-
-              // 2. Exact or high-overlap redundancy
               if (textI === textJ) {
-                redundancies.push(`Duplicate: "${axioms[i].text}"`);
+                redundancies.push(`Duplicate: "${left.text}"`);
+                conflictType = "duplication";
+                confidence = 0.91;
+                action = "merge";
+                evidence.push("Exact normalized string match.");
+              } else if (
+                (textI.includes("not ") && textI.replace("not ", "") === textJ) ||
+                (textJ.includes("not ") && textJ.replace("not ", "") === textI)
+              ) {
+                contradictions.push(`Contradiction: "${left.text}" vs "${right.text}"`);
+                conflictType = "negation";
+                confidence = 0.93;
+                action = "manual_review";
+                evidence.push('Negation marker ("not") yields opposing propositions.');
+              } else {
+                const hasAlwaysNever =
+                  (textI.includes("always") && textJ.includes("never")) ||
+                  (textJ.includes("always") && textI.includes("never"));
+                const nearTopo =
+                  Math.abs((left.meta.peano?.index ?? 0.5) - (right.meta.peano?.index ?? 0.5)) <
+                  0.01;
+                if (hasAlwaysNever || nearTopo) {
+                  conflictType = hasAlwaysNever ? "policy-divergence" : "semantic-divergence";
+                  confidence = hasAlwaysNever ? 0.8 : 0.62;
+                  action = hasAlwaysNever ? "manual_review" : "prefer_latest";
+                  if (hasAlwaysNever) {
+                    evidence.push('Policy polarity mismatch ("always" vs "never").');
+                  }
+                  if (nearTopo) {
+                    evidence.push("Topological proximity indicates overlapping concern space.");
+                  }
+                }
               }
 
-              // 4. Topological Proximity Audit
-              const indexI = axioms[i].meta.peano?.index ?? 0.5;
-              const indexJ = axioms[j].meta.peano?.index ?? 0.5;
-              if (Math.abs(indexI - indexJ) < 0.005 && textI !== textJ) {
-                // If topologically very close but text is different, might be a subtle contradiction or semantic overlap
-                // This is a heuristic for Phase 6
+              if (conflictType) {
+                candidateConflicts.push({
+                  left,
+                  right,
+                  heuristic: {
+                    pair: [left.meta.id ?? left.text, right.meta.id ?? right.text],
+                    confidence,
+                    conflictType,
+                    evidence,
+                    affectedModules,
+                    impactScope,
+                    action,
+                  },
+                });
               }
             }
           }
 
-          // 3. Semantic Divergence Check (Future LLM integration)
-          // For now, look for "never" vs "always" style markers
-          for (const a of axioms) {
-            if (a.text.toLowerCase().includes("never") && a.text.toLowerCase().includes("always")) {
-              contradictions.push(`Internal Divergence in Axiom: "${a.text}"`);
+          const semanticConflicts: SemanticConflict[] = [];
+          let llmAttempts = 0;
+          let llmFallbacks = 0;
+          const arbitrationCandidates = candidateConflicts.slice(0, 8);
+          for (const candidate of arbitrationCandidates) {
+            llmAttempts += 1;
+            const resolved = await arbitrateConflict(candidate);
+            if (resolved.fallback) {
+              llmFallbacks += 1;
             }
+            semanticConflicts.push(resolved);
           }
 
           // Topological Health Heuristic
@@ -133,13 +299,22 @@ export function createLogicRefinementTool(): AgentTool {
           const healthScore =
             totalAxioms === 0
               ? 1.0
-              : Math.max(0, 1 - contradictions.length * 0.2 - redundancies.length * 0.1);
+              : Math.max(
+                  0,
+                  1 - contradictions.length * 0.18 - redundancies.length * 0.08 - semanticConflicts.length * 0.05,
+                );
           const healthLabel =
             healthScore > 0.9
               ? "High-Civi (Convergence)"
               : healthScore > 0.6
                 ? "Stable"
                 : "Divergent (Chaos)";
+          const conflictGraph = {
+            nodeCount: totalAxioms,
+            edgeCount: semanticConflicts.length,
+            highConfidenceConflicts: semanticConflicts.filter((entry) => entry.confidence >= 0.78)
+              .length,
+          };
 
           return jsonResult({
             status: "ok",
@@ -150,11 +325,20 @@ export function createLogicRefinementTool(): AgentTool {
               healthScore,
               contradictions,
               redundancies,
+              conflicts: semanticConflicts,
+              conflictGraph,
+              deconfliction: {
+                pipelineType: "deconfliction",
+                llmAttempts,
+                llmFallbacks,
+                fallback: llmFallbacks > 0,
+                confidence: llmAttempts > 0 ? (llmAttempts - llmFallbacks) / llmAttempts : 0,
+              },
             },
             text:
               (reports.concat(contradictions, redundancies).join("\n") ||
                 "Audit complete: Logic gates are in optimal alignment.") +
-              ` \nStatus: ${healthLabel}. Found ${contradictions.length} contradictions and ${redundancies.length} redundancies.` +
+              ` \nStatus: ${healthLabel}. Found ${contradictions.length} contradictions, ${redundancies.length} redundancies, ${semanticConflicts.length} semantic conflicts.` +
               (axioms.some((a) => a.meta.crystallized)
                 ? `\nCrystallized Axioms: ${axioms.filter((a) => a.meta.crystallized).length}`
                 : ""),

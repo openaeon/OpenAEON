@@ -1203,6 +1203,15 @@ export async function runEmbeddedAttempt(
           const consecutiveErrors = subscription?.getConsecutiveToolErrors() ?? 0;
           const chaosScore = subscription?.getChaosScore() ?? 0;
           if (evt.stream === "tool" && evt.data?.phase === "result") {
+            if (consecutiveErrors >= 6 || chaosScore >= 10) {
+              const reason =
+                consecutiveErrors >= 6
+                  ? `${consecutiveErrors} consecutive tool errors (ignored Z² steering)`
+                  : `severe algorithmic divergence (chaosScore=${chaosScore})`;
+              log.error(`run ${params.runId} aborting due to ${reason}`);
+              abortRun(false, new Error(`Agent run aborted: ${reason}. Please review your task approach and try again.`));
+              return;
+            }
             if (consecutiveErrors >= 3 || chaosScore >= 5) {
               const reason =
                 consecutiveErrors >= 3

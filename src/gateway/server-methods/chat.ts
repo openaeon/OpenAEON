@@ -8,6 +8,7 @@ import { resolveAgentTimeoutMs } from "../../agents/timeout.js";
 import { dispatchInboundMessage } from "../../auto-reply/dispatch.js";
 import { createReplyDispatcher } from "../../auto-reply/reply/reply-dispatcher.js";
 import type { MsgContext } from "../../auto-reply/templating.js";
+import { alignPointsTopologically, type EmbeddingVector } from "../../utils/peano.js";
 import { createReplyPrefixOptions } from "../../channels/reply-prefix.js";
 import { resolveSessionFilePath } from "../../config/sessions.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
@@ -49,9 +50,11 @@ import {
   recoverIncompleteDeliveries,
   recordDeliveryTransition,
 } from "../aeon-delivery-log.js";
+import { recordAeonEvidenceEvent } from "../aeon-state.js";
 import { injectTimestamp, timestampOptsFromConfig } from "./agent-timestamp.js";
 import { normalizeRpcAttachmentsToChatAttachments } from "./attachment-normalize.js";
 import { appendInjectedAssistantMessageToTranscript } from "./chat-transcript-inject.js";
+import { getAeonMemoryGraph } from "../aeon-state.js";
 import type { GatewayRequestContext, GatewayRequestHandlers } from "./types.js";
 
 type TranscriptAppendResult = {
@@ -73,6 +76,16 @@ type AbortedPartialSnapshot = {
 const CHAT_HISTORY_TEXT_MAX_CHARS = 12_000;
 const CHAT_HISTORY_MAX_SINGLE_MESSAGE_BYTES = 128 * 1024;
 const CHAT_HISTORY_OVERSIZED_PLACEHOLDER = "[chat.history omitted: message too large]";
+const ETERNAL_AUTODRIVE_DIRECTIVE = `
+[ETERNAL_AUTODRIVE]
+Eternal mode is enabled for this session. Execute in a full autonomous loop:
+1) If a task plan exists in planning, immediately approve/transition to execution.
+2) In execution, prefer sessions_spawn for parallel sub-agents on independent subtasks.
+3) Update todos to in_progress/done with concrete outputs; do not leave placeholder tasks.
+4) Continue iterate->verify->synthesize until user goal is fully delivered.
+5) Do not stop at planning text; produce executable outcomes and a final integrated answer.
+[/ETERNAL_AUTODRIVE]
+`.trim();
 let chatHistoryPlaceholderEmitCount = 0;
 void recoverIncompleteDeliveries().catch(() => {});
 
@@ -85,6 +98,70 @@ function stripDisallowedChatControlChars(message: string): string {
     }
   }
   return output;
+}
+
+/**
+ * [FCA Layer 4: FCCM] Fractal Cognitive Context Management.
+ * Generates a simple semantic proxy (32-dim) for memory content to enable topological sorting.
+ */
+function getSemanticProxy(text: string): EmbeddingVector {
+  const dims = 32;
+  const vector = new Array(dims).fill(0);
+  const normalized = text.toLowerCase().replace(/[^a-z0-9]/g, "");
+  for (let i = 0; i < normalized.length; i += 1) {
+    const code = normalized.charCodeAt(i);
+    vector[i % dims] += code / 128;
+  }
+  return vector;
+}
+
+/**
+ * [FCA Layer 4: FCCM] Builds a Hilbert-sorted memory context from MEMORY.md and LOGIC_GATES.md.
+ */
+function buildFractalMemoryContext(): string {
+  const graph = getAeonMemoryGraph();
+  if (graph.nodes.length === 0) {
+    return "";
+  }
+
+  // Apply topological alignment using Hilbert curve indexing
+  const sortedNodes = alignPointsTopologically(
+    graph.nodes,
+    (node) => getSemanticProxy(node.content),
+    { order: 8 }
+  );
+
+  const lines = sortedNodes.map((node) => {
+    const prefix = node.type === "axiom" ? "[AXIOM]" : "[VERIFIED]";
+    return `${prefix} ${node.content}`;
+  });
+
+  return [
+    "## Fractal Cognitive Memory (FCCM Sorted)",
+    "The following axioms and verified truths are topologically sorted by semantic locality.",
+    "",
+    ...lines,
+    "",
+  ].join("\n");
+}
+
+function isHighRiskCodeEditIntent(message: string): boolean {
+  const text = message.toLowerCase();
+  const codeEditSignals = ["modify", "edit", "rewrite", "refactor", "change", "patch", "update"];
+  const coreTargets = [
+    "src/gateway",
+    "server-methods/chat",
+    "auth",
+    "permission",
+    "sandbox",
+    "security",
+    "execution core",
+    "底层代码",
+    "核心代码",
+  ];
+  const asksCodeEdit = codeEditSignals.some((token) => text.includes(token));
+  const touchesCore = coreTargets.some((token) => text.includes(token));
+  return asksCodeEdit && touchesCore;
 }
 
 export function sanitizeChatSendMessageInput(
@@ -702,6 +779,7 @@ export const chatHandlers: GatewayRequestHandlers = {
       timeoutMs?: number;
       idempotencyKey: string;
       modelOptions?: Record<string, unknown>;
+      confirmDangerousCodeEdit?: boolean;
     };
     const sanitizedMessageResult = sanitizeChatSendMessageInput(p.message);
     if (!sanitizedMessageResult.ok) {
@@ -748,9 +826,9 @@ export const chatHandlers: GatewayRequestHandlers = {
     const now = Date.now();
     const clientRunId = p.idempotencyKey;
 
-    const sendPolicy = resolveSendPolicy({
-      cfg,
-      entry,
+      const sendPolicy = resolveSendPolicy({
+        cfg,
+        entry,
       sessionKey,
       channel: entry?.channel,
       chatType: entry?.chatType,
@@ -760,6 +838,53 @@ export const chatHandlers: GatewayRequestHandlers = {
         false,
         undefined,
         errorShape(ErrorCodes.INVALID_REQUEST, "send blocked by session policy"),
+      );
+      return;
+    }
+
+    const requiresRiskConfirmation = isHighRiskCodeEditIntent(parsedMessage);
+    const confirmedRiskEdit = p.confirmDangerousCodeEdit === true;
+    if (requiresRiskConfirmation && !confirmedRiskEdit) {
+      recordAeonEvidenceEvent({
+        type: "manual_intervention",
+        module: "gateway-chat",
+        source: "chat_risk_gate",
+      });
+      void recordDeliveryTransition({
+        runId: clientRunId,
+        sessionKey: rawSessionKey,
+        state: "persist_failed",
+        pipelineType: "chat",
+        reasonCode: "HIGH_RISK_CODE_EDIT_CONFIRMATION_REQUIRED",
+        summary:
+          "High-risk core code edit request blocked pending explicit confirmDangerousCodeEdit=true.",
+        guardrail: {
+          decision: "BLOCK",
+          severity: "high",
+          requiresHuman: true,
+          triggerRule: "HIGH_RISK_CODE_EDIT_CONFIRMATION_REQUIRED",
+        },
+        pauseRecord: {
+          severity: "high",
+          reason: "High-risk code edit request requires explicit human confirmation.",
+          triggerRule: "HIGH_RISK_CODE_EDIT_CONFIRMATION_REQUIRED",
+          suggestedAction: "Resend with confirmDangerousCodeEdit=true if intentional.",
+          resumePoint: "chat.send",
+          createdAt: Date.now(),
+        },
+      }).catch(() => {});
+      respond(
+        false,
+        {
+          runId: clientRunId,
+          status: "blocked" as const,
+          summary:
+            "High-risk core code edit detected. Resend with confirmDangerousCodeEdit=true to proceed.",
+        },
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          "high-risk code edit request requires explicit confirmDangerousCodeEdit=true",
+        ),
       );
       return;
     }
@@ -806,6 +931,7 @@ export const chatHandlers: GatewayRequestHandlers = {
         runId: clientRunId,
         sessionKey: rawSessionKey,
         state: "running",
+        pipelineType: "chat",
         taskGoal: parsedMessage.trim() || undefined,
       }).catch(() => {});
       const ackPayload = {
@@ -819,6 +945,7 @@ export const chatHandlers: GatewayRequestHandlers = {
         p.thinking && trimmedMessage && !trimmedMessage.startsWith("/"),
       );
       const commandBody = injectThinking ? `/think ${p.thinking} ${parsedMessage}` : parsedMessage;
+      const eternalModeEnabled = entry?.eternalMode === true;
       const clientInfo = client?.connect?.client;
       // Inject timestamp so agents know the current date/time.
       // Only BodyForAgent gets the timestamp — Body stays raw for UI display.
@@ -828,8 +955,9 @@ export const chatHandlers: GatewayRequestHandlers = {
       try {
         if (context.workspaceDir && sessionKey) {
           const planDigest = await loadPlanDigest(context.workspaceDir, sessionKey);
-          if (planDigest) {
-            bodyForAgent = `${planDigest}\n\n${stampedMessage}`;
+          const fractalMemory = buildFractalMemoryContext();
+          if (planDigest || fractalMemory) {
+            bodyForAgent = [fractalMemory, planDigest, stampedMessage].filter(Boolean).join("\n\n");
           }
         }
       } catch (err) {
@@ -838,6 +966,9 @@ export const chatHandlers: GatewayRequestHandlers = {
             err,
           )}`,
         );
+      }
+      if (eternalModeEnabled && trimmedMessage && !trimmedMessage.startsWith("/")) {
+        bodyForAgent = `${bodyForAgent}\n\n${ETERNAL_AUTODRIVE_DIRECTIVE}`;
       }
 
       const ctx: MsgContext = {
@@ -923,6 +1054,7 @@ export const chatHandlers: GatewayRequestHandlers = {
             runId: clientRunId,
             sessionKey: rawSessionKey,
             state: "finalizing",
+            pipelineType: "chat",
           }).catch(() => {});
           if (!agentRunStarted) {
             const combinedReply = finalReplyParts
@@ -949,6 +1081,7 @@ export const chatHandlers: GatewayRequestHandlers = {
                   runId: clientRunId,
                   sessionKey: rawSessionKey,
                   state: "persisted",
+                  pipelineType: "chat",
                   persistedAt: Date.now(),
                   summary: combinedReply.slice(0, 600),
                   artifactRefs: extractArtifactRefs(combinedReply),
@@ -961,6 +1094,7 @@ export const chatHandlers: GatewayRequestHandlers = {
                   runId: clientRunId,
                   sessionKey: rawSessionKey,
                   state: "persist_failed",
+                  pipelineType: "chat",
                   reasonCode: "TRANSCRIPT_APPEND_FAILED",
                 }).catch(() => {});
                 const now = Date.now();
@@ -985,6 +1119,7 @@ export const chatHandlers: GatewayRequestHandlers = {
               runId: clientRunId,
               sessionKey: rawSessionKey,
               state: "acknowledged",
+              pipelineType: "chat",
             }).catch(() => {});
           }
           context.dedupe.set(`chat:${clientRunId}`, {
@@ -998,6 +1133,7 @@ export const chatHandlers: GatewayRequestHandlers = {
             runId: clientRunId,
             sessionKey: rawSessionKey,
             state: "persist_failed",
+            pipelineType: "chat",
             reasonCode: "RUN_ERROR",
             summary: String(err).slice(0, 300),
           }).catch(() => {});
@@ -1027,6 +1163,7 @@ export const chatHandlers: GatewayRequestHandlers = {
         runId: clientRunId,
         sessionKey: rawSessionKey,
         state: "persist_failed",
+        pipelineType: "chat",
         reasonCode: "START_ERROR",
         summary: String(err).slice(0, 300),
       }).catch(() => {});

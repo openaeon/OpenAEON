@@ -1,4 +1,5 @@
 import { css } from "lit";
+import { hudStyles } from "./hud.ts";
 
 export const chatLayoutStyles = css`
   :host {
@@ -9,9 +10,12 @@ export const chatLayoutStyles = css`
     --silicon-glow-primary: rgba(45, 212, 191, 0.36);
     --silicon-glow-secondary: rgba(56, 189, 248, 0.28);
     --silicon-glow-alert: rgba(245, 158, 11, 0.36);
-    --formula-phase-idle: rgba(148, 163, 184, 0.5);
+    --formula-phase-idle: rgba(148, 163, 184, 0.4);
     --formula-phase-active: rgba(45, 212, 191, 0.95);
     --formula-phase-error: rgba(251, 146, 60, 0.95);
+    --aeon-cyan: #22d3ee;
+    --aeon-orange: #fb923c;
+    --aeon-purple: #c084fc;
     --mystic-noise-low: 0.14;
     --mystic-noise-high: 0.6;
     --fractal-font-title: "Space Grotesk", "Orbitron", "Aldrich", sans-serif;
@@ -132,6 +136,8 @@ export const chatLayoutStyles = css`
     position: absolute;
     inset: 0;
     pointer-events: none;
+    transition: none;
+    will-change: auto;
   }
 
   .chat-cosmos__grid {
@@ -144,7 +150,7 @@ export const chatLayoutStyles = css`
   }
 
   .chat-cosmos__recursive-web {
-    opacity: calc(0.1 + var(--fractal-resonance) * 0.32);
+    opacity: 0.16;
     background-image:
       radial-gradient(circle at 50% 50%, rgba(125, 211, 252, 0.2) 0.6px, transparent 1.8px),
       radial-gradient(circle at 50% 50%, rgba(196, 181, 253, 0.16) 0.7px, transparent 2px);
@@ -157,27 +163,27 @@ export const chatLayoutStyles = css`
     mask-image:
       radial-gradient(circle at 50% 50%, black 26%, transparent 82%),
       linear-gradient(180deg, transparent 6%, black 35%, black 65%, transparent 94%);
-    animation: recursiveWebShift 24s linear infinite;
+    animation: none;
   }
 
   .chat-cosmos__rings {
     background:
       radial-gradient(circle at 80% 20%, rgba(45, 212, 191, 0.08), transparent 44%),
       radial-gradient(circle at 20% 80%, rgba(129, 140, 248, 0.08), transparent 45%);
-    animation: fractalRingDrift 16s ease-in-out infinite;
+    animation: none;
   }
 
   .chat-cosmos__branchfield {
-    opacity: calc(0.08 + var(--fractal-noise-level) * 0.35);
+    opacity: 0.12;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='320' viewBox='0 0 520 320'%3E%3Cg fill='none' stroke='rgba(45,212,191,0.19)' stroke-width='1'%3E%3Cpath d='M20 278 C60 248 100 248 140 278 C180 308 220 308 260 278 C300 248 340 248 380 278 C420 308 460 308 500 278'/%3E%3Cpath d='M60 250 C90 220 120 220 150 250 C180 280 210 280 240 250 C270 220 300 220 330 250 C360 280 390 280 420 250'/%3E%3Cpath d='M110 222 C132 200 154 200 176 222 C198 244 220 244 242 222 C264 200 286 200 308 222 C330 244 352 244 374 222'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(129,140,248,0.17)' stroke-width='0.8'%3E%3Cpath d='M250 284 L250 240 L228 216 L210 198 L194 178'/%3E%3Cpath d='M250 240 L272 216 L290 198 L306 178'/%3E%3Cpath d='M228 216 L210 214 L194 208'/%3E%3Cpath d='M272 216 L290 214 L306 208'/%3E%3C/g%3E%3C/svg%3E");
     background-size: 760px 460px;
     background-position: 0 0;
     mask-image: radial-gradient(circle at 50% 62%, black 32%, transparent 88%);
-    animation: branchFieldDrift 34s linear infinite;
+    animation: none;
   }
 
   .chat-cosmos__emergence {
-    opacity: calc(0.08 + var(--fractal-resonance) * 0.42);
+    opacity: 0.08;
     background:
       repeating-radial-gradient(
         circle at 50% 56%,
@@ -191,23 +197,57 @@ export const chatLayoutStyles = css`
       );
     mask-image: radial-gradient(circle at 50% 58%, black 30%, transparent 86%);
     transform-origin: 50% 56%;
-    animation: emergenceBloom 30s linear infinite;
+    animation: none;
   }
 
   .chat-cosmos__lifelines {
-    opacity: calc(0.06 + var(--fractal-noise-level) * 0.32);
+    opacity: 0.1;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='620' height='360' viewBox='0 0 620 360'%3E%3Cg fill='none' stroke='rgba(103,232,249,0.2)' stroke-width='1'%3E%3Cpath d='M50 300 C115 252 168 252 230 300 C292 348 338 348 400 300 C462 252 515 252 570 300'/%3E%3Cpath d='M50 260 C115 212 168 212 230 260 C292 308 338 308 400 260 C462 212 515 212 570 260'/%3E%3Cpath d='M90 220 C146 182 194 182 244 220 C294 258 340 258 390 220 C440 182 488 182 542 220'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(196,181,253,0.19)' stroke-width='0.9'%3E%3Cpath d='M312 312 L312 268 L290 246 L272 224 L258 205'/%3E%3Cpath d='M312 268 L334 246 L352 224 L366 205'/%3E%3Cpath d='M290 246 L272 244 L258 236'/%3E%3Cpath d='M334 246 L352 244 L366 236'/%3E%3C/g%3E%3C/svg%3E");
     background-size: 840px 500px;
     background-position: 0 0;
     mask-image: radial-gradient(circle at 50% 64%, black 42%, transparent 90%);
-    animation: lifeLinesFlow 40s linear infinite;
+    animation: none;
   }
 
   .chat-cosmos__formula-cloud {
-    opacity: calc(var(--mystic-noise-low) + var(--fractal-noise-level) * 0.55);
+    opacity: 0.09;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='160' viewBox='0 0 320 160'%3E%3Ctext x='20' y='40' fill='rgba(103,232,249,0.22)' font-size='14' font-family='monospace'%3EZ%E2%86%92Z%C2%B2%2BC%3C/text%3E%3Ctext x='78' y='84' fill='rgba(196,181,253,0.18)' font-size='12' font-family='monospace'%3ER(n%2B1)%3Df(R(n)%2Cintent%2Centropy)%3C/text%3E%3Ctext x='45' y='126' fill='rgba(251,191,36,0.16)' font-size='11' font-family='monospace'%3Eargmin(risk)%20%7C%20guardrail%3C/text%3E%3C/svg%3E");
     background-size: 560px 280px;
-    animation: formulaCloudShift 34s linear infinite;
+    animation: none;
+  }
+
+  .chat[data-performance-mode="performance"] .chat-cosmos,
+  .chat[data-performance-mode="performance"]::after,
+  .chat[data-performance-mode="performance"]::before {
+    display: none;
+  }
+
+  .chat[data-performance-mode="balanced"] .chat-cosmos__grid {
+    opacity: 0.12;
+  }
+
+  .chat[data-performance-mode="balanced"] .chat-cosmos__recursive-web,
+  .chat[data-performance-mode="balanced"] .chat-cosmos__rings,
+  .chat[data-performance-mode="balanced"] .chat-cosmos__branchfield,
+  .chat[data-performance-mode="balanced"] .chat-cosmos__emergence,
+  .chat[data-performance-mode="balanced"] .chat-cosmos__lifelines,
+  .chat[data-performance-mode="balanced"] .chat-cosmos__formula-cloud,
+  .chat[data-performance-mode="balanced"] .chat-cosmos__edge-pulse {
+    opacity: 0.06;
+    filter: none !important;
+  }
+
+  /* Stability mode: keep cosmos layers static to avoid visible flicker on long sessions. */
+  .chat-cosmos__edge-pulse,
+  .chat-cosmos__recursive-web,
+  .chat-cosmos__rings,
+  .chat-cosmos__branchfield,
+  .chat-cosmos__emergence,
+  .chat-cosmos__lifelines,
+  .chat-cosmos__formula-cloud {
+    animation: none !important;
+    transition: none !important;
+    filter: none !important;
   }
 
   @keyframes recursiveWebShift {
@@ -508,9 +548,9 @@ export const chatLayoutStyles = css`
   .chat-utility-rail {
     position: absolute;
     right: 18px;
-    top: 112px;
-    width: min(340px, 38%);
-    bottom: 16px;
+    top: 96px;
+    width: min(440px, 46%);
+    bottom: 12px;
     z-index: 4;
     display: flex;
     flex-direction: column;
@@ -519,66 +559,8 @@ export const chatLayoutStyles = css`
     align-items: stretch;
   }
 
-  .chat-utility-rail > * {
-    pointer-events: auto;
-  }
-
-  .formula-rail {
-    position: relative;
-    width: 100%;
-    flex: 0 0 auto;
-    max-height: min(34vh, 320px);
-    z-index: 0;
-    border-radius: 14px;
-    padding: 10px 12px;
-    border: 1px solid rgba(56, 189, 248, 0.32);
-    background: linear-gradient(160deg, rgba(2, 6, 23, 0.88), rgba(15, 23, 42, 0.8));
-    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.55);
-    backdrop-filter: blur(12px);
-  }
-
-  .formula-rail__title {
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    color: rgba(125, 211, 252, 0.95);
-    font-family: var(--fractal-font-title);
-  }
-
-  .formula-rail__item {
-    border-left: 2px solid var(--formula-phase-idle);
-    padding: 6px 8px;
-    margin-bottom: 6px;
-    border-radius: 8px;
-    background: rgba(15, 23, 42, 0.55);
-    overflow: hidden;
-  }
-
-  .formula-rail__item.active {
-    border-left-color: var(--formula-phase-active);
-    box-shadow: inset 0 0 24px rgba(45, 212, 191, 0.08);
-  }
-
-  .formula-rail__item.error {
-    border-left-color: var(--formula-phase-error);
-    box-shadow: inset 0 0 24px rgba(251, 146, 60, 0.08);
-  }
-
-  .formula-rail__expr {
-    font-size: 12px;
-    color: #e2e8f0;
-    font-family: var(--fractal-font-mono);
-    overflow-wrap: anywhere;
-  }
-
-  .formula-rail__value {
-    margin-top: 2px;
-    font-size: 11px;
-    color: #94a3b8;
-    font-family: var(--fractal-font-mono);
-    overflow-wrap: anywhere;
-  }
+  /* HUD-Specific Styles (Moved to hud.ts) */
+  \${hudStyles}
 
   .chat[data-fractal-depth="3"] .chat-main,
   .chat[data-fractal-depth="4"] .chat-main {
@@ -589,25 +571,25 @@ export const chatLayoutStyles = css`
 
   .chat[data-fractal-depth="3"] .chat-cosmos__recursive-web,
   .chat[data-fractal-depth="4"] .chat-cosmos__recursive-web {
-    opacity: calc(0.16 + var(--fractal-resonance) * 0.42);
+    opacity: 0.18;
   }
 
   .chat[data-fractal-depth="3"] .chat-cosmos__edge-pulse,
   .chat[data-fractal-depth="4"] .chat-cosmos__edge-pulse {
-    opacity: calc(0.3 + var(--fractal-resonance) * 0.38);
+    opacity: 0.2;
   }
 
   .chat[data-fractal-depth="4"] .chat-cosmos__branchfield {
-    opacity: calc(0.16 + var(--fractal-noise-level) * 0.48);
+    opacity: 0.16;
   }
 
   .chat[data-fractal-depth="4"] .chat-cosmos__emergence {
-    opacity: calc(0.14 + var(--fractal-resonance) * 0.5);
+    opacity: 0.12;
   }
 
   .chat[data-fractal-depth="3"] .chat-cosmos__lifelines,
   .chat[data-fractal-depth="4"] .chat-cosmos__lifelines {
-    opacity: calc(0.11 + var(--fractal-noise-level) * 0.4);
+    opacity: 0.11;
   }
 
   .chat[data-delivery-band="warn"] .chat-main-status {
@@ -621,76 +603,10 @@ export const chatLayoutStyles = css`
       0 0 20px rgba(45, 212, 191, 0.18);
   }
 
-  .consciousness-stream {
-    position: relative;
-    width: 100%;
-    min-height: 240px;
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    border-radius: 14px;
-    border: 1px solid rgba(0, 242, 255, 0.22);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    padding: 0;
-    overflow: hidden;
-    background: linear-gradient(160deg, rgba(2, 6, 23, 0.88), rgba(15, 23, 42, 0.8));
-  }
-
-  .consciousness-stream-header {
-    background: rgba(0, 242, 255, 0.1);
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(0, 242, 255, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    color: var(--aeon-cyan);
-  }
-
-  .consciousness-stream-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .consciousness-entry {
-    padding: 8px;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.02);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    border-radius: 8px;
-  }
-
-  .consciousness-entry-meta {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-    font-family: var(--fractal-font-mono);
-    font-size: 0.55rem;
-  }
-
-  .consciousness-type {
-    opacity: 0.8;
-  }
-
-  .consciousness-time {
-    opacity: 0.5;
-  }
-
-  .consciousness-content {
-    font-size: 0.78rem;
-    line-height: 1.4;
-    color: var(--text-base, #e2e8f0);
-    overflow-wrap: anywhere;
-    display: -webkit-box;
-    -webkit-line-clamp: 6;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* Consciousness Stream HUD (Moved to hud.ts) */
+  .consciousness-content--placeholder {
+    color: rgba(148, 163, 184, 0.88);
+    font-style: italic;
   }
 
   @media (hover: hover) {
@@ -701,12 +617,12 @@ export const chatLayoutStyles = css`
 
   .consciousness-focus,
   .consciousness-pivot {
-    margin-top: 4px;
-    font-size: 0.62rem;
+    margin-top: 5px;
+    font-size: 0.68rem;
     font-family: var(--fractal-font-mono);
-    padding: 2px 6px;
+    padding: 3px 7px;
     border-radius: 2px;
-    background: rgba(0, 0, 0, 0.24);
+    background: rgba(0, 0, 0, 0.35);
   }
 
   .consciousness-focus {
@@ -767,32 +683,27 @@ export const chatLayoutStyles = css`
   }
 
   .chat[data-formula-phase="active"] .chat-cosmos__recursive-web {
-    filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.16));
+    opacity: 0.16;
   }
 
   .chat[data-formula-phase="active"] .chat-cosmos__edge-pulse {
-    animation-duration: 14s;
-    filter: saturate(1.32) brightness(1.08);
+    opacity: 0.18;
   }
 
   .chat[data-formula-phase="active"] .chat-cosmos__emergence {
-    filter: drop-shadow(0 0 14px rgba(45, 212, 191, 0.2));
-    animation-duration: 18s;
+    opacity: 0.08;
   }
 
   .chat[data-formula-phase="error"] .chat-cosmos__branchfield {
-    filter: hue-rotate(-24deg) saturate(1.2);
-    opacity: calc(0.18 + var(--fractal-noise-level) * 0.52);
+    opacity: 0.12;
   }
 
   .chat[data-formula-phase="error"] .chat-cosmos__lifelines {
-    filter: hue-rotate(-18deg) saturate(1.3);
-    opacity: calc(0.14 + var(--fractal-noise-level) * 0.46);
+    opacity: 0.1;
   }
 
   .chat[data-formula-phase="error"] .chat-cosmos__edge-pulse {
-    filter: hue-rotate(-20deg) saturate(1.26);
-    opacity: calc(0.25 + var(--fractal-noise-level) * 0.34);
+    opacity: 0.12;
   }
 
   /* ---- Message Animations ---- */

@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { calculatePeanoIndex, alignPointsTopologically } from "./peano.js";
+import {
+  alignPointsTopologically,
+  calculatePeanoIndex,
+  calculateStrictCurvePointFromScalar,
+  projectEmbeddingToCurvePoint,
+} from "./peano.js";
 
 describe("Peano Utility", () => {
   it("should calculate a stable index for an embedding", () => {
@@ -29,5 +34,17 @@ describe("Peano Utility", () => {
     expect(aligned[0]).toBe(p1);
     expect(aligned[1]).toBe(p3); // P3 is closer to P1 in Peano space
     expect(aligned[2]).toBe(p2);
+  });
+
+  it("is deterministic for projection seed and curve point replay", () => {
+    const vec = [0.2, 0.4, -0.8, 0.1, 0.5];
+    const p1 = projectEmbeddingToCurvePoint(vec, { projectionSeed: 42 });
+    const p2 = projectEmbeddingToCurvePoint(vec, { projectionSeed: 42 });
+    expect(p1).toEqual(p2);
+
+    const c1 = calculateStrictCurvePointFromScalar(0.314159, { order: 6 });
+    const c2 = calculateStrictCurvePointFromScalar(0.314159, { order: 6 });
+    expect(c1).toEqual(c2);
+    expect(c1.curveType).toBe("hilbert");
   });
 });

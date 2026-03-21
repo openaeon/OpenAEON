@@ -82,6 +82,9 @@ export function requireOPENAEONAgentDir(): string {
   return agentDir;
 }
 
+/** @deprecated Use requireOPENAEONAgentDir. */
+export const requireOpenClawAgentDir = requireOPENAEONAgentDir;
+
 export function authProfilePathForAgent(agentDir: string): string {
   return path.join(agentDir, "auth-profiles.json");
 }

@@ -635,3 +635,6 @@ export function discoverOPENAEONPlugins(params: {
 
   return { candidates, diagnostics };
 }
+
+/** @deprecated Use discoverOPENAEONPlugins. */
+export const discoverOpenClawPlugins = discoverOPENAEONPlugins;

@@ -1,0 +1,71 @@
+version: 1
+claims:
+  - id: claim.evidence-driven-telemetry
+    statement: AEON consciousness/runtime outputs are evidence-driven with confidence and provenance instead of raw linear scores.
+    metrics:
+      - aeon.status.telemetry.v4.evidence
+      - aeon.status.telemetry.v4.inference
+      - aeon.status.telemetry.v4.confidence
+    logs:
+      - aeon.execution.lookup.pipelineType
+      - aeon.status.telemetry.v4.evidence.provenance
+    tests:
+      - src/gateway/aeon-state.test.ts
+      - src/gateway/server-methods/aeon.test.ts
+
+  - id: claim.strict-curve-index
+    statement: Topology indexing uses strict deterministic Hilbert traversal with explicit projection and replay parameters.
+    metrics:
+      - aeon.status.telemetry.v4.curve.curveType
+      - aeon.status.telemetry.v4.curve.curveOrder
+      - aeon.status.telemetry.v4.curve.projectionSeed
+    logs:
+      - aeon.status.telemetry.v4.curve
+    tests:
+      - src/utils/peano.test.ts
+      - src/gateway/server-methods/aeon.test.ts
+
+  - id: claim.autospawn-synthesis-chain
+    statement: High-confidence, multi-module contradictions automatically trigger synthesis subagent spawn under rate limits and breaker control.
+    metrics:
+      - aeon.status.telemetry.v4.autospawn
+      - aeon.status.telemetry.v4.evidence.conflict
+    logs:
+      - aeon.execution.lookup.pipelineType=deconfliction
+      - aeon.execution.lookup.reasonCode
+    tests:
+      - src/gateway/server-methods/aeon.test.ts
+      - src/agents/tools/logic-refinement.test.ts
+
+  - id: claim.llm-semantic-deconfliction
+    statement: Semantic conflict arbitration attempts LLM-first structured judgment and marks heuristic fallback explicitly.
+    metrics:
+      - aeon.status.telemetry.v4.evidence.deconfliction.llmCoverage
+      - aeon.status.telemetry.v4.evidence.deconfliction.fallbackRate
+    logs:
+      - aeon.execution.lookup.pipelineType=deconfliction
+      - aeon.execution.lookup.summary
+    tests:
+      - src/agents/tools/logic-refinement.test.ts
+
+  - id: claim.singularity-staged-pipeline
+    statement: Singularity execution follows staged diagnose-plan-simulate-apply pipeline with failure recording and rollback-safe downgrade.
+    metrics:
+      - aeon.status.telemetry.v4.inference.integrityScore
+      - aeon.status.telemetry.v4.confidence.overall
+    logs:
+      - aeon.execution.lookup.pipelineType=singularity
+      - aeon.execution.lookup.reasonCode=SINGULARITY_PIPELINE_FAILED
+    tests:
+      - src/gateway/server-evolution.test.ts
+
+  - id: claim.reflect-architecture-diagnostics
+    statement: Evolution reflect emits architecture-aware candidates from dependency/heat/failure/conflict signals, not TODO-only scans.
+    metrics:
+      - aeon.status.telemetry.v4.evidence.conflict.moduleSpread
+      - aeon.status.telemetry.v4.inference.mode
+    logs:
+      - aeon.execution.lookup.pipelineType=deconfliction
+      - aeon.execution.lookup.summary
+    tests:
+      - src/agents/tools/logic-refinement.test.ts

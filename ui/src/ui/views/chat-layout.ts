@@ -21,6 +21,7 @@ import { renderChatManualPanel } from "./chat/components/manual-panel.ts";
 import { renderStickyPlanBar, renderPlanSidebar } from "./chat/components/plan-sidebar.ts";
 import { renderSubagentSidebar } from "./chat/components/subagent-sidebar.ts";
 import { renderConsciousnessStream } from "./chat/components/consciousness-stream.ts";
+import { getVisiblePlanTodos } from "./chat/components/subagent-view-model.ts";
 
 export type ChatLayoutProps = ChatProps & {
   // Pass through props from the functional renderChat function
@@ -43,20 +44,15 @@ export class ChatLayout extends LitElement {
     }
 
     const toolSidebarOpen = Boolean(this.props.sidebarOpen && this.props.onCloseSidebar);
-    const planPhase = this.props?.taskPlan?.phase;
-    const hasPlanData = (this.props.taskPlan?.todos?.length ?? 0) > 0;
-
-    // Determine active sessions, excluding the main orchestrator agent
-    const activeWorkers = (this.props.sandboxSessions ?? []).filter(
-      (r) => r.kind !== "global" && !r.systemSent,
-    );
+    const planPhase = this.props?.taskPlan?.phase ?? "planning";
+    const visibleTodos = getVisiblePlanTodos(this.props.taskPlan);
+    const hasPlanData = visibleTodos.length > 0;
 
     // Sidebar conditions
     const hasPlanSidebar = planPhase === "planning" && hasPlanData;
     const hasSubagentSidebar =
-      activeWorkers.length > 0 ||
-      ((planPhase === "execution" || planPhase === "verification" || planPhase === "complete") &&
-        hasPlanData);
+      (planPhase === "execution" || planPhase === "verification" || planPhase === "complete") &&
+      hasPlanData;
 
     // Determine if sidebar should be open and what type
     const sidebarOpen = toolSidebarOpen || hasPlanSidebar || hasSubagentSidebar;
@@ -106,6 +102,7 @@ export class ChatLayout extends LitElement {
       sessionWorking,
     });
     const showUtilityRail = !sidebarOpen;
+    const performanceMode = this.props.performanceMode ?? "balanced";
 
     return html`
       <section
@@ -113,6 +110,7 @@ export class ChatLayout extends LitElement {
         data-fractal-depth=${String(fractal.depthLevel)}
         data-formula-phase=${fractal.formulaPhase}
         data-delivery-band=${fractal.deliveryBand}
+        data-performance-mode=${performanceMode}
         style=${`--fractal-noise-level:${fractal.noiseLevel};--fractal-resonance:${fractal.resonanceLevel};`}
       >
         <div class="chat-cosmos" aria-hidden="true">
@@ -154,14 +152,16 @@ export class ChatLayout extends LitElement {
                     <aside class="chat-utility-rail" aria-label=${t("chat.formulaRailLabel") || "Fractal utility rail"}>
                       <section class="formula-rail" aria-label=${t("chat.formulaRailLabel") || "Fractal formula rail"}>
                         <div class="formula-rail__title">${t("chat.formulaRailTitle") || "Recursive Formula Rail"}</div>
-                        ${formulaRows.map(
-                          (row) => html`
-                            <div class="formula-rail__item ${row.phase}">
-                              <div class="formula-rail__expr">${row.expr}</div>
-                              <div class="formula-rail__value">${row.value}</div>
-                            </div>
-                          `,
-                        )}
+                        <div class="formula-rail__body">
+                          ${formulaRows.map(
+                            (row) => html`
+                              <div class="formula-rail__item ${row.phase}">
+                                <div class="formula-rail__expr">${row.expr}</div>
+                                <div class="formula-rail__value">${row.value}</div>
+                              </div>
+                            `,
+                          )}
+                        </div>
                       </section>
                       ${renderConsciousnessStream({
                         log: this.props.cognitiveLog,
@@ -169,6 +169,10 @@ export class ChatLayout extends LitElement {
                         docked: true,
                         muteWhenSidebarOpen: false,
                         sidebarOpen: false,
+                        epiphanyFactor: this.props.epiphanyFactor,
+                        chaosScore: this.props.chaosScore,
+                        riskScore: this.props.riskScore,
+                        memorySaturation: this.props.memorySaturation,
                       })}
                     </aside>
                   `
@@ -233,6 +237,15 @@ export class ChatLayout extends LitElement {
                 : nothing
             }
             ${renderStickyPlanBar(this.props)}
+            ${
+              this.props.executionWatchdog?.degraded
+                ? html`
+                    <div class="callout warning" role="status" aria-live="polite">
+                      Execution watchdog degraded: ${this.props.executionWatchdog.reason ?? "No progress detected in execution phase."}
+                    </div>
+                  `
+                : nothing
+            }
             
             <div
               class="chat-thread ${this.props.messages && this.props.messages.length > 0 ? "" : "chat-thread--empty"}"

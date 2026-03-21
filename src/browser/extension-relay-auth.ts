@@ -71,3 +71,6 @@ export async function probeAuthenticatedOPENAEONRelay(params: {
     clearTimeout(timer);
   }
 }
+
+/** @deprecated Use probeAuthenticatedOPENAEONRelay. */
+export const probeAuthenticatedOpenClawRelay = probeAuthenticatedOPENAEONRelay;

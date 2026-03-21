@@ -2,12 +2,25 @@ export type TaskTodo = {
   id: string;
   title: string;
   status: "todo" | "in_progress" | "done";
+  result?: string;
+  dependsOn?: string[];
+  ownerAgent?: string;
+  acceptanceCriteria?: string[];
+  riskLevel?: "low" | "medium" | "high";
+};
+
+export type TaskPlanExecutionGraph = {
+  orderedTodoIds: string[];
+  readyTodoIds: string[];
+  blockedTodoIds: string[];
+  blockedBy: Record<string, string[]>;
 };
 
 export type TaskPlanSnapshot = {
   description: string;
   todos: TaskTodo[];
   phase?: "planning" | "execution" | "verification" | "complete";
+  executionGraph?: TaskPlanExecutionGraph;
 };
 
 export type SandboxProps = {

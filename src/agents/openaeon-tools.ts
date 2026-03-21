@@ -240,3 +240,6 @@ export function createOPENAEONTools(options?: {
 
   return [...tools, ...pluginTools];
 }
+
+/** @deprecated Use createOPENAEONTools. */
+export const createOpenClawTools = createOPENAEONTools;

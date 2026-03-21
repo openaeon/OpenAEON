@@ -285,6 +285,17 @@ export const OPENAEONSchema = z
     ui: z
       .object({
         seamColor: HexColorSchema.optional(),
+        chat: z
+          .object({
+            performanceMode: z
+              .union([z.literal("performance"), z.literal("balanced"), z.literal("visual")])
+              .optional(),
+            subagentMatchMode: z
+              .union([z.literal("owner_first"), z.literal("balanced"), z.literal("fuzzy")])
+              .optional(),
+          })
+          .strict()
+          .optional(),
         assistant: z
           .object({
             name: z.string().max(50).optional(),
@@ -600,6 +611,41 @@ export const OPENAEONSchema = z
           })
           .strict()
           .optional(),
+        lanes: z
+          .object({
+            chat_lane: z
+              .object({
+                maxInFlight: z.number().int().positive().optional(),
+                queueLimit: z.number().int().positive().optional(),
+                timeoutMs: z.number().int().positive().optional(),
+                retryBudget: z.number().int().min(0).optional(),
+                dropIfSlow: z.boolean().optional(),
+              })
+              .strict()
+              .optional(),
+            agent_lane: z
+              .object({
+                maxInFlight: z.number().int().positive().optional(),
+                queueLimit: z.number().int().positive().optional(),
+                timeoutMs: z.number().int().positive().optional(),
+                retryBudget: z.number().int().min(0).optional(),
+                dropIfSlow: z.boolean().optional(),
+              })
+              .strict()
+              .optional(),
+            tool_lane: z
+              .object({
+                maxInFlight: z.number().int().positive().optional(),
+                queueLimit: z.number().int().positive().optional(),
+                timeoutMs: z.number().int().positive().optional(),
+                retryBudget: z.number().int().min(0).optional(),
+                dropIfSlow: z.boolean().optional(),
+              })
+              .strict()
+              .optional(),
+          })
+          .strict()
+          .optional(),
         channelHealthCheckMinutes: z.number().int().min(0).optional(),
         tailscale: z
           .object({
@@ -764,6 +810,85 @@ export const OPENAEONSchema = z
           })
           .strict()
           .optional(),
+        autospawn: z
+          .object({
+            enabled: z.boolean().optional(),
+            cooldownMinutes: z.number().int().positive().optional(),
+            perSessionWindowMinutes: z.number().int().positive().optional(),
+            perSessionLimit: z.number().int().positive().optional(),
+            perHourLimit: z.number().int().positive().optional(),
+            maxConcurrent: z.number().int().positive().optional(),
+            failureThreshold: z.number().int().positive().optional(),
+          })
+          .strict()
+          .optional(),
+        policy: z
+          .object({
+            defaultProfile: z
+              .union([z.literal("conservative"), z.literal("balanced"), z.literal("aggressive")])
+              .optional(),
+            profiles: z
+              .object({
+                conservative: z
+                  .object({
+                    cVector: z
+                      .object({
+                        safety: z.number().min(0).max(1).optional(),
+                        truth: z.number().min(0).max(1).optional(),
+                        latency: z.number().min(0).max(1).optional(),
+                        cost: z.number().min(0).max(1).optional(),
+                        learning: z.number().min(0).max(1).optional(),
+                      })
+                      .strict()
+                      .optional(),
+                    maxLlmCallsPerHour: z.number().int().positive().optional(),
+                    maxConcurrentPipelines: z.number().int().positive().optional(),
+                    maxPipelineLatencyMs: z.number().int().positive().optional(),
+                  })
+                  .strict()
+                  .optional(),
+                balanced: z
+                  .object({
+                    cVector: z
+                      .object({
+                        safety: z.number().min(0).max(1).optional(),
+                        truth: z.number().min(0).max(1).optional(),
+                        latency: z.number().min(0).max(1).optional(),
+                        cost: z.number().min(0).max(1).optional(),
+                        learning: z.number().min(0).max(1).optional(),
+                      })
+                      .strict()
+                      .optional(),
+                    maxLlmCallsPerHour: z.number().int().positive().optional(),
+                    maxConcurrentPipelines: z.number().int().positive().optional(),
+                    maxPipelineLatencyMs: z.number().int().positive().optional(),
+                  })
+                  .strict()
+                  .optional(),
+                aggressive: z
+                  .object({
+                    cVector: z
+                      .object({
+                        safety: z.number().min(0).max(1).optional(),
+                        truth: z.number().min(0).max(1).optional(),
+                        latency: z.number().min(0).max(1).optional(),
+                        cost: z.number().min(0).max(1).optional(),
+                        learning: z.number().min(0).max(1).optional(),
+                      })
+                      .strict()
+                      .optional(),
+                    maxLlmCallsPerHour: z.number().int().positive().optional(),
+                    maxConcurrentPipelines: z.number().int().positive().optional(),
+                    maxPipelineLatencyMs: z.number().int().positive().optional(),
+                  })
+                  .strict()
+                  .optional(),
+              })
+              .strict()
+              .optional(),
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .optional(),
@@ -888,3 +1013,8 @@ export const OPENAEONSchema = z
       }
     }
   });
+
+/** @deprecated Use OPENAEONSchema. */
+export const OpenClawSchema = OPENAEONSchema;
+/** @deprecated Use OPENAEONSchema. */
+export const OpenAEONSchema = OPENAEONSchema;

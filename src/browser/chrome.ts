@@ -349,3 +349,12 @@ export async function stopOPENAEONChrome(running: RunningChrome, timeoutMs = 250
     // ignore
   }
 }
+
+/** @deprecated Use resolveOPENAEONUserDataDir. */
+export const resolveOpenClawUserDataDir = resolveOPENAEONUserDataDir;
+/** @deprecated Use launchOPENAEONChrome. */
+export const launchOpenClawChrome = launchOPENAEONChrome;
+/** @deprecated Use stopOPENAEONChrome. */
+export const stopOpenClawChrome = stopOPENAEONChrome;
+/** @deprecated Use decorateOPENAEONProfile. */
+export const decorateOpenClawProfile = decorateOPENAEONProfile;

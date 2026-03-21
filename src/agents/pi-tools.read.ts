@@ -718,6 +718,9 @@ export function createOPENAEONReadTool(
   };
 }
 
+/** @deprecated Use createOPENAEONReadTool. */
+export const createOpenClawReadTool = createOPENAEONReadTool;
+
 function createSandboxReadOperations(params: SandboxToolParams) {
   return {
     readFile: (absolutePath: string) =>

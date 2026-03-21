@@ -26,6 +26,9 @@ title: "Features"
   <Card title="Mobile nodes" icon="smartphone">
     iOS and Android nodes with Canvas support.
   </Card>
+  <Card title="FCA Core" icon="brain">
+    9-layer fractal cognitive architecture with Peano traversal.
+  </Card>
 </Columns>
 
 ## Full list
@@ -46,6 +49,10 @@ title: "Features"
 - WebChat and macOS menu bar app
 - iOS node with pairing and Canvas surface
 - Android node with pairing, Canvas, chat, and camera
+- **FCA Core**: Fractal Cognitive Adapter with multi-layer logic mapping
+- **Peano Traversal**: Locality-preserving cognitive space scanning
+- **Coupling Flux**: Closed-loop strategy auto-tuning via `CouplingVector`
+- **Forensic Simulation**: Foreword and backward thought-trace replay
 
 <Note>
 Legacy Claude, Codex, Gemini, and Opencode paths have been removed. Pi is the only

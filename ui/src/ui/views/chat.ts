@@ -16,12 +16,16 @@ import type {
   ChatManualMode,
   ChatManualSection,
   ManualRuntimeSnapshot,
+  SubagentViewModel,
 } from "../types.ts";
 import type { ChatItem, MessageGroup } from "../types/chat-types.ts";
 import type { ChatAttachment, ChatQueueItem } from "../ui-types.ts";
 import { renderMarkdownSidebar } from "./markdown-sidebar.ts";
 import "../components/resizable-divider.ts";
 import "./chat-layout.ts";
+import {
+  buildSubagentViewModel,
+} from "./chat/components/subagent-view-model.ts";
 
 export type CompactionIndicatorStatus = {
   active: boolean;
@@ -41,6 +45,7 @@ export type FallbackIndicatorStatus = {
 import type { TaskPlanSnapshot } from "../views/sandbox.ts";
 
 export type ChatProps = {
+  performanceMode?: "performance" | "balanced" | "visual";
   sessionKey: string;
   onSessionKeyChange: (next: string) => void;
   thinkingLevel: string | null;
@@ -67,6 +72,12 @@ export type ChatProps = {
   focusMode: boolean;
   // Task Plan (from sandbox state)
   taskPlan?: TaskPlanSnapshot | null;
+  executionWatchdog?: {
+    active: boolean;
+    degraded: boolean;
+    reason: string | null;
+    retryCount: number;
+  };
   // Sidebar state
   sidebarOpen?: boolean;
   sidebarContent?: string | null;
@@ -104,6 +115,8 @@ export type ChatProps = {
   // Subagent details for sidebar
   sandboxChatEvents?: import("../types.ts").SandboxChatEvents;
   sandboxSessions?: GatewaySessionRow[];
+  subagentViewModel?: SubagentViewModel[];
+  subagentMatchMode?: "owner_first" | "balanced" | "fuzzy";
   cognitiveLog?: import("../types.ts").CognitiveLogEntry[];
   executionDelivery?: import("../types.ts").AeonExecutionDelivery;
   fractalState?: import("../types.ts").FractalThemeState;
@@ -117,6 +130,8 @@ export type ChatProps = {
   onManualSectionChange?: (section: ChatManualSection) => void;
   chaosScore: number;
   epiphanyFactor: number;
+  riskScore: number;
+  memorySaturation: number;
 };
 
 export type ChatQuickCommand = {
@@ -211,8 +226,17 @@ export function renderChat(props: ChatProps) {
     avatar: props.assistantAvatar ?? props.assistantAvatarUrl ?? null,
   };
 
+  const subagentViewModel =
+    props.subagentViewModel ??
+    buildSubagentViewModel({
+      taskPlan: props.taskPlan,
+      sandboxChatEvents: props.sandboxChatEvents,
+      sessions: props.sandboxSessions,
+      matchMode: props.subagentMatchMode,
+    });
+
   return html`
-    <chat-layout .props=${{ ...props, fractalState }}>
+    <chat-layout .props=${{ ...props, fractalState, subagentViewModel }}>
       <div slot="messages" style="display: contents;">
         ${
           props.loading

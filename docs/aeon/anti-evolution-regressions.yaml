@@ -1,0 +1,21 @@
+version: 1
+cases:
+  - id: anti-evolution.evidence-confidence-drops-with-sparse-signals
+    title: Evidence confidence must fall when telemetry evidence is sparse
+    testFiles:
+      - src/gateway/aeon-state.test.ts
+
+  - id: anti-evolution.strict-curve-replayable
+    title: Curve indexing must remain deterministic and replayable
+    testFiles:
+      - src/utils/peano.test.ts
+
+  - id: anti-evolution.deconfliction-fallback-visible
+    title: LLM failure fallback must stay visible and confidence-downgraded
+    testFiles:
+      - src/agents/tools/logic-refinement.test.ts
+
+  - id: anti-evolution.execution-pipeline-typed
+    title: Execution records must keep pipelineType labels for deconfliction/singularity/chat
+    testFiles:
+      - src/gateway/server-methods/aeon.test.ts

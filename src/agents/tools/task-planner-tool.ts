@@ -29,6 +29,43 @@ const TaskPlannerSchema = Type.Object({
         "Only used when status is 'done'. The result output from the subagent or execution step.",
     }),
   ),
+  ownerAgent: Type.Optional(
+    Type.String({
+      description: "Optional owner agent/session label for this task.",
+    }),
+  ),
+  dependsOn: Type.Optional(
+    Type.Array(Type.String(), {
+      description: "Optional dependency task IDs that must complete before this task.",
+    }),
+  ),
+  acceptanceCriteria: Type.Optional(
+    Type.Array(Type.String(), {
+      description: "Optional acceptance criteria checklist for objective verification.",
+    }),
+  ),
+  outputSchema: Type.Optional(
+    Type.String({
+      description: "Optional output contract/schema description for task result.",
+    }),
+  ),
+  riskLevel: Type.Optional(
+    Type.Union([Type.Literal("low"), Type.Literal("medium"), Type.Literal("high")], {
+      description: "Optional risk level used by orchestrator guardrails.",
+    }),
+  ),
+  mergeKey: Type.Optional(
+    Type.String({
+      description: "Optional merge key for grouping related tasks/results.",
+    }),
+  ),
+  retryLimit: Type.Optional(
+    Type.Number({
+      minimum: 0,
+      maximum: 10,
+      description: "Optional retry cap for this task.",
+    }),
+  ),
   phase: Type.Optional(
     Type.Union(
       [
@@ -62,6 +99,13 @@ type TodoItem = {
   title: string;
   status: "todo" | "in_progress" | "done";
   result?: string;
+  ownerAgent?: string;
+  dependsOn?: string[];
+  acceptanceCriteria?: string[];
+  outputSchema?: string;
+  riskLevel?: "low" | "medium" | "high";
+  mergeKey?: string;
+  retryLimit?: number;
 };
 
 type TaskPlan = {
@@ -69,6 +113,113 @@ type TaskPlan = {
   todos: TodoItem[];
   phase: "planning" | "execution" | "verification" | "complete";
 };
+
+const TASK_PLAN_PHASE_ORDER: Record<TaskPlan["phase"], number> = {
+  planning: 0,
+  execution: 1,
+  verification: 2,
+  complete: 3,
+};
+
+function isPlaceholderTodoTitle(title: string): boolean {
+  const normalized = title.trim();
+  if (!normalized) {
+    return false;
+  }
+  return (
+    /^agent\s*\d+\s*:\s*待定任务\d*$/i.test(normalized) ||
+    /^代理\s*\d+\s*:\s*待定任务\d*$/i.test(normalized) ||
+    /^待定任务\d*$/i.test(normalized)
+  );
+}
+
+function isPlaceholderTodoResult(result: string | undefined): boolean {
+  if (!result) {
+    return false;
+  }
+  const normalized = result.trim().toLowerCase();
+  return (
+    normalized.includes("占位任务") ||
+    normalized.includes("无需执行") ||
+    normalized.includes("placeholder")
+  );
+}
+
+function prunePlaceholderTodos(plan: TaskPlan): number {
+  const before = plan.todos.length;
+  plan.todos = plan.todos.filter(
+    (todo) => !isPlaceholderTodoTitle(todo.title) && !isPlaceholderTodoResult(todo.result),
+  );
+  return before - plan.todos.length;
+}
+
+function readStringArrayParam(
+  params: unknown,
+  key: string,
+  opts: { required?: boolean } = {},
+): string[] | undefined {
+  if (!params || typeof params !== "object") {
+    if (opts.required) {
+      throw new ToolInputError(`Invalid value for '${key}': expected array`);
+    }
+    return undefined;
+  }
+  const value = (params as Record<string, unknown>)[key];
+  if (value === undefined) {
+    if (opts.required) {
+      throw new ToolInputError(`Missing required parameter '${key}'`);
+    }
+    return undefined;
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    throw new ToolInputError(`Invalid value for '${key}': expected string[]`);
+  }
+  return value;
+}
+
+function readNumberParam(
+  params: unknown,
+  key: string,
+  opts: { required?: boolean; min?: number; max?: number } = {},
+): number | undefined {
+  if (!params || typeof params !== "object") {
+    if (opts.required) {
+      throw new ToolInputError(`Invalid value for '${key}': expected number`);
+    }
+    return undefined;
+  }
+  const value = (params as Record<string, unknown>)[key];
+  if (value === undefined) {
+    if (opts.required) {
+      throw new ToolInputError(`Missing required parameter '${key}'`);
+    }
+    return undefined;
+  }
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    throw new ToolInputError(`Invalid value for '${key}': expected number`);
+  }
+  if (opts.min !== undefined && value < opts.min) {
+    throw new ToolInputError(`Invalid value for '${key}': must be >= ${opts.min}`);
+  }
+  if (opts.max !== undefined && value > opts.max) {
+    throw new ToolInputError(`Invalid value for '${key}': must be <= ${opts.max}`);
+  }
+  return value;
+}
+
+function ensureDoneResultWhenRequired(item: TodoItem): void {
+  if (item.status !== "done") {
+    return;
+  }
+  if (!item.acceptanceCriteria || item.acceptanceCriteria.length === 0) {
+    return;
+  }
+  if (!item.result || item.result.trim().length === 0) {
+    throw new ToolInputError(
+      "Cannot set todo to done without non-empty result when acceptanceCriteria is defined.",
+    );
+  }
+}
 
 export function createTaskPlannerTool(options?: {
   agentSessionKey?: string;
@@ -132,6 +283,10 @@ export function createTaskPlannerTool(options?: {
 
         if (action === "read_plan") {
           const plan = await loadPlan();
+          const removed = prunePlaceholderTodos(plan);
+          if (removed > 0) {
+            await savePlan(plan);
+          }
           const format = readStringParam(params, "format");
           if (format === "digest") {
             const statusIcons: Record<string, string> = {
@@ -158,6 +313,10 @@ export function createTaskPlannerTool(options?: {
 
         if (action === "complete_plan") {
           const plan = await loadPlan();
+          const removed = prunePlaceholderTodos(plan);
+          if (removed > 0) {
+            await savePlan(plan);
+          }
           plan.todos = plan.todos.map((t) => ({ ...t, status: "done" as const }));
           plan.phase = "complete";
           await savePlan(plan);
@@ -173,17 +332,57 @@ export function createTaskPlannerTool(options?: {
             );
           }
           const plan = await loadPlan();
+          const removed = prunePlaceholderTodos(plan);
+          if (removed > 0) {
+            await savePlan(plan);
+          }
+          const currentOrder = TASK_PLAN_PHASE_ORDER[plan.phase];
+          const nextOrder = TASK_PLAN_PHASE_ORDER[phaseStr as TaskPlan["phase"]];
+          if (nextOrder < currentOrder) {
+            throw new ToolInputError(
+              `Invalid phase transition: ${plan.phase} -> ${phaseStr}. Backward transitions are not allowed.`,
+            );
+          }
           plan.phase = phaseStr as TaskPlan["phase"];
           await savePlan(plan);
           return jsonResult({ status: "ok", phase: plan.phase, plan });
         }
 
         const plan = await loadPlan();
+        const removed = prunePlaceholderTodos(plan);
+        if (removed > 0) {
+          await savePlan(plan);
+        }
 
         if (action === "add_todo") {
           const title = readStringParam(params, "title", { required: true });
+          if (isPlaceholderTodoTitle(title)) {
+            return jsonResult({
+              status: "ignored",
+              reason: "placeholder_todo_title",
+              plan,
+            });
+          }
           const id = crypto.randomUUID().substring(0, 8);
-          const item: TodoItem = { id, title, status: "todo" };
+          const ownerAgent = readStringParam(params, "ownerAgent");
+          const dependsOn = readStringArrayParam(params, "dependsOn");
+          const acceptanceCriteria = readStringArrayParam(params, "acceptanceCriteria");
+          const outputSchema = readStringParam(params, "outputSchema");
+          const riskLevel = readStringParam(params, "riskLevel") as TodoItem["riskLevel"] | undefined;
+          const mergeKey = readStringParam(params, "mergeKey");
+          const retryLimit = readNumberParam(params, "retryLimit", { min: 0, max: 10 });
+          const item: TodoItem = {
+            id,
+            title,
+            status: "todo",
+            ...(ownerAgent ? { ownerAgent } : {}),
+            ...(dependsOn && dependsOn.length > 0 ? { dependsOn } : {}),
+            ...(acceptanceCriteria && acceptanceCriteria.length > 0 ? { acceptanceCriteria } : {}),
+            ...(outputSchema ? { outputSchema } : {}),
+            ...(riskLevel ? { riskLevel } : {}),
+            ...(mergeKey ? { mergeKey } : {}),
+            ...(retryLimit !== undefined ? { retryLimit } : {}),
+          };
           plan.todos.push(item);
           await savePlan(plan);
           return jsonResult({ status: "ok", added: item, plan });
@@ -194,6 +393,13 @@ export function createTaskPlannerTool(options?: {
           const statusStr = readStringParam(params, "status");
           const titleStr = readStringParam(params, "title");
           const resultStr = readStringParam(params, "result");
+          const ownerAgent = readStringParam(params, "ownerAgent");
+          const dependsOn = readStringArrayParam(params, "dependsOn");
+          const acceptanceCriteria = readStringArrayParam(params, "acceptanceCriteria");
+          const outputSchema = readStringParam(params, "outputSchema");
+          const riskLevel = readStringParam(params, "riskLevel") as TodoItem["riskLevel"] | undefined;
+          const mergeKey = readStringParam(params, "mergeKey");
+          const retryLimit = readNumberParam(params, "retryLimit", { min: 0, max: 10 });
 
           const item = plan.todos.find((t) => t.id === taskId);
           if (!item) {
@@ -203,11 +409,36 @@ export function createTaskPlannerTool(options?: {
             item.status = statusStr as "todo" | "in_progress" | "done";
           }
           if (titleStr) {
+            if (isPlaceholderTodoTitle(titleStr)) {
+              throw new ToolInputError("Placeholder todo titles are not allowed.");
+            }
             item.title = titleStr;
           }
-          if (resultStr && item.status === "done") {
+          if (resultStr) {
             item.result = resultStr;
           }
+          if (ownerAgent) {
+            item.ownerAgent = ownerAgent;
+          }
+          if (dependsOn) {
+            item.dependsOn = dependsOn;
+          }
+          if (acceptanceCriteria) {
+            item.acceptanceCriteria = acceptanceCriteria;
+          }
+          if (outputSchema) {
+            item.outputSchema = outputSchema;
+          }
+          if (riskLevel) {
+            item.riskLevel = riskLevel;
+          }
+          if (mergeKey) {
+            item.mergeKey = mergeKey;
+          }
+          if (retryLimit !== undefined) {
+            item.retryLimit = retryLimit;
+          }
+          ensureDoneResultWhenRequired(item);
           await savePlan(plan);
           return jsonResult({ status: "ok", updated: item, plan });
         }

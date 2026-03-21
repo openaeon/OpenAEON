@@ -165,4 +165,29 @@ describe("subagent-announce-queue", () => {
       }
     }
   });
+
+  it("drops queue without retry when delivery channel context is missing", async () => {
+    vi.useFakeTimers();
+    const send = vi
+      .fn()
+      .mockRejectedValue(
+        new Error(
+          "delivery channel is required: pass --channel/--reply-channel or use a main session with a previous channel",
+        ),
+      );
+
+    enqueueAnnounce({
+      key: "announce:test:missing-delivery-channel",
+      item: {
+        prompt: "subagent completed",
+        enqueuedAt: Date.now(),
+        sessionKey: "agent:main:main:acct:default",
+      },
+      settings: { mode: "followup", debounceMs: 0 },
+      send,
+    });
+
+    await vi.runAllTimersAsync();
+    expect(send).toHaveBeenCalledTimes(1);
+  });
 });

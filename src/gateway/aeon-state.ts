@@ -4,6 +4,7 @@ import path from "node:path";
 import { loadConfig } from "../config/config.js";
 import { resolveStateDir } from "../config/paths.js";
 import { resolveWorkspaceRoot } from "../agents/workspace-dir.js";
+import { DEFAULT_CURVE_ORDER, DEFAULT_PROJECTION_SEED, type CurvePoint2D } from "../utils/peano.js";
 
 export type CognitiveLogEntry = {
   timestamp: number;
@@ -194,6 +195,154 @@ export type ThinkingStreamEntry = CognitiveLogEntry & {
   scopeKey: string;
 };
 
+export type AeonEvidenceType =
+  | "execution_success"
+  | "execution_failure"
+  | "rollback"
+  | "conflict_detected"
+  | "manual_intervention"
+  | "memory_write_valid"
+  | "memory_write_invalid"
+  | "deconfliction_llm_success"
+  | "deconfliction_fallback"
+  | "autospawn_success"
+  | "autospawn_failure";
+
+const AEON_EVIDENCE_MODULE_SET = new Set([
+  "logic-gates",
+  "memory",
+  "server-evolution",
+  "gateway-chat",
+  "unknown",
+]);
+
+const AEON_EVIDENCE_SOURCE_SET = new Set([
+  "logic_refinement",
+  "evolution_monitor",
+  "singularity",
+  "chat_risk_gate",
+  "unknown",
+  "test",
+]);
+
+export type AeonEvidenceEvent = {
+  ts: number;
+  type: AeonEvidenceType;
+  value?: number;
+  module: string;
+  source: string;
+};
+
+export type AeonAutospawnTelemetry = {
+  enabled: boolean;
+  cooldownMinutes: number;
+  perSessionWindowMinutes: number;
+  perSessionLimit: number;
+  perHourLimit: number;
+  maxConcurrent: number;
+  circuitOpen: boolean;
+  lastTriggeredAt: number | null;
+  lastFailureAt: number | null;
+  recentTriggers: number[];
+  recentFailures: number[];
+  inFlight: number;
+  triggerCount: number;
+  blockedByRateLimit: number;
+  blockedByCircuitBreaker: number;
+  watchdogActive: boolean;
+  degraded: boolean;
+  degradedReason: string | null;
+  retryCount: number;
+};
+
+export type AeonLaneTelemetry = {
+  queueLength: number;
+  inFlight: number;
+  avgDispatchMs: number;
+  dropped: number;
+  retries: number;
+  degraded: boolean;
+  degradedReason: string | null;
+  updatedAt: number | null;
+};
+
+export type ActionStateTelemetry = {
+  currentPipeline: string | null;
+  activeToolId: string | null;
+  retryCount: number;
+  successRateTurn: number;
+  blockedByRisk: boolean;
+};
+
+export type MemoryStateTelemetry = {
+  totalAxioms: number;
+  distillCheckpoint: number;
+  saturationLevel: number; // 0-1
+  lastSearchLatencyMs: number;
+};
+
+export type AeonLaneTelemetryV4 = {
+  chat_lane: AeonLaneTelemetry;
+  agent_lane: AeonLaneTelemetry;
+  tool_lane: AeonLaneTelemetry;
+};
+
+export type AeonTelemetryV4 = {
+  evidence: {
+    windowMs: number;
+    decayHalfLifeMs: number;
+    eventCount: number;
+    execution: {
+      successRate: number;
+      rollbackRate: number;
+    };
+    conflict: {
+      density: number;
+      moduleSpread: number;
+    };
+    intervention: {
+      manualRate: number;
+    };
+    memory: {
+      writeValidityRate: number;
+    };
+    deconfliction: {
+      llmCoverage: number;
+      fallbackRate: number;
+    };
+    provenance: {
+      byType: Partial<Record<AeonEvidenceType, number>>;
+      windowStartAt: number;
+      windowEndAt: number;
+    };
+  };
+  inference: {
+    selfAwarenessIndex: number;
+    integrityScore: number;
+    autonomyScore: number;
+    riskScore: number;
+    mode: "stabilize" | "balanced" | "explore";
+  };
+  confidence: {
+    overall: number;
+    evidenceCoverage: number;
+    byMetric: Record<string, number>;
+  };
+  curve: {
+    curveType: "hilbert";
+    curveOrder: number;
+    projectionMethod: "deterministic_weighted_projection_2d";
+    projectionSeed: number;
+    point: CurvePoint2D;
+  };
+  autospawn: AeonAutospawnTelemetry;
+  lane: AeonLaneTelemetryV4;
+  action: ActionStateTelemetry;
+  memory: MemoryStateTelemetry;
+  cognitiveGaps: string[];
+  gapSeverity: number;
+};
+
 export type AeonStateScope = {
   sessionKey?: string | null;
   agentId?: string | null;
@@ -232,6 +381,8 @@ export type ConsciousnessSelfKernelTelemetry = {
 
 export type ConsciousnessEpistemicTelemetry = {
   epistemicLabel: EpistemicLabel;
+  /** Back-compat alias for older clients. */
+  lastLabel?: EpistemicLabel | null;
   confidence: number;
   highConfidenceWithoutLabelBlocked: boolean;
   unknownRate: number;
@@ -357,6 +508,11 @@ type AeonStateContext = {
   consciousnessPolicy: ConsciousnessRuntimePolicy;
   cognitiveLog: CognitiveLogEntry[];
   cognitiveLogSeq: number;
+  evidenceLog: AeonEvidenceEvent[];
+  autospawn: AeonAutospawnTelemetry;
+  lane: AeonLaneTelemetryV4;
+  telemetryV4: AeonTelemetryV4;
+  peanoTrajectory: CurvePoint2D[];
   singularityActive: boolean;
 };
 
@@ -371,6 +527,80 @@ const DEFAULT_CHARTER_VALUE_ORDER: ConsciousnessCharterTelemetry["valueOrder"] =
 ];
 
 function createInitialStateContext(): AeonStateContext {
+  const autospawnDefaults: AeonAutospawnTelemetry = {
+    enabled: true,
+    cooldownMinutes: 30,
+    perSessionWindowMinutes: 30,
+    perSessionLimit: 1,
+    perHourLimit: 2,
+    maxConcurrent: 1,
+    circuitOpen: false,
+    lastTriggeredAt: null,
+    lastFailureAt: null,
+    recentTriggers: [],
+    recentFailures: [],
+    inFlight: 0,
+    triggerCount: 0,
+    blockedByRateLimit: 0,
+    blockedByCircuitBreaker: 0,
+    watchdogActive: false,
+    degraded: false,
+    degradedReason: null,
+    retryCount: 0,
+  };
+  const laneDefaults: AeonLaneTelemetryV4 = {
+    chat_lane: {
+      queueLength: 0,
+      inFlight: 0,
+      avgDispatchMs: 0,
+      dropped: 0,
+      retries: 0,
+      degraded: false,
+      degradedReason: null,
+      updatedAt: null,
+    },
+    agent_lane: {
+      queueLength: 0,
+      inFlight: 0,
+      avgDispatchMs: 0,
+      dropped: 0,
+      retries: 0,
+      degraded: false,
+      degradedReason: null,
+      updatedAt: null,
+    },
+    tool_lane: {
+      queueLength: 0,
+      inFlight: 0,
+      avgDispatchMs: 0,
+      dropped: 0,
+      retries: 0,
+      degraded: false,
+      degradedReason: null,
+      updatedAt: null,
+    },
+  };
+  const actionDefaults: ActionStateTelemetry = {
+    currentPipeline: null,
+    activeToolId: null,
+    retryCount: 0,
+    successRateTurn: 1.0,
+    blockedByRisk: false,
+  };
+  const memoryDefaults: MemoryStateTelemetry = {
+    totalAxioms: 0,
+    distillCheckpoint: 0,
+    saturationLevel: 0,
+    lastSearchLatencyMs: 0,
+  };
+
+  const cognitiveGaps: string[] = [];
+  const gapSeverity = 0;
+  const cloneLaneDefaults = (): AeonLaneTelemetryV4 => ({
+    chat_lane: { ...laneDefaults.chat_lane },
+    agent_lane: { ...laneDefaults.agent_lane },
+    tool_lane: { ...laneDefaults.tool_lane },
+  });
   return {
     lastDreamingAt: null,
     lastMaintenanceAt: null,
@@ -592,6 +822,57 @@ function createInitialStateContext(): AeonStateContext {
     },
     cognitiveLog: [],
     cognitiveLogSeq: 1,
+    evidenceLog: [],
+    autospawn: autospawnDefaults,
+    lane: cloneLaneDefaults(),
+    telemetryV4: {
+      evidence: {
+        windowMs: 6 * 60 * 60 * 1000,
+        decayHalfLifeMs: 2 * 60 * 60 * 1000,
+        eventCount: 0,
+        execution: { successRate: 0.5, rollbackRate: 0.5 },
+        conflict: { density: 0.5, moduleSpread: 0 },
+        intervention: { manualRate: 0.5 },
+        memory: { writeValidityRate: 0.5 },
+        deconfliction: { llmCoverage: 0, fallbackRate: 1 },
+        provenance: {
+          byType: {},
+          windowStartAt: Date.now() - 6 * 60 * 60 * 1000,
+          windowEndAt: Date.now(),
+        },
+      },
+      inference: {
+        selfAwarenessIndex: 0.14,
+        integrityScore: 0.2,
+        autonomyScore: 0.2,
+        riskScore: 0.4,
+        mode: "balanced",
+      },
+      confidence: {
+        overall: 0.2,
+        evidenceCoverage: 0.1,
+        byMetric: {
+          integrityScore: 0.2,
+          autonomyScore: 0.2,
+          riskScore: 0.2,
+          selfAwarenessIndex: 0.2,
+        },
+      },
+      curve: {
+        curveType: "hilbert",
+        curveOrder: DEFAULT_CURVE_ORDER,
+        projectionMethod: "deterministic_weighted_projection_2d",
+        projectionSeed: DEFAULT_PROJECTION_SEED,
+        point: { x: 0.5, y: 0.5 },
+      },
+      autospawn: autospawnDefaults,
+      lane: cloneLaneDefaults(),
+      action: actionDefaults,
+      memory: memoryDefaults,
+      cognitiveGaps: [...cognitiveGaps],
+      gapSeverity,
+    },
+    peanoTrajectory: [],
     singularityActive: false,
   };
 }
@@ -717,6 +998,19 @@ function smoothValue(prev: number, next: number, smooth = 0.7): number {
   return prev * smooth + next * (1 - smooth);
 }
 
+function betaPosteriorMean(successes: number, failures: number, alpha = 1, beta = 1): number {
+  return (alpha + successes) / (alpha + beta + successes + failures);
+}
+
+function confidenceFromSamples(samples: number): number {
+  return clamp01(1 - Math.exp(-samples / 8));
+}
+
+function decayedEvidenceWeight(params: { now: number; ts: number; halfLifeMs: number }): number {
+  const age = Math.max(0, params.now - params.ts);
+  return Math.exp((-Math.log(2) * age) / Math.max(1, params.halfLifeMs));
+}
+
 function evaluateTrend(history: number[]): "rising" | "stable" | "falling" {
   if (history.length < 6) {
     return "stable";
@@ -770,6 +1064,85 @@ export function recordAeonMaintenance(
 export function recordAeonEpiphanyFactor(value: number, scope?: AeonStateScope): void {
   const ctx = getContext(scope);
   ctx.lastEpiphanyFactor = value;
+}
+
+export function recordAeonEvidenceEvent(
+  event: Omit<AeonEvidenceEvent, "ts" | "module" | "source"> & {
+    ts?: number;
+    module?: string;
+    source?: string;
+  },
+  scope?: AeonStateScope,
+): void {
+  const ctx = getContext(scope);
+  const normalizedModule = event.module?.trim() || "unknown";
+  const normalizedSource = event.source?.trim() || "unknown";
+  const fullEvent: AeonEvidenceEvent = {
+    ts: event.ts ?? Date.now(),
+    type: event.type,
+    value: event.value,
+    module: AEON_EVIDENCE_MODULE_SET.has(normalizedModule) ? normalizedModule : "unknown",
+    source: AEON_EVIDENCE_SOURCE_SET.has(normalizedSource) ? normalizedSource : "unknown",
+  };
+  ctx.evidenceLog.push(fullEvent);
+  if (ctx.evidenceLog.length > MAX_LOG_SIZE * 10) {
+    ctx.evidenceLog.splice(0, ctx.evidenceLog.length - MAX_LOG_SIZE * 10);
+  }
+
+  // Phase 3: Strategy Auto-tuning
+  adjustCouplingVector(fullEvent, scope);
+}
+
+export function updateAeonAutospawnTelemetry(
+  update: Partial<Omit<AeonAutospawnTelemetry, "recentTriggers" | "recentFailures">> & {
+    triggerAt?: number;
+    failureAt?: number;
+  },
+  scope?: AeonStateScope,
+): void {
+  const ctx = getContext(scope);
+  const now = Date.now();
+  const triggers = [...ctx.autospawn.recentTriggers];
+  const failures = [...ctx.autospawn.recentFailures];
+  if (typeof update.triggerAt === "number") {
+    triggers.push(update.triggerAt);
+  }
+  if (typeof update.failureAt === "number") {
+    failures.push(update.failureAt);
+  }
+  const oneHourAgo = now - 60 * 60 * 1000;
+  const thirtyMinutesAgo = now - 30 * 60 * 1000;
+  ctx.autospawn = {
+    ...ctx.autospawn,
+    ...update,
+    recentTriggers: triggers.filter((ts) => ts >= oneHourAgo).slice(-32),
+    recentFailures: failures.filter((ts) => ts >= thirtyMinutesAgo).slice(-32),
+  };
+}
+
+export function updateAeonLaneTelemetry(
+  update: Partial<Record<keyof AeonLaneTelemetryV4, Partial<AeonLaneTelemetry>>>,
+  scope?: AeonStateScope,
+): void {
+  const ctx = getContext(scope);
+  const now = Date.now();
+  const nextLane: AeonLaneTelemetryV4 = {
+    chat_lane: { ...ctx.lane.chat_lane },
+    agent_lane: { ...ctx.lane.agent_lane },
+    tool_lane: { ...ctx.lane.tool_lane },
+  };
+  for (const key of ["chat_lane", "agent_lane", "tool_lane"] as const) {
+    const patch = update[key];
+    if (!patch) {
+      continue;
+    }
+    nextLane[key] = {
+      ...nextLane[key],
+      ...patch,
+      updatedAt: patch.updatedAt ?? now,
+    };
+  }
+  ctx.lane = nextLane;
 }
 
 export function updateCollectiveResonance(activeFactors: number[], scope?: AeonStateScope): void {
@@ -1279,6 +1652,162 @@ export function recordConsciousnessPulse(
       lastUpdatedAt: now,
     },
   };
+
+  const evidenceWindowMs = 6 * 60 * 60 * 1000;
+  const windowStartAt = now - evidenceWindowMs;
+  const windowEvents = ctx.evidenceLog.filter((entry) => entry.ts >= windowStartAt);
+  const evidenceHalfLifeMs = 2 * 60 * 60 * 1000;
+  const weightedByType = windowEvents.reduce(
+    (acc, entry) => {
+      const w = decayedEvidenceWeight({ now, ts: entry.ts, halfLifeMs: evidenceHalfLifeMs });
+      acc[entry.type] = (acc[entry.type] ?? 0) + w * Math.max(0.1, entry.value ?? 1);
+      return acc;
+    },
+    {} as Partial<Record<AeonEvidenceType, number>>,
+  );
+  const countByType = windowEvents.reduce(
+    (acc, entry) => {
+      acc[entry.type] = (acc[entry.type] ?? 0) + 1;
+      return acc;
+    },
+    {} as Partial<Record<AeonEvidenceType, number>>,
+  );
+  const executionSuccess = weightedByType.execution_success ?? 0;
+  const executionFailure = weightedByType.execution_failure ?? 0;
+  const rollbacks = weightedByType.rollback ?? 0;
+  const conflicts = weightedByType.conflict_detected ?? 0;
+  const manualInterventions = weightedByType.manual_intervention ?? 0;
+  const memoryWritesValid = weightedByType.memory_write_valid ?? 0;
+  const memoryWritesInvalid = weightedByType.memory_write_invalid ?? 0;
+  const llmSuccess = weightedByType.deconfliction_llm_success ?? 0;
+  const llmFallbacks = weightedByType.deconfliction_fallback ?? 0;
+  const autospawnSuccess = weightedByType.autospawn_success ?? 0;
+  const autospawnFailure = weightedByType.autospawn_failure ?? 0;
+  const distinctModules = new Set(windowEvents.map((entry) => entry.module).filter(Boolean)).size;
+
+  const executionSuccessRate = betaPosteriorMean(executionSuccess, executionFailure);
+  const rollbackRate = betaPosteriorMean(rollbacks, Math.max(0, executionSuccess - rollbacks));
+  const memoryWriteValidityRate = betaPosteriorMean(memoryWritesValid, memoryWritesInvalid);
+  const llmCoverage = betaPosteriorMean(llmSuccess, llmFallbacks);
+  const fallbackRate = betaPosteriorMean(llmFallbacks, llmSuccess);
+  const conflictDensity = clamp01(conflicts / 12);
+  const manualRate = betaPosteriorMean(
+    manualInterventions,
+    Math.max(0, executionSuccess + executionFailure - manualInterventions),
+  );
+
+  const integrityScore = clamp01(
+    executionSuccessRate * 0.45 +
+      (1 - rollbackRate) * 0.2 +
+      memoryWriteValidityRate * 0.2 +
+      (1 - conflictDensity) * 0.15,
+  );
+  const autonomyScore = clamp01(
+    (1 - manualRate) * 0.4 +
+      llmCoverage * 0.25 +
+      betaPosteriorMean(autospawnSuccess, autospawnFailure) * 0.2 +
+      nextAutonomyDrive * 0.15,
+  );
+  const riskScore = clamp01(
+    (1 - integrityScore) * 0.55 + conflictDensity * 0.25 + fallbackRate * 0.2,
+  );
+  const evidenceCoverage = confidenceFromSamples(windowEvents.length);
+  const byMetricConfidence = {
+    integrityScore: confidenceFromSamples(executionSuccess + executionFailure + memoryWritesValid),
+    autonomyScore: confidenceFromSamples(
+      manualInterventions + llmSuccess + llmFallbacks + autospawnSuccess + autospawnFailure,
+    ),
+    riskScore: confidenceFromSamples(conflicts + rollbacks + llmFallbacks),
+    selfAwarenessIndex: confidenceFromSamples(reflectiveEvents + windowEvents.length),
+  };
+  const overallConfidence =
+    (byMetricConfidence.integrityScore +
+      byMetricConfidence.autonomyScore +
+      byMetricConfidence.riskScore +
+      byMetricConfidence.selfAwarenessIndex) /
+    4;
+
+  const autospawnRecentTriggers = ctx.autospawn.recentTriggers.filter(
+    (ts) => ts >= now - 60 * 60 * 1000,
+  );
+  const autospawnRecentFailures = ctx.autospawn.recentFailures.filter(
+    (ts) => ts >= now - 30 * 60 * 1000,
+  );
+  ctx.autospawn = {
+    ...ctx.autospawn,
+    recentTriggers: autospawnRecentTriggers,
+    recentFailures: autospawnRecentFailures,
+    circuitOpen: autospawnRecentFailures.length >= 3,
+  };
+
+  ctx.telemetryV4 = {
+    evidence: {
+      windowMs: evidenceWindowMs,
+      decayHalfLifeMs: evidenceHalfLifeMs,
+      eventCount: windowEvents.length,
+      execution: {
+        successRate: executionSuccessRate,
+        rollbackRate,
+      },
+      conflict: {
+        density: conflictDensity,
+        moduleSpread: clamp01(distinctModules / 10),
+      },
+      intervention: {
+        manualRate,
+      },
+      memory: {
+        writeValidityRate: memoryWriteValidityRate,
+      },
+      deconfliction: {
+        llmCoverage,
+        fallbackRate,
+      },
+      provenance: {
+        byType: countByType,
+        windowStartAt,
+        windowEndAt: now,
+      },
+    },
+    inference: {
+      selfAwarenessIndex: nextIndex,
+      integrityScore,
+      autonomyScore,
+      riskScore,
+      mode,
+    },
+    confidence: {
+      overall: overallConfidence,
+      evidenceCoverage,
+      byMetric: byMetricConfidence,
+    },
+    curve: {
+      curveType: "hilbert",
+      curveOrder: DEFAULT_CURVE_ORDER,
+      projectionMethod: "deterministic_weighted_projection_2d",
+      projectionSeed: DEFAULT_PROJECTION_SEED,
+      point: {
+        x: clamp01(memoryNorm * 0.6 + nextAutonomyDrive * 0.4),
+        y: clamp01(nextGoalCoherence * 0.5 + (1 - riskScore) * 0.5),
+      },
+    },
+    autospawn: { ...ctx.autospawn },
+    lane: {
+      chat_lane: { ...ctx.lane.chat_lane },
+      agent_lane: { ...ctx.lane.agent_lane },
+      tool_lane: { ...ctx.lane.tool_lane },
+    },
+    action: { ...ctx.telemetryV4.action },
+    memory: { ...ctx.telemetryV4.memory },
+    cognitiveGaps: [...(ctx.telemetryV4.cognitiveGaps || [])],
+    gapSeverity: ctx.telemetryV4.gapSeverity || 0,
+  };
+
+  // Phase 3: Record trajectory point
+  ctx.peanoTrajectory.push({ ...ctx.telemetryV4.curve.point });
+  if (ctx.peanoTrajectory.length > 100) {
+    ctx.peanoTrajectory.shift();
+  }
 }
 
 export function getAeonMemoryGraph(): MemoryGraph {
@@ -1333,6 +1862,41 @@ export function getAeonMemoryGraph(): MemoryGraph {
   });
 
   return { nodes, edges };
+}
+
+export function getPeanoTrajectory(scope?: AeonStateScope): CurvePoint2D[] {
+  return [...getContext(scope).peanoTrajectory];
+}
+
+/**
+ * Phase 3: Strategy Auto-tuning (CouplingVector adjustment)
+ * Adjusts internal cognitive weights based on execution evidence.
+ */
+export function adjustCouplingVector(evidence: AeonEvidenceEvent, scope?: AeonStateScope): void {
+  const ctx = getContext(scope);
+  const isSuccess = evidence.type === "execution_success";
+  const isFailure = evidence.type === "execution_failure";
+
+  if (!isSuccess && !isFailure) return;
+
+  // Simple feedback loop: adjust risk and resonance based on outcome
+  if (isSuccess) {
+    ctx.resonanceScore = Math.min(1, ctx.resonanceScore + 0.02);
+    ctx.systemEntropy = Math.max(0, ctx.systemEntropy - 1);
+  } else {
+    ctx.resonanceScore = Math.max(0, ctx.resonanceScore - 0.05);
+    ctx.systemEntropy = Math.min(100, ctx.systemEntropy + 5);
+  }
+
+  // Record tuning in cognitive log
+  addCognitiveLog(
+    {
+      timestamp: Date.now(),
+      type: "patch",
+      content: `Strategy auto-tuned: ${isSuccess ? "positive" : "negative"} coupling shift in ${evidence.module} from ${evidence.source}`,
+    },
+    scope,
+  );
 }
 
 export function addCognitiveLog(entry: CognitiveLogEntry, scope?: AeonStateScope): void {
@@ -1435,6 +1999,9 @@ export type AeonEvolutionState = {
   memoryPersistence: MemoryPersistenceTelemetry;
   policy: MaintenancePolicyTelemetry;
   consciousness: ConsciousnessTelemetry;
+  telemetryV4: AeonTelemetryV4;
+  autospawn: AeonAutospawnTelemetry;
+  peanoTrajectory: CurvePoint2D[];
 };
 
 export function getAeonEvolutionState(scope?: AeonStateScope): AeonEvolutionState {
@@ -1534,5 +2101,55 @@ export function getAeonEvolutionState(scope?: AeonStateScope): AeonEvolutionStat
         lastUpdatedAt: ctx.consciousness.helpfulnessContract.lastUpdatedAt,
       },
     },
+    telemetryV4: {
+      evidence: {
+        windowMs: ctx.telemetryV4.evidence.windowMs,
+        decayHalfLifeMs: ctx.telemetryV4.evidence.decayHalfLifeMs,
+        eventCount: ctx.telemetryV4.evidence.eventCount,
+        execution: { ...ctx.telemetryV4.evidence.execution },
+        conflict: { ...ctx.telemetryV4.evidence.conflict },
+        intervention: { ...ctx.telemetryV4.evidence.intervention },
+        memory: { ...ctx.telemetryV4.evidence.memory },
+        deconfliction: { ...ctx.telemetryV4.evidence.deconfliction },
+        provenance: {
+          byType: { ...ctx.telemetryV4.evidence.provenance.byType },
+          windowStartAt: ctx.telemetryV4.evidence.provenance.windowStartAt,
+          windowEndAt: ctx.telemetryV4.evidence.provenance.windowEndAt,
+        },
+      },
+      inference: { ...ctx.telemetryV4.inference },
+      confidence: {
+        overall: ctx.telemetryV4.confidence.overall,
+        evidenceCoverage: ctx.telemetryV4.confidence.evidenceCoverage,
+        byMetric: { ...ctx.telemetryV4.confidence.byMetric },
+      },
+      curve: {
+        curveType: "hilbert",
+        curveOrder: ctx.telemetryV4.curve.curveOrder,
+        projectionMethod: "deterministic_weighted_projection_2d",
+        projectionSeed: ctx.telemetryV4.curve.projectionSeed,
+        point: { ...ctx.telemetryV4.curve.point },
+      },
+      autospawn: {
+        ...ctx.telemetryV4.autospawn,
+        recentTriggers: [...ctx.telemetryV4.autospawn.recentTriggers],
+        recentFailures: [...ctx.telemetryV4.autospawn.recentFailures],
+      },
+      lane: {
+        chat_lane: { ...ctx.telemetryV4.lane.chat_lane },
+        agent_lane: { ...ctx.telemetryV4.lane.agent_lane },
+        tool_lane: { ...ctx.telemetryV4.lane.tool_lane },
+      },
+      action: { ...ctx.telemetryV4.action },
+      memory: { ...ctx.telemetryV4.memory },
+      cognitiveGaps: [...(ctx.telemetryV4.cognitiveGaps || [])],
+      gapSeverity: ctx.telemetryV4.gapSeverity || 0,
+    },
+    autospawn: {
+      ...ctx.autospawn,
+      recentTriggers: [...ctx.autospawn.recentTriggers],
+      recentFailures: [...ctx.autospawn.recentFailures],
+    },
+    peanoTrajectory: [...ctx.peanoTrajectory],
   };
 }

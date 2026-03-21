@@ -23,3 +23,6 @@ export function ensureOPENAEONAgentEnv(): string {
   }
   return dir;
 }
+
+/** @deprecated Use resolveOPENAEONAgentDir. */
+export const resolveOpenClawAgentDir = resolveOPENAEONAgentDir;

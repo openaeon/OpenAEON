@@ -75,9 +75,26 @@ type GatewayHost = {
   assistantAvatar: string | null;
   assistantAgentId: string | null;
   sessionKey: string;
+  sandboxTaskPlan: import("./views/sandbox.ts").TaskPlanSnapshot | null;
   chatRunId: string | null;
+  chatSending: boolean;
+  chatStream: string | null;
+  chatMessage: string;
   chatChaosScore: number;
   chatEpiphanyFactor: number;
+  executionWatchdog: {
+    active: boolean;
+    degraded: boolean;
+    reason: string | null;
+    retryCount: number;
+    stagnantPolls: number;
+    startedAt: number | null;
+    lastProgressAt: number | null;
+    lastDigest: string | null;
+    lastRetryAt: number | null;
+  };
+  executionAutoQueued: boolean;
+  handleSendChat: () => Promise<void>;
   refreshSessionsAfterChat: Set<string>;
   sandboxChatEvents: SandboxChatEvents;
   execApprovalQueue: ExecApprovalRequest[];
@@ -85,6 +102,33 @@ type GatewayHost = {
   updateAvailable: UpdateAvailable | null;
   aeonSystemStatus?: AeonStatusResult | null;
 };
+
+type TaskPlanExecutionTriggerPayload = {
+  sessionKey?: string;
+  approvedAt?: number;
+  phaseTransition?: {
+    from?: "planning" | "execution" | "verification" | "complete";
+    to?: "planning" | "execution" | "verification" | "complete";
+    changed?: boolean;
+  };
+  prompt?: string;
+  executionGraph?: {
+    orderedTodoIds?: string[];
+    readyTodoIds?: string[];
+    blockedTodoIds?: string[];
+    blockedBy?: Record<string, string[]>;
+  };
+};
+
+function isSafetyPauseMessage(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes("prioritize safety") ||
+    normalized.includes("risk profile") ||
+    normalized.includes("safety pause") ||
+    normalized.includes("安全")
+  );
+}
 
 function appendLocalCognitiveLog(host: GatewayHost, payload: ChatEventPayload | undefined): void {
   if (!payload) return;
@@ -279,6 +323,9 @@ function handleTerminalChatEvent(
   void flushChatQueueForEvent(host as unknown as Parameters<typeof flushChatQueueForEvent>[0]);
   const runId = payload?.runId;
   if (!runId || !host.refreshSessionsAfterChat.has(runId)) {
+    if (state === "final" || state === "aborted") {
+      host.executionWatchdog.lastProgressAt = Date.now();
+    }
     return;
   }
   host.refreshSessionsAfterChat.delete(runId);
@@ -287,16 +334,45 @@ function handleTerminalChatEvent(
       activeMinutes: CHAT_SESSIONS_ACTIVE_MINUTES,
     });
   }
+  if ((state === "final" || state === "aborted") && host.executionAutoQueued) {
+    host.executionAutoQueued = false;
+    const prompt =
+      "计划已批准。立即进入 execution 阶段，禁止再次规划，按当前 TODO 逐项执行并在每步后汇报结果。";
+    host.chatMessage = prompt;
+    if (!host.chatSending && !host.chatStream?.trim()) {
+      void host.handleSendChat();
+    }
+  }
 }
 
 function handleChatGatewayEvent(host: GatewayHost, payload: ChatEventPayload | undefined) {
-  if (payload?.sessionKey) {
+  if (payload?.sessionKey && payload.sessionKey === host.sessionKey) {
     setLastActiveSessionKey(
       host as unknown as Parameters<typeof setLastActiveSessionKey>[0],
       payload.sessionKey,
     );
   }
   const state = handleChatEvent(host as unknown as OPENAEONApp, payload);
+  if (payload?.message) {
+    const preview = extractText(payload.message) ?? "";
+    if (
+      (state === "final" || state === "error") &&
+      isSafetyPauseMessage(preview) &&
+      !preview.toLowerCase().includes("confirmdangerouscodeedit") &&
+      host.sandboxTaskPlan?.phase === "execution"
+    ) {
+      host.executionWatchdog.reason = "safety_pause_detected_auto_resuming";
+      host.executionWatchdog.lastProgressAt = Date.now();
+      if (!host.chatSending && !host.chatStream?.trim()) {
+        host.executionWatchdog.retryCount = Math.max(1, host.executionWatchdog.retryCount + 1);
+        host.chatMessage =
+          "在当前风险边界内继续 execution：采用保守方案，避免高风险改动，逐项完成 TODO 并回填结果。";
+        void host.handleSendChat();
+      } else {
+        host.executionAutoQueued = true;
+      }
+    }
+  }
   handleTerminalChatEvent(host, payload, state);
   if (state === "final" && shouldReloadHistoryForFinalEvent(payload)) {
     void loadChatHistory(host as unknown as OPENAEONApp);
@@ -324,13 +400,14 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
       host as unknown as Parameters<typeof handleAgentEvent>[0],
       evt.payload as AgentEventPayload | undefined,
     );
+    host.executionWatchdog.lastProgressAt = Date.now();
     return;
   }
 
   if (evt.event === "chat") {
     const payload = evt.payload as ChatEventPayload | undefined;
     if (payload?.sessionKey && payload.message) {
-      const preview = extractText(payload.message);
+      const preview = extractText(payload.message) ?? "";
       host.sandboxChatEvents = {
         ...host.sandboxChatEvents,
         [payload.sessionKey]: preview,
@@ -377,6 +454,43 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     if (resolved) {
       host.execApprovalQueue = removeExecApproval(host.execApprovalQueue, resolved.id);
     }
+    return;
+  }
+
+  if (evt.event === "task_plan.execution.trigger") {
+    const payload = (evt.payload as TaskPlanExecutionTriggerPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey) {
+      return;
+    }
+    if (host.sandboxTaskPlan) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        phase: payload.phaseTransition?.to ?? "execution",
+        executionGraph:
+          payload.executionGraph && Object.keys(payload.executionGraph).length > 0
+            ? {
+                orderedTodoIds: payload.executionGraph.orderedTodoIds ?? [],
+                readyTodoIds: payload.executionGraph.readyTodoIds ?? [],
+                blockedTodoIds: payload.executionGraph.blockedTodoIds ?? [],
+                blockedBy: payload.executionGraph.blockedBy ?? {},
+              }
+            : host.sandboxTaskPlan.executionGraph,
+      };
+    }
+    const executionPrompt =
+      typeof payload.prompt === "string" && payload.prompt.trim().length > 0
+        ? payload.prompt
+        : "计划已批准。立即进入 execution 阶段，禁止再次规划，按当前 TODO 逐项执行并在每步后汇报结果。";
+    host.executionWatchdog.lastProgressAt = Date.now();
+    if (host.chatSending || Boolean(host.chatStream?.trim())) {
+      host.chatMessage = executionPrompt;
+      host.executionAutoQueued = true;
+      return;
+    }
+    host.executionAutoQueued = false;
+    host.chatMessage = executionPrompt;
+    void host.handleSendChat();
     return;
   }
 

@@ -19,6 +19,7 @@ import type { SecretInputMode } from "./onboard-types.js";
 const DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434/v1";
 const DEFAULT_CONTEXT_WINDOW = CONTEXT_WINDOW_HARD_MIN_TOKENS;
 const DEFAULT_MAX_TOKENS = 4096;
+const RESPONSES_VERIFY_MIN_OUTPUT_TOKENS = 16;
 const VERIFY_TIMEOUT_MS = 30_000;
 
 function normalizeContextWindowForCustomModel(value: unknown): number {
@@ -375,7 +376,8 @@ export async function requestOpenAiResponsesVerification(params: {
     body: {
       model: params.modelId,
       input: [{ type: "message", role: "user", content: "Hi" }],
-      max_output_tokens: 1,
+      // Some OpenAI-compatible gateways enforce a minimum >=16.
+      max_output_tokens: RESPONSES_VERIFY_MIN_OUTPUT_TOKENS,
       stream: false,
     },
   });

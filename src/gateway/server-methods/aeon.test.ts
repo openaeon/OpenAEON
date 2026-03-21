@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getSystemStatus: vi.fn(),
   loadConfig: vi.fn(),
   loadPlanDigest: vi.fn(),
+  lookupDeliveryRecords: vi.fn(),
 }));
 
 vi.mock("node:fs/promises", () => ({
@@ -26,6 +27,10 @@ vi.mock("../../config/config.js", () => ({
 
 vi.mock("../../agents/planner-context.js", () => ({
   loadPlanDigest: mocks.loadPlanDigest,
+}));
+
+vi.mock("../aeon-delivery-log.js", () => ({
+  lookupDeliveryRecords: mocks.lookupDeliveryRecords,
 }));
 
 vi.mock("../../agents/pi-embedded-runner/runs.js", () => ({
@@ -65,6 +70,7 @@ describe("aeon.status", () => {
     });
     mocks.loadConfig.mockReturnValue({});
     mocks.loadPlanDigest.mockResolvedValue(undefined);
+    mocks.lookupDeliveryRecords.mockResolvedValue([]);
 
     const respond = vi.fn();
     await aeonHandlers["aeon.status"]({
@@ -78,10 +84,12 @@ describe("aeon.status", () => {
     const payload = respond.mock.calls[0]?.[1] as Record<string, unknown>;
     expect(payload.schemaVersion).toBe(3);
     expect(payload.telemetry).toBeDefined();
+    expect((payload.telemetry as Record<string, unknown>).v4).toBeDefined();
     expect(payload.legacy).toBeDefined();
     expect(payload.consciousness).toBeDefined();
 
     const telemetry = payload.telemetry as {
+      v4: Record<string, unknown>;
       cognitiveState: Record<string, unknown>;
       evolution: Record<string, unknown>;
     };
@@ -95,6 +103,11 @@ describe("aeon.status", () => {
     expect(typeof telemetry.cognitiveState.epistemicLabel).toBe("string");
     expect(typeof telemetry.cognitiveState.impactScale).toBe("string");
     expect(typeof telemetry.cognitiveState.decisionConfidenceBand).toBe("string");
+    expect(telemetry.v4.evidence).toBeDefined();
+    expect(telemetry.v4.inference).toBeDefined();
+    expect(telemetry.v4.confidence).toBeDefined();
+    expect(telemetry.v4.curve).toBeDefined();
+    expect(telemetry.v4.autospawn).toBeDefined();
   });
 });
 
@@ -142,5 +155,28 @@ describe("aeon.* introspection methods", () => {
     expect(intentPayload.goalDrift).toBeDefined();
     expect(ethicsPayload.charter).toBeDefined();
     expect(ethicsPayload.adjudication).toBeDefined();
+  });
+
+  it("forwards pipelineType filter to aeon.execution.lookup", async () => {
+    mocks.lookupDeliveryRecords.mockResolvedValueOnce([]);
+    const respond = vi.fn();
+    await aeonHandlers["aeon.execution.lookup"]({
+      params: { sessionKey: "agent:main:main", pipelineType: "deconfliction", limit: 10 },
+      respond,
+      context: makeContext(),
+      req: { type: "req", id: "aeon-lookup-test", method: "aeon.execution.lookup" },
+    } as never);
+
+    expect(mocks.lookupDeliveryRecords).toHaveBeenCalledWith({
+      runId: undefined,
+      sessionKey: "agent:main:main",
+      pipelineType: "deconfliction",
+      limit: 10,
+    });
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ schemaVersion: 1, records: [] }),
+      undefined,
+    );
   });
 });

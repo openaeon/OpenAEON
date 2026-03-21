@@ -315,6 +315,20 @@ export type GatewayToolsConfig = {
   allow?: string[];
 };
 
+export type GatewayLanePolicyConfig = {
+  maxInFlight?: number;
+  queueLimit?: number;
+  timeoutMs?: number;
+  retryBudget?: number;
+  dropIfSlow?: boolean;
+};
+
+export type GatewayLanesConfig = {
+  chat_lane?: GatewayLanePolicyConfig;
+  agent_lane?: GatewayLanePolicyConfig;
+  tool_lane?: GatewayLanePolicyConfig;
+};
+
 export type GatewayConfig = {
   /** Single multiplexed port for Gateway WS + HTTP (default: 18789). */
   port?: number;
@@ -356,6 +370,8 @@ export type GatewayConfig = {
   allowRealIpFallback?: boolean;
   /** Tool access restrictions for HTTP /tools/invoke endpoint. */
   tools?: GatewayToolsConfig;
+  /** Logical broadcast lanes for chat/agent/tool prioritization and throttling. */
+  lanes?: GatewayLanesConfig;
   /**
    * Channel health monitor interval in minutes.
    * Periodically checks channel health and restarts unhealthy channels.

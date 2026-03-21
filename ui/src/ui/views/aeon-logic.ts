@@ -1,7 +1,9 @@
 import { html, nothing } from "lit";
 import { t } from "../../i18n/index.ts";
 import { renderConsciousnessStream } from "./chat/components/consciousness-stream.ts";
+import { hudStyles } from "./chat/styles/hud.ts";
 import { renderMemoryGraph } from "./chat/components/memory-graph.ts";
+import { renderPeanoMap } from "./chat/components/peano-map.ts";
 
 export interface AeonLogicOptions {
   loading: boolean;
@@ -19,7 +21,10 @@ export interface AeonLogicOptions {
   cognitiveLog?: import("../types.ts").CognitiveLogEntry[];
   liveThinking?: string | null;
   activeTab?: "logic" | "memory";
+  viewMode?: "narrative" | "evidence";
   onTabChange?: (tab: "logic" | "memory") => void;
+  onViewModeChange?: (mode: "narrative" | "evidence") => void;
+  onBacktrack?: (runId: string) => void;
 }
 
 type ParsedLogicLine = {
@@ -93,20 +98,26 @@ function renderIdentityTimeline(log: import("../types.ts").CognitiveLogEntry[] |
   }
   return html`
     <div class="aeon-life-timeline">
-      ${timeline.map(
-        (entry) => html`
+      ${timeline.map((entry) => {
+        const typeIcon =
+          entry.type === "anomaly" ? "⚠" :
+          entry.type === "dreaming" ? "⌬" :
+          entry.type === "reflection" ? "∿" :
+          entry.type === "synthesis" ? "❖" :
+          "⚬";
+        return html`
           <article class="aeon-life-timeline__item">
             <div class="aeon-life-timeline__dot"></div>
             <div class="aeon-life-timeline__body">
               <div class="aeon-life-timeline__head">
-                <strong>${timelineTypeLabel(entry.type)}</strong>
+                <strong>${typeIcon} ${timelineTypeLabel(entry.type)}</strong>
                 <span>${new Date(entry.timestamp).toLocaleTimeString()}</span>
               </div>
               <div class="aeon-life-timeline__text">${entry.content}</div>
             </div>
           </article>
-        `,
-      )}
+        `;
+      })}
     </div>
   `;
 }
@@ -141,6 +152,7 @@ function localizeEnumValue(value: string): string {
 export function renderAeonLogic(params: AeonLogicOptions) {
   const status = params.systemStatus;
   const telemetry = status?.telemetry;
+  const telemetryV4 = telemetry?.v4;
   const cognitive = telemetry?.cognitiveState ?? status?.cognitiveState;
   const evolution = telemetry?.evolution ?? status?.evolution;
   const system = status?.system;
@@ -156,12 +168,18 @@ export function renderAeonLogic(params: AeonLogicOptions) {
   const identityContinuity = status?.consciousness?.selfKernel?.identityContinuityScore ?? 0;
   const goalDrift = status?.consciousness?.selfKernel?.goalDriftScore ?? 0;
   const calibration = status?.consciousness?.selfKernel?.epistemicCalibrationScore ?? 0;
-  const trusted = status?.consciousness?.charter?.trusted;
+  const trusted =
+    guardrailDecision === "BLOCK"
+      ? false
+      : guardrailDecision === "ALLOW" || guardrailDecision === "SOFT_WARN"
+        ? true
+        : null;
   const epistemic =
-    status?.consciousness?.epistemic?.lastLabel ?? cognitive?.epistemicLabel ?? "UNKNOWN";
+    status?.consciousness?.epistemic?.epistemicLabel ?? cognitive?.epistemicLabel ?? "UNKNOWN";
 
   const recommendSeal = memorySaturation >= 80;
   const activeTab = params.activeTab ?? "logic";
+  const viewMode = params.viewMode ?? "narrative";
   const logicLines = parseLogicLines(params.content ?? "", params.userDraft ?? "");
   const hitLines = logicLines.filter((line) => line.highlighted);
   const renderLines = (hitLines.length > 0 ? hitLines : logicLines).slice(0, 36);
@@ -183,6 +201,7 @@ export function renderAeonLogic(params: AeonLogicOptions) {
 
   return html`
     <style>
+      \${hudStyles.cssText}
       .aeon-life {
         display: grid;
         gap: 16px;
@@ -336,6 +355,7 @@ export function renderAeonLogic(params: AeonLogicOptions) {
         display: flex;
         gap: 8px;
         margin-bottom: 12px;
+        flex-wrap: wrap;
       }
       .aeon-life-tab {
         border: 1px solid var(--border-color);
@@ -350,6 +370,32 @@ export function renderAeonLogic(params: AeonLogicOptions) {
         color: #d1fae5;
         border-color: rgba(45, 212, 191, 0.45);
         background: rgba(45, 212, 191, 0.12);
+      }
+      .aeon-life-evidence {
+        display: grid;
+        gap: 10px;
+      }
+      .aeon-life-evidence-block {
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(2, 6, 23, 0.35);
+      }
+      .aeon-life-evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .aeon-life-evidence-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        font-size: 12px;
+        padding: 4px 0;
+        border-bottom: 1px dashed rgba(148, 163, 184, 0.18);
+      }
+      .aeon-life-evidence-row:last-child {
+        border-bottom: none;
       }
       .aeon-life-logic {
         display: grid;
@@ -386,9 +432,16 @@ export function renderAeonLogic(params: AeonLogicOptions) {
         color: var(--text-color);
       }
       .aeon-life-side {
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: 12px;
         align-content: start;
+        max-height: calc(100vh - 240px);
+        overflow-y: auto;
+      }
+      .aeon-life-side .consciousness-stream {
+        min-height: 420px;
+        flex: 1;
       }
       .aeon-life-kv {
         display: grid;
@@ -440,8 +493,10 @@ export function renderAeonLogic(params: AeonLogicOptions) {
       }
       .aeon-life-timeline__text {
         margin-top: 6px;
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: 11px;
+        line-height: 1.5;
+        font-family: var(--fractal-font-mono);
+        color: #e2e8f0;
       }
       .aeon-life-manual {
         position: fixed;
@@ -565,6 +620,12 @@ export function renderAeonLogic(params: AeonLogicOptions) {
       <section class="aeon-life-main">
         <article class="aeon-life-card">
           <div class="aeon-life-tabs">
+            <button class="aeon-life-tab ${viewMode === "narrative" ? "active" : ""}" @click=${() => params.onViewModeChange?.("narrative")}>
+              Narrative
+            </button>
+            <button class="aeon-life-tab ${viewMode === "evidence" ? "active" : ""}" @click=${() => params.onViewModeChange?.("evidence")}>
+              Evidence
+            </button>
             <button class="aeon-life-tab ${activeTab === "logic" ? "active" : ""}" @click=${() => params.onTabChange?.("logic")}>
               ${t("chat.aeonTabLogicTissue")}
             </button>
@@ -578,9 +639,58 @@ export function renderAeonLogic(params: AeonLogicOptions) {
               ? html`<div class="muted">${t("chat.aeonBooting")}</div>`
               : params.error
                 ? html`<div class="callout danger">${params.error}</div>`
-                : activeTab === "memory"
-                  ? html`${renderMemoryGraph({ graph: evolution?.memoryGraph, active: true })}`
-                  : html`
+                : viewMode === "evidence"
+                  ? html`
+                    <section class="aeon-life-evidence">
+                      ${renderPeanoMap({ 
+                        trajectory: status?.telemetry?.evolution?.peanoTrajectory ?? status?.peanoTrajectory, 
+                        active: true 
+                      })}
+                      <article class="aeon-life-evidence-block">
+                        <h4 style="margin:0 0 8px;">telemetry.v4.evidence</h4>
+                        <div class="aeon-life-evidence-grid">
+                          <div class="aeon-life-evidence-row"><span>windowMs</span><strong>${telemetryV4?.evidence.windowMs ?? 0}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>eventCount</span><strong>${telemetryV4?.evidence.eventCount ?? 0}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>execution.successRate</span><strong>${(telemetryV4?.evidence.execution.successRate ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>execution.rollbackRate</span><strong>${(telemetryV4?.evidence.execution.rollbackRate ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>conflict.density</span><strong>${(telemetryV4?.evidence.conflict.density ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>memory.writeValidityRate</span><strong>${(telemetryV4?.evidence.memory.writeValidityRate ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>deconfliction.llmCoverage</span><strong>${(telemetryV4?.evidence.deconfliction.llmCoverage ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>deconfliction.fallbackRate</span><strong>${(telemetryV4?.evidence.deconfliction.fallbackRate ?? 0).toFixed(3)}</strong></div>
+                        </div>
+                      </article>
+                      <article class="aeon-life-evidence-block">
+                        <h4 style="margin:0 0 8px;">telemetry.v4.inference + confidence</h4>
+                        <div class="aeon-life-evidence-grid">
+                          <div class="aeon-life-evidence-row"><span>inference.selfAwarenessIndex</span><strong>${(telemetryV4?.inference.selfAwarenessIndex ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>inference.integrityScore</span><strong>${(telemetryV4?.inference.integrityScore ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>inference.autonomyScore</span><strong>${(telemetryV4?.inference.autonomyScore ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>inference.riskScore</span><strong>${(telemetryV4?.inference.riskScore ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>confidence.overall</span><strong>${(telemetryV4?.confidence.overall ?? 0).toFixed(3)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>confidence.coverage</span><strong>${(telemetryV4?.confidence.evidenceCoverage ?? 0).toFixed(3)}</strong></div>
+                        </div>
+                      </article>
+                      <article class="aeon-life-evidence-block">
+                        <h4 style="margin:0 0 8px;">telemetry.v4.curve + autospawn</h4>
+                        <div class="aeon-life-evidence-grid">
+                          <div class="aeon-life-evidence-row"><span>curveType/order</span><strong>${telemetryV4?.curve.curveType ?? "hilbert"}/${telemetryV4?.curve.curveOrder ?? 0}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>projection</span><strong>${telemetryV4?.curve.projectionMethod ?? "deterministic-2d"}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>projectionSeed</span><strong>${telemetryV4?.curve.projectionSeed ?? 0}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>curve.point</span><strong>(${telemetryV4?.curve.point.x ?? 0}, ${telemetryV4?.curve.point.y ?? 0})</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.enabled</span><strong>${String(telemetryV4?.autospawn.enabled ?? false)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.circuitOpen</span><strong>${String(telemetryV4?.autospawn.circuitOpen ?? false)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.inFlight</span><strong>${telemetryV4?.autospawn.inFlight ?? 0}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.triggerCount</span><strong>${telemetryV4?.autospawn.triggerCount ?? 0}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.watchdogActive</span><strong>${String(telemetryV4?.autospawn.watchdogActive ?? false)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.degraded</span><strong>${String(telemetryV4?.autospawn.degraded ?? false)}</strong></div>
+                          <div class="aeon-life-evidence-row"><span>autospawn.retryCount</span><strong>${telemetryV4?.autospawn.retryCount ?? 0}</strong></div>
+                        </div>
+                      </article>
+                    </section>
+                  `
+                  : activeTab === "memory"
+                    ? html`${renderMemoryGraph({ graph: evolution?.memoryGraph, active: true })}`
+                    : html`
                     <div class="aeon-life-note">
                       ${
                         hitLines.length > 0
@@ -644,7 +754,14 @@ export function renderAeonLogic(params: AeonLogicOptions) {
             ${renderIdentityTimeline(streamLog)}
           </article>
 
-          ${renderConsciousnessStream({ log: streamLog, active: true })}
+          ${renderConsciousnessStream({ 
+            log: streamLog, 
+            active: true,
+            onBacktrack: params.onBacktrack,
+            epiphanyFactor: telemetryV4?.inference.riskScore != null ? status?.epiphanyFactor : undefined, // Check if we have systemStatus
+            memorySaturation: status?.memorySaturation,
+            riskScore: telemetryV4?.inference.riskScore,
+          })}
         </aside>
       </section>
     </section>

@@ -58,6 +58,8 @@ export const select = vi.fn().mockResolvedValue("node") as unknown as MockFn;
 export const note = vi.fn() as unknown as MockFn;
 export const writeConfigFile = vi.fn().mockResolvedValue(undefined) as unknown as MockFn;
 export const resolveOPENAEONPackageRoot = vi.fn().mockResolvedValue(null) as unknown as MockFn;
+/** @deprecated Use resolveOPENAEONPackageRoot. */
+export const resolveOpenClawPackageRoot = resolveOPENAEONPackageRoot;
 export const runGatewayUpdate = vi
   .fn()
   .mockResolvedValue(createGatewayUpdateResult()) as unknown as MockFn;

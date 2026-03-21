@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Mocks ---
 
-const agentSpy = vi.fn(async () => ({ runId: "run-requester", status: "ok" }));
+const agentSpy = vi.fn<(req: unknown) => Promise<{ runId: string; status: string }>>(
+  async () => ({ runId: "run-requester", status: "ok" }),
+);
 const progressAnnounceSpy = vi.fn().mockResolvedValue(true);
 
 vi.mock("../gateway/call.js", () => ({
-  callGateway: vi.fn(async (req: any) => {
-    if (req.method === "agent") return await agentSpy(req);
+  callGateway: vi.fn(async (req: unknown) => {
+    const payload = req as { method?: string };
+    if (payload.method === "agent") return await agentSpy(req);
     return {};
   }),
 }));
@@ -111,11 +114,19 @@ describe("Subagent Progress Monitoring", () => {
 
       expect(success).toBe(true);
       expect(agentSpy).toHaveBeenCalledTimes(1);
-      const call = agentSpy.mock.calls[0][0];
-      expect(call.params.sessionKey).toBe("agent:main:main");
-      expect(call.params.message).toContain("Processing step 4...");
-      expect(call.params.internalEvents[0].type).toBe("task_progress");
-      expect(call.params.internalEvents[0].progress).toBe("Processing step 4...");
+      const [call] = agentSpy.mock.calls[0] ?? [];
+      expect(call).toBeDefined();
+      const payload = call as {
+        params: {
+          sessionKey: string;
+          message: string;
+          internalEvents: Array<{ type: string; progress?: string }>;
+        };
+      };
+      expect(payload.params.sessionKey).toBe("agent:main:main");
+      expect(payload.params.message).toContain("Processing step 4...");
+      expect(payload.params.internalEvents[0].type).toBe("task_progress");
+      expect(payload.params.internalEvents[0].progress).toBe("Processing step 4...");
     });
   });
 

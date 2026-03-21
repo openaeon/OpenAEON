@@ -167,3 +167,10 @@ export function resolvePreferredOPENAEONTmpDir(
     return ensureTrustedFallbackDir();
   }
 }
+
+/** @deprecated Use POSIX_OPENAEON_TMP_DIR. */
+export const POSIX_OpenAEON_TMP_DIR = POSIX_OPENAEON_TMP_DIR;
+/** @deprecated Use resolvePreferredOPENAEONTmpDir. */
+export const resolvePreferredOpenAEONTmpDir = resolvePreferredOPENAEONTmpDir;
+/** @deprecated Use resolvePreferredOPENAEONTmpDir. */
+export const resolvePreferredOpenClawTmpDir = resolvePreferredOPENAEONTmpDir;

@@ -43,6 +43,20 @@ function normalizeFiniteInteger(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : null;
 }
 
+/**
+ * FCA Layer 1: Instruction Normalization
+ * Maps raw input to a standardized command schema for downstream cognitive processing.
+ */
+function normalizeInstruction(message: string): string {
+  const trimmed = message.trim();
+  if (trimmed.startsWith("/") || trimmed.startsWith("!")) {
+    return trimmed; // Already a command
+  }
+  // If it looks like a natural language task but lacks structure, we could wrap it.
+  // For now, we ensure basic sanitization and prepare it for Layer 2 Intent Extraction.
+  return trimmed;
+}
+
 function resolveVoiceTranscriptFingerprint(obj: Record<string, unknown>, text: string): string {
   const eventId =
     normalizeNonEmptyString(obj.eventId) ??
@@ -138,6 +152,28 @@ function compactNotificationEventText(raw: string) {
 }
 
 type LoadedSessionEntry = ReturnType<typeof loadSessionEntry>;
+
+async function prefixMessageWithTaskPlan(params: {
+  message: string;
+  sessionKey: string;
+  cfg: OPENAEONConfig;
+  logGateway: NodeEventContext["logGateway"];
+}): Promise<string> {
+  const { message, sessionKey, cfg, logGateway } = params;
+  try {
+    const agentId = resolveSessionAgentId({ sessionKey, config: cfg });
+    const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
+    const digest = await loadPlanDigest(workspaceDir, sessionKey);
+    if (digest) {
+      return `${digest}\n\n${message}`;
+    }
+  } catch (err) {
+    logGateway.warn(
+      `node-events: failed to load task plan digest for session ${sessionKey}: ${String(err)}`,
+    );
+  }
+  return message;
+}
 
 async function touchSessionStore(params: {
   cfg: ReturnType<typeof loadConfig>;
@@ -305,12 +341,12 @@ export const handleNodeEvent = async (ctx: NodeEventContext, nodeId: string, evt
         clientRunId: `voice-${randomUUID()}`,
       });
 
-      const text = await prefixMessageWithTaskPlan({
+      const text = normalizeInstruction(await prefixMessageWithTaskPlan({
         message: rawText,
         sessionKey: canonicalKey,
         cfg,
         logGateway: ctx.logGateway,
-      });
+      }));
 
       void agentCommand(
         {
@@ -380,27 +416,6 @@ export const handleNodeEvent = async (ctx: NodeEventContext, nodeId: string, evt
         }
       }
 
-      async function prefixMessageWithTaskPlan(params: {
-        message: string;
-        sessionKey: string;
-        cfg: OPENAEONConfig;
-        logGateway: NodeEventContext["logGateway"];
-      }): Promise<string> {
-        const { message, sessionKey, cfg, logGateway } = params;
-        try {
-          const agentId = resolveSessionAgentId({ sessionKey, config: cfg });
-          const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
-          const digest = await loadPlanDigest(workspaceDir, sessionKey);
-          if (digest) {
-            return `${digest}\n\n${message}`;
-          }
-        } catch (err) {
-          logGateway.debug(
-            `node-events: failed to load task plan digest for session ${sessionKey}: ${String(err)}`,
-          );
-        }
-        return message;
-      }
       if (!message) {
         return;
       }
@@ -467,7 +482,7 @@ export const handleNodeEvent = async (ctx: NodeEventContext, nodeId: string, evt
 
       void agentCommand(
         {
-          message,
+          message: normalizeInstruction(message),
           images,
           sessionId,
           sessionKey: canonicalKey,

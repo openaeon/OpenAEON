@@ -1,5 +1,9 @@
 import { EnvHttpProxyAgent } from "undici";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as browserActions from "../../browser/client-actions.js";
+import * as browserClient from "../../browser/client.js";
+import * as browserConfig from "../../browser/config.js";
+import * as configStore from "../../config/config.js";
 import { withFetchPreconnect } from "../../test-utils/fetch-mock.js";
 import { createWebFetchTool, createWebSearchTool } from "./web-tools.js";
 
@@ -551,5 +555,77 @@ describe("web_search external content wrapping", () => {
     // Citations are URLs - should NOT be wrapped for tool chaining
     expect(details.citations?.[0]).toBe(citation);
     expect(details.citations?.[0]).not.toContain("<<<EXTERNAL_UNTRUSTED_CONTENT>>>");
+  });
+});
+
+describe("web_search browser fallback", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("uses browser fallback for brave when API key is missing", async () => {
+    vi.stubEnv("BRAVE_API_KEY", "");
+    vi.spyOn(configStore, "loadConfig").mockReturnValue({} as ReturnType<typeof configStore.loadConfig>);
+    vi.spyOn(browserConfig, "resolveBrowserConfig").mockReturnValue({
+      enabled: true,
+      defaultProfile: "",
+    } as ReturnType<typeof browserConfig.resolveBrowserConfig>);
+    vi.spyOn(browserClient, "browserStatus").mockResolvedValue({
+      running: true,
+    } as Awaited<ReturnType<typeof browserClient.browserStatus>>);
+    vi.spyOn(browserActions, "browserNavigate").mockResolvedValue({
+      targetId: "tab-1",
+      url: "https://duckduckgo.com/?q=test",
+    } as Awaited<ReturnType<typeof browserActions.browserNavigate>>);
+    const browserActMock = vi.spyOn(browserActions, "browserAct");
+    browserActMock
+      .mockResolvedValueOnce({
+        ok: true,
+        targetId: "tab-1",
+      } as Awaited<ReturnType<typeof browserActions.browserAct>>)
+      .mockResolvedValueOnce({
+        ok: true,
+        targetId: "tab-1",
+        result: [{ title: "Example", url: "https://example.com", description: "snippet" }],
+      } as Awaited<ReturnType<typeof browserActions.browserAct>>);
+    vi.spyOn(browserClient, "browserCloseTab").mockResolvedValue();
+
+    const tool = createWebSearchTool({
+      config: {
+        tools: {
+          web: {
+            search: {
+              provider: "brave",
+            },
+          },
+        },
+      },
+      sandboxed: true,
+    });
+    const result = await tool?.execute?.("call-1", { query: "fallback test" });
+    expect(result?.details).toMatchObject({
+      provider: "browser_fallback",
+      fallback: true,
+      count: 1,
+    });
+  });
+
+  it("respects browser fallback disable switch", async () => {
+    vi.stubEnv("BRAVE_API_KEY", "");
+    const tool = createWebSearchTool({
+      config: {
+        tools: {
+          web: {
+            search: {
+              provider: "brave",
+              browserFallback: { enabled: false },
+            },
+          },
+        },
+      },
+      sandboxed: true,
+    });
+    const result = await tool?.execute?.("call-1", { query: "no fallback" });
+    expect(result?.details).toMatchObject({ error: "missing_brave_api_key" });
   });
 });

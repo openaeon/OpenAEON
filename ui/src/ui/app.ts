@@ -277,12 +277,36 @@ export class OPENAEONApp extends LitElement {
   @state() aeonEternalMode = this.settings.aeonEternalMode ?? false;
   @state() aeonEternalModeSource: "url" | "session" | "local" | "default" = "default";
   aeonEternalHydratedSessionKey: string | null = null;
+  @state() aeonActiveTab: "logic" | "memory" = "logic";
+  @state() aeonViewMode: "narrative" | "evidence" = "narrative";
   @state() aeonManualVisible = false;
 
   // Sandbox / Deep Agents task plan state
   @state() sandboxTaskPlan: import("./views/sandbox.js").TaskPlanSnapshot | null = null;
   @state() sandboxTaskPlanLoading = false;
   @state() sandboxTaskPlanError: string | null = null;
+  @state() executionWatchdog: {
+    active: boolean;
+    degraded: boolean;
+    reason: string | null;
+    retryCount: number;
+    stagnantPolls: number;
+    startedAt: number | null;
+    lastProgressAt: number | null;
+    lastDigest: string | null;
+    lastRetryAt: number | null;
+  } = {
+    active: false,
+    degraded: false,
+    reason: null,
+    retryCount: 0,
+    stagnantPolls: 0,
+    startedAt: null,
+    lastProgressAt: null,
+    lastDigest: null,
+    lastRetryAt: null,
+  };
+  executionAutoQueued = false;
   /** Suppresses automatic task-plan re-fetches; default true to avoid showing stale data on load. Lifted when user sends a real message. */
   sandboxTaskPlanSuppressed = true;
   sandboxPollTimer: ReturnType<typeof setInterval> | null = null;
@@ -732,6 +756,23 @@ export class OPENAEONApp extends LitElement {
     }
   }
 
+  async handleAeonBacktrack(runId: string) {
+    if (!this.client || !this.connected) return;
+    try {
+      this.aeonLogicLoading = true;
+      const result = await this.client.request("aeon.simulate_trace", {
+        runId,
+        sessionKey: this.sessionKey,
+      });
+      console.log("Backtrack simulation result:", result);
+      this.handleOpenSidebar(JSON.stringify(result, null, 2));
+    } catch (err) {
+      this.lastError = `Replay failed: ${String(err)}`;
+    } finally {
+      this.aeonLogicLoading = false;
+    }
+  }
+
   async handleAeonLogicCompaction() {
     if (!this.client || !this.connected) return;
     try {
@@ -743,6 +784,14 @@ export class OPENAEONApp extends LitElement {
 
   handleToggleAeonManual(visible: boolean) {
     this.aeonManualVisible = visible;
+  }
+
+  handleAeonTabChange(tab: "logic" | "memory") {
+    this.aeonActiveTab = tab;
+  }
+
+  handleAeonViewModeChange(mode: "narrative" | "evidence") {
+    this.aeonViewMode = mode;
   }
 
   handleToggleChatManual(

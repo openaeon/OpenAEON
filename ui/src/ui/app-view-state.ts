@@ -187,6 +187,7 @@ export type AppViewState = {
   aeonEternalModeSource: "url" | "session" | "local" | "default";
   aeonEternalHydratedSessionKey: string | null;
   aeonActiveTab: "logic" | "memory";
+  aeonViewMode: "narrative" | "evidence";
   aeonManualVisible: boolean;
   chatManualVisible: boolean;
   chatManualMode: ChatManualMode;
@@ -196,6 +197,18 @@ export type AppViewState = {
   sandboxTaskPlan: import("./views/sandbox.js").TaskPlanSnapshot | null;
   sandboxTaskPlanLoading: boolean;
   sandboxTaskPlanError: string | null;
+  executionWatchdog: {
+    active: boolean;
+    degraded: boolean;
+    reason: string | null;
+    retryCount: number;
+    stagnantPolls: number;
+    startedAt: number | null;
+    lastProgressAt: number | null;
+    lastDigest: string | null;
+    lastRetryAt: number | null;
+  };
+  executionAutoQueued: boolean;
   sandboxPollTimer: ReturnType<typeof setInterval> | null;
   sandboxChatEvents: import("./types.ts").SandboxChatEvents;
   sessionsLoading: boolean;
@@ -376,6 +389,8 @@ export type AppViewState = {
   handleAeonLogicRefresh: () => Promise<void>;
   handleAeonLogicCompaction: () => Promise<void>;
   handleAeonTabChange: (tab: "logic" | "memory") => void;
+  handleAeonViewModeChange: (mode: "narrative" | "evidence") => void;
+  handleAeonBacktrack: (runId: string) => Promise<void>;
   handleToggleAeonManual: (visible: boolean) => void;
   handleToggleChatManual: (
     visible: boolean,

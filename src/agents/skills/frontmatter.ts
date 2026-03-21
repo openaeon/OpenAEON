@@ -211,6 +211,9 @@ export function resolveOPENAEONMetadata(
   };
 }
 
+/** @deprecated Use resolveOPENAEONMetadata. */
+export const resolveOpenClawMetadata = resolveOPENAEONMetadata;
+
 export function resolveSkillInvocationPolicy(
   frontmatter: ParsedSkillFrontmatter,
 ): SkillInvocationPolicy {

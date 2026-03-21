@@ -12,10 +12,19 @@ import {
   setConsciousnessRuntimePolicy,
   type AeonStateScope,
 } from "../aeon-state.js";
+import {
+  diagnoseCognitiveGap as diagnoseEvolutionGap,
+  simulateThoughtTrace,
+} from "../server-evolution.js";
 import type { GatewayRequestHandlers } from "./types.js";
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { lookupDeliveryRecords } from "../aeon-delivery-log.js";
 import { loadSessionEntry } from "../session-utils.js";
+import {
+  calculateStrictCurvePointFromScalar,
+  DEFAULT_CURVE_ORDER,
+  DEFAULT_PROJECTION_SEED,
+} from "../../utils/peano.js";
 
 /**
  * AEON PROPHET: Cognitive Status Gateway Handlers
@@ -189,6 +198,7 @@ export const aeonHandlers: GatewayRequestHandlers = {
 
       const epiphanyFactor = calculateEpiphanyFactor(chaosScore, memorySaturation, neuralDepth);
       const evolutionState = getAeonEvolutionState(scope);
+      const cogGap = diagnoseEvolutionGap(scope);
       const distillState = await readMemoryDistillState({ workspaceDir }).catch(() => null);
       const deliveryLatest = (
         await lookupDeliveryRecords({
@@ -219,6 +229,7 @@ export const aeonHandlers: GatewayRequestHandlers = {
       const telemetry = {
         generatedAt: Date.now(),
         source: "aeon.status",
+        v4: evolutionState.telemetryV4,
         cognitiveState: {
           entropy: cognitiveEntropy,
           topo: calculatePeanoTraversedPoint(cognitiveEntropy),
@@ -241,6 +252,8 @@ export const aeonHandlers: GatewayRequestHandlers = {
           intentLayer: "turn",
           impactScale: evolutionState.consciousness.impactLens.impactScale,
           decisionConfidenceBand: evolutionState.consciousness.decisionCard.decisionConfidenceBand,
+          cognitiveGaps: cogGap.gaps,
+          gapSeverity: cogGap.severity,
         },
         evolution: {
           lastDreamingAt: evolutionState.lastDreamingAt,
@@ -321,12 +334,20 @@ export const aeonHandlers: GatewayRequestHandlers = {
                   persistedAt: deliveryLatest.persistedAt ?? null,
                   artifactRefs: deliveryLatest.artifactRefs ?? [],
                   reasonCode: deliveryLatest.reasonCode ?? null,
+                  laneType: deliveryLatest.laneType,
+                  fallback: deliveryLatest.fallback === true,
+                  fallbackReason: deliveryLatest.fallbackReason ?? null,
+                  resumeReason: deliveryLatest.resumeReason ?? null,
+                  guardrail: deliveryLatest.guardrail,
                 }
               : {
                   state: "persist_failed",
                   persistedAt: null,
                   artifactRefs: [],
                   reasonCode: "NO_DELIVERY_RECORD",
+                  fallback: false,
+                  fallbackReason: null,
+                  resumeReason: null,
                 },
           },
           mode: {
@@ -522,7 +543,13 @@ export const aeonHandlers: GatewayRequestHandlers = {
         typeof params.limit === "number" && Number.isFinite(params.limit)
           ? params.limit
           : undefined;
-      const records = await lookupDeliveryRecords({ runId, sessionKey, limit });
+      const pipelineType =
+        params.pipelineType === "chat" ||
+        params.pipelineType === "deconfliction" ||
+        params.pipelineType === "singularity"
+          ? params.pipelineType
+          : undefined;
+      const records = await lookupDeliveryRecords({ runId, sessionKey, pipelineType, limit });
       respond(
         true,
         {
@@ -575,6 +602,22 @@ export const aeonHandlers: GatewayRequestHandlers = {
       });
     }
   },
+  "aeon.simulate_trace": async ({ params, respond }) => {
+    try {
+      const runId = params.runId as string;
+      const sessionKey = (params.sessionKey as string) ?? "main";
+      if (!runId) {
+        return respond(false, undefined, {
+          code: "INVALID_PARAMS",
+          message: "runId is required for trace simulation",
+        });
+      }
+      const result = await simulateThoughtTrace({ runId, sessionKey });
+      respond(true, result);
+    } catch (err) {
+      respond(false, undefined, { code: "INTERNAL_ERROR", message: String(err) });
+    }
+  },
 };
 
 /**
@@ -582,18 +625,16 @@ export const aeonHandlers: GatewayRequestHandlers = {
  * This is a deterministic mapping to ensure UI stability.
  */
 export function calculatePeanoTraversedPoint(entropy: number) {
-  const t = (Date.now() / 10000) % 1; // 0-1 loop
-  const res = 8; // Resolution of the "grid"
-
-  // Pseudo-Peano space filling logic
-  // We use entropy to drift the "scan line" speed and depth
-  const phase = t * Math.PI * 2;
-  const drift = (entropy / 100) * 0.2;
-
+  const normalized = Math.max(0, Math.min(1, entropy / 100));
+  const point = calculateStrictCurvePointFromScalar(normalized, { order: DEFAULT_CURVE_ORDER });
   return {
-    x: Math.max(0, Math.min(1, Math.sin(phase) * 0.4 + 0.5 + Math.cos(phase * 2) * drift)),
-    y: Math.max(0, Math.min(1, Math.cos(phase * 0.7) * 0.4 + 0.5 + Math.sin(phase * 3) * drift)),
-    z: Math.sin(phase * 0.3) * 0.5 + 0.5,
+    x: point.x,
+    y: point.y,
+    z: normalized,
+    curveType: "hilbert",
+    curveOrder: DEFAULT_CURVE_ORDER,
+    projectionMethod: "deterministic_weighted_projection_2d",
+    projectionSeed: DEFAULT_PROJECTION_SEED,
   };
 }
 

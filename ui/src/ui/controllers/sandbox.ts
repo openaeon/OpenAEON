@@ -15,6 +15,7 @@ export type SandboxState = {
 type TaskPlanReadResponse = {
   ok: boolean;
   plan: TaskPlanSnapshot | null;
+  executionGraph?: TaskPlanSnapshot["executionGraph"];
   error?: string;
 };
 
@@ -40,7 +41,14 @@ export async function loadSandboxTaskPlan(state: SandboxState): Promise<void> {
       sessionKey: state.sessionKey,
     });
     if (res?.ok) {
-      state.sandboxTaskPlan = res.plan ?? null;
+      if (res.plan) {
+        state.sandboxTaskPlan = {
+          ...res.plan,
+          executionGraph: res.executionGraph ?? res.plan.executionGraph,
+        };
+      } else {
+        state.sandboxTaskPlan = null;
+      }
     } else {
       state.sandboxTaskPlan = null;
     }

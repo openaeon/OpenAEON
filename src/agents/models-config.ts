@@ -197,3 +197,6 @@ export async function ensureOPENAEONModelsJson(
   await fs.writeFile(targetPath, next, { mode: 0o600 });
   return { agentDir, wrote: true };
 }
+
+/** @deprecated Use ensureOPENAEONModelsJson. */
+export const ensureOpenClawModelsJson = ensureOPENAEONModelsJson;

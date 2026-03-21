@@ -692,6 +692,8 @@ export type LogEntry = {
   meta?: Record<string, unknown> | null;
 };
 
+export type CurvePoint2D = { x: number; y: number };
+
 export type AeonSystemStatus = {
   uptime: number;
   cpuLoad: number[];
@@ -880,6 +882,8 @@ export type ConsciousnessSelfKernelTelemetry = {
 
 export type ConsciousnessEpistemicTelemetry = {
   epistemicLabel: EpistemicLabel;
+  /** Back-compat alias for older UI fields. */
+  lastLabel?: EpistemicLabel | null;
   confidence: number;
   highConfidenceWithoutLabelBlocked: boolean;
   unknownRate: number;
@@ -972,6 +976,16 @@ export type AeonExecutionDelivery = {
   persistedAt: number | null;
   artifactRefs: string[];
   reasonCode: string | null;
+  laneType?: "chat_lane" | "agent_lane" | "tool_lane";
+  fallback?: boolean;
+  fallbackReason?: string | null;
+  resumeReason?: string | null;
+  guardrail?: {
+    decision?: GuardrailDecision;
+    severity?: "low" | "medium" | "high";
+    requiresHuman?: boolean;
+    triggerRule?: string;
+  };
 };
 
 export type AeonEternalModeStatus = {
@@ -994,6 +1008,7 @@ export type AeonStatusResult = {
   memorySaturation: number;
   neuralDepth: number;
   cognitiveEntropy: number;
+  peanoTrajectory?: CurvePoint2D[];
   chaosScore: number;
   dialecticStage?: "thesis" | "antithesis" | "synthesis";
   cognitiveState?: {
@@ -1023,6 +1038,95 @@ export type AeonStatusResult = {
   telemetry?: {
     generatedAt: number;
     source: string;
+    v4?: {
+      evidence: {
+        windowMs: number;
+        decayHalfLifeMs?: number;
+        eventCount: number;
+        execution: { successRate: number; rollbackRate: number };
+        conflict: { density: number; moduleSpread: number };
+        intervention: { manualRate: number };
+        memory: { writeValidityRate: number };
+        deconfliction: { llmCoverage: number; fallbackRate: number };
+        provenance: {
+          byType: Record<string, number>;
+          windowStartAt: number;
+          windowEndAt: number;
+        };
+      };
+      inference: {
+        selfAwarenessIndex: number;
+        integrityScore: number;
+        autonomyScore: number;
+        riskScore: number;
+        mode: "stabilize" | "balanced" | "explore";
+      };
+      confidence: {
+        overall: number;
+        evidenceCoverage: number;
+        byMetric: Record<string, number>;
+      };
+      curve: {
+        curveType: "hilbert";
+        curveOrder: number;
+        projectionMethod: string;
+        projectionSeed: number;
+        point: { x: number; y: number };
+      };
+      autospawn: {
+        enabled: boolean;
+        cooldownMinutes: number;
+        perSessionWindowMinutes: number;
+        perSessionLimit: number;
+        perHourLimit: number;
+        maxConcurrent: number;
+        circuitOpen: boolean;
+        lastTriggeredAt: number | null;
+        lastFailureAt: number | null;
+        recentTriggers: number[];
+        recentFailures: number[];
+        inFlight: number;
+        triggerCount: number;
+        blockedByRateLimit: number;
+        blockedByCircuitBreaker: number;
+        watchdogActive: boolean;
+        degraded: boolean;
+        degradedReason?: string | null;
+        retryCount: number;
+      };
+      lane?: {
+        chat_lane: {
+          queueLength: number;
+          inFlight: number;
+          avgDispatchMs: number;
+          dropped: number;
+          retries: number;
+          degraded: boolean;
+          degradedReason?: string | null;
+          updatedAt?: number | null;
+        };
+        agent_lane: {
+          queueLength: number;
+          inFlight: number;
+          avgDispatchMs: number;
+          dropped: number;
+          retries: number;
+          degraded: boolean;
+          degradedReason?: string | null;
+          updatedAt?: number | null;
+        };
+        tool_lane: {
+          queueLength: number;
+          inFlight: number;
+          avgDispatchMs: number;
+          dropped: number;
+          retries: number;
+          degraded: boolean;
+          degradedReason?: string | null;
+          updatedAt?: number | null;
+        };
+      };
+    };
     cognitiveState: NonNullable<AeonStatusResult["cognitiveState"]>;
     evolution: NonNullable<AeonStatusResult["evolution"]>;
   };
@@ -1075,6 +1179,7 @@ export type AeonStatusResult = {
     consciousness?: ConsciousnessTelemetry;
     maintenanceDecision?: MaintenanceDecision;
     guardrailDecision?: GuardrailDecision;
+    peanoTrajectory?: CurvePoint2D[];
   };
 };
 
@@ -1117,6 +1222,8 @@ export type AeonMemoryTraceResult = {
 export type AeonExecutionLookupRecord = {
   runId: string;
   sessionKey: string;
+  pipelineType?: "chat" | "deconfliction" | "singularity";
+  laneType?: "chat_lane" | "agent_lane" | "tool_lane";
   state: "running" | "finalizing" | "persisted" | "acknowledged" | "persist_failed";
   updatedAt: number;
   persistedAt?: number;
@@ -1124,6 +1231,23 @@ export type AeonExecutionLookupRecord = {
   taskGoal?: string;
   summary?: string;
   artifactRefs?: string[];
+  fallback?: boolean;
+  fallbackReason?: string;
+  resumeReason?: string;
+  guardrail?: {
+    decision?: GuardrailDecision;
+    severity?: "low" | "medium" | "high";
+    requiresHuman?: boolean;
+    triggerRule?: string;
+  };
+  pauseRecord?: {
+    severity: "low" | "medium" | "high";
+    reason: string;
+    triggerRule?: string;
+    suggestedAction?: string;
+    resumePoint?: string;
+    createdAt: number;
+  };
 };
 
 export type AeonExecutionLookupResult = {
@@ -1143,6 +1267,21 @@ export type FractalThemeState = {
   formulaPhase: "idle" | "active" | "error";
   noiseLevel: number;
   deliveryBand: "pending" | "safe" | "warn";
+};
+
+export type SubagentStatus = "ready" | "blocked" | "in_progress" | "done" | "idle";
+
+export type SubagentViewModel = {
+  todoId: string;
+  ownerAgent?: string;
+  title: string;
+  status: SubagentStatus;
+  blockedBy: string[];
+  lastEvent?: string;
+  updatedAt?: number | null;
+  model?: string;
+  tokenUsage?: number;
+  depthLevel: 1 | 2 | 3 | 4;
 };
 
 export type ChatManualMode = "quick" | "guided";

@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import type { OPENAEONConfig } from "../../config/config.js";
-import { SsrFBlockedError } from "../../infra/net/ssrf.js";
+import { SsrFBlockedError, type SsrFPolicy } from "../../infra/net/ssrf.js";
 import { logDebug } from "../../logger.js";
 import { wrapExternalContent, wrapWebContent } from "../../security/external-content.js";
 import { normalizeSecretInput } from "../../utils/normalize-secret-input.js";
@@ -446,7 +446,42 @@ type WebFetchRuntimeParams = FirecrawlRuntimeParams & {
   cacheTtlMs: number;
   userAgent: string;
   readabilityEnabled: boolean;
+  privateNetworkAllowlist: string[];
 };
+
+function resolvePrivateNetworkAllowlist(cfg?: OPENAEONConfig): string[] {
+  const raw = cfg?.tools?.web?.privateNetwork?.allowlist;
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const normalized = raw
+    .map((entry) => (typeof entry === "string" ? entry.trim().toLowerCase() : ""))
+    .filter((entry) => entry.length > 0);
+  return Array.from(new Set(normalized));
+}
+
+function isHostMatchedByAllowlist(hostname: string, allowlist: readonly string[]): boolean {
+  const normalizedHost = hostname.trim().toLowerCase();
+  if (!normalizedHost || allowlist.length === 0) {
+    return false;
+  }
+  for (const pattern of allowlist) {
+    if (!pattern) {
+      continue;
+    }
+    if (pattern.startsWith("*.")) {
+      const suffix = pattern.slice(2);
+      if (suffix && normalizedHost !== suffix && normalizedHost.endsWith(`.${suffix}`)) {
+        return true;
+      }
+      continue;
+    }
+    if (normalizedHost === pattern) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function toFirecrawlContentParams(
   params: FirecrawlRuntimeParams & { url: string; extractMode: ExtractMode },
@@ -517,6 +552,18 @@ async function runWebFetch(params: WebFetchRuntimeParams): Promise<Record<string
   if (!["http:", "https:"].includes(parsedUrl.protocol)) {
     throw new Error("Invalid URL: must be http or https");
   }
+  const ssrfPolicy: SsrFPolicy | undefined =
+    params.privateNetworkAllowlist.length > 0
+      ? {
+          allowPrivateNetwork: true,
+          hostnameAllowlist: params.privateNetworkAllowlist,
+        }
+      : undefined;
+  if (isHostMatchedByAllowlist(parsedUrl.hostname, params.privateNetworkAllowlist)) {
+    logDebug(
+      `[web-fetch] privateNetwork allowlist hit for host=${parsedUrl.hostname} (${redactUrlForDebugLog(params.url)})`,
+    );
+  }
 
   const start = Date.now();
   let res: Response;
@@ -527,6 +574,7 @@ async function runWebFetch(params: WebFetchRuntimeParams): Promise<Record<string
       url: params.url,
       maxRedirects: params.maxRedirects,
       timeoutSeconds: params.timeoutSeconds,
+      policy: ssrfPolicy,
       init: {
         headers: {
           Accept: "text/markdown, text/html;q=0.9, */*;q=0.1",
@@ -732,6 +780,7 @@ export function createWebFetchTool(options?: {
     (fetch && "userAgent" in fetch && typeof fetch.userAgent === "string" && fetch.userAgent) ||
     DEFAULT_FETCH_USER_AGENT;
   const maxResponseBytes = resolveFetchMaxResponseBytes(fetch);
+  const privateNetworkAllowlist = resolvePrivateNetworkAllowlist(options?.config);
   return {
     label: "Web Fetch",
     name: "web_fetch",
@@ -758,6 +807,7 @@ export function createWebFetchTool(options?: {
         cacheTtlMs: resolveCacheTtlMs(fetch?.cacheTtlMinutes, DEFAULT_CACHE_TTL_MINUTES),
         userAgent,
         readabilityEnabled,
+        privateNetworkAllowlist,
         firecrawlEnabled,
         firecrawlApiKey,
         firecrawlBaseUrl,

@@ -29,32 +29,29 @@ title: "OpenAEON"
   Send a message, get an agent response from your pocket. Plugins add Mattermost and more.
 </p>
 
-<Columns>
-  <Card title="Get Started" href="/start/getting-started" icon="rocket">
-    Install OpenAEON and bring up the Gateway in minutes.
-  </Card>
-  <Card title="Run the Wizard" href="/start/wizard" icon="sparkles">
-    Guided setup with `openaeon onboard` and pairing flows.
-  </Card>
-  <Card title="Open the Control UI" href="/web/control-ui" icon="layout-dashboard">
-    Launch the browser dashboard for chat, config, and sessions.
-  </Card>
-</Columns>
+## The Fractal Cognitive Engine
+
+OpenAEON is a **multi-channel gateway** and an **Autonomous Cognitive Engine**. It is powered by the **FCA Core (Fractal Cognitive Adapter)**, a multi-layer architecture that transforms simple AI interactions into a recursive, verifiable logic loop.
+
+### 🧠 Core Philosophy
+Instead of simple linear processing, OpenAEON decomposes complex problem spaces into verifiable sub-loops. It uses **Peano Space-Filling Traversal** to map complex tasks into high-density cognitive streams, ensuring no reasoning gaps are left behind.
+
+### 🏗 9-Layer Architecture
+The system is built on nine specialized layers of intelligence:
+- **Semantic Grounding**: Mapping input to high-dimensional tokens.
+- **Topology Analytics**: Understanding context proximity.
+- **Fractal Decomposition**: Recursive goal splitting.
+- **Decision Adjudication**: Policy and guardrail alignment.
+- **Strategy Flux**: Real-time strategy auto-tuning.
+- **Forensic Simulation**: Error replay and thought-trace reconstruction.
+
+👉 **[Deep-dive into FCA Core Architecture](/aeon/FCA_CORE)**
 
 ## What is OpenAEON?
 
-OpenAEON is a **self-hosted gateway** that connects your favorite chat apps — WhatsApp, Telegram, Discord, iMessage, and more — to AI coding agents like Pi. You run a single Gateway process on your own machine (or a server), and it becomes the bridge between your messaging apps and an always-available AI assistant.
+OpenAEON is a **self-hosted gateway** that connects your favorite chat apps — WhatsApp, Telegram, Discord, iMessage, and more — to AI coding agents. You run a single Gateway process on your own machine, and it becomes the bridge between your messaging apps and an always-available, self-evolving AI assistant.
 
 **Who is it for?** Developers and power users who want a personal AI assistant they can message from anywhere — without giving up control of their data or relying on a hosted service.
-
-**What makes it different?**
-
-- **Self-hosted**: runs on your hardware, your rules
-- **Multi-channel**: one Gateway serves WhatsApp, Telegram, Discord, and more simultaneously
-- **Agent-native**: built for coding agents with tool use, sessions, memory, and multi-agent routing
-- **Open source**: MIT licensed, community-driven
-
-**What do you need?** Node 22+, an API key (Anthropic recommended), and 5 minutes.
 
 ## How it works
 
@@ -174,8 +171,8 @@ Example:
 ## Learn more
 
 <Columns>
-  <Card title="AEON logic model" href="/aeon/logic-model" icon="brain">
-    Safety-first cognition loop, persistence semantics, and traceability APIs.
+  <Card title="FCA Core Architecture" href="/aeon/FCA_CORE" icon="brain">
+    Fractal Cognitive Adapter: 9-layer autonomous architecture, Peano maps, and auto-tuning.
   </Card>
   <Card title="Full feature list" href="/concepts/features" icon="list">
     Complete channel, routing, and media capabilities.

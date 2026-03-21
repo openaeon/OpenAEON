@@ -136,6 +136,30 @@ function uniquePreserveOrder(values: string[]): string[] {
   return output;
 }
 
+function resolveChatPerformanceMode(state: AppViewState): "performance" | "balanced" | "visual" {
+  const config = state.configForm ?? state.configSnapshot?.config ?? null;
+  const ui = config && typeof config === "object" ? (config as Record<string, unknown>).ui : null;
+  const chat =
+    ui && typeof ui === "object" ? (ui as Record<string, unknown>).chat : null;
+  const mode =
+    chat && typeof chat === "object"
+      ? (chat as Record<string, unknown>).performanceMode
+      : undefined;
+  return mode === "performance" || mode === "visual" || mode === "balanced" ? mode : "balanced";
+}
+
+function resolveSubagentMatchMode(state: AppViewState): "owner_first" | "balanced" | "fuzzy" {
+  const config = state.configForm ?? state.configSnapshot?.config ?? null;
+  const ui = config && typeof config === "object" ? (config as Record<string, unknown>).ui : null;
+  const chat =
+    ui && typeof ui === "object" ? (ui as Record<string, unknown>).chat : null;
+  const mode =
+    chat && typeof chat === "object"
+      ? (chat as Record<string, unknown>).subagentMatchMode
+      : undefined;
+  return mode === "owner_first" || mode === "balanced" || mode === "fuzzy" ? mode : "balanced";
+}
+
 function resolveAssistantAvatarUrl(state: AppViewState): string | undefined {
   const list = state.agentsList?.agents ?? [];
   const parsed = parseAgentSessionKey(state.sessionKey);
@@ -268,6 +292,8 @@ export function renderApp(state: AppViewState) {
     state.aeonSystemStatus?.epiphanyFactor ?? 0,
     state.chatEpiphanyFactor,
   );
+  const memorySaturation = state.aeonSystemStatus?.memorySaturation ?? 0;
+  const riskScore = state.aeonSystemStatus?.telemetry?.v4?.inference?.riskScore ?? 0;
   const switchChatSession = (next: string) => {
     cacheDraft(state, state.sessionKey, state.chatMessage);
     state.sessionKey = next;
@@ -282,6 +308,18 @@ export function renderApp(state: AppViewState) {
     state.sandboxTaskPlan = null;
     state.sandboxTaskPlanLoading = false;
     state.sandboxTaskPlanError = null;
+    state.executionWatchdog = {
+      active: false,
+      degraded: false,
+      reason: null,
+      retryCount: 0,
+      stagnantPolls: 0,
+      startedAt: null,
+      lastProgressAt: null,
+      lastDigest: null,
+      lastRetryAt: null,
+    };
+    state.executionAutoQueued = false;
     state.sandboxChatEvents = {};
     state.aeonThinkingCursor = null;
     state.aeonThinkingEvents = [];
@@ -694,6 +732,7 @@ export function renderApp(state: AppViewState) {
                 history: state.chatMessages,
                 isThinking: state.chatSending || Boolean(state.chatStream),
                 showManual: state.aeonManualVisible,
+                systemStatus: state.aeonSystemStatus,
                 onRefresh: () => state.handleAeonLogicRefresh(),
                 onCompaction: () => state.handleAeonLogicCompaction(),
                 onDraftChange: (next) => state.setChatMessage(next),
@@ -701,7 +740,10 @@ export function renderApp(state: AppViewState) {
                 cognitiveLog: state.aeonSystemStatus?.evolution?.cognitiveLog,
                 liveThinking: state.chatStreamThinking,
                 activeTab: state.aeonActiveTab,
+                viewMode: state.aeonViewMode,
                 onTabChange: (tab) => state.handleAeonTabChange(tab),
+                onViewModeChange: (mode) => state.handleAeonViewModeChange(mode),
+                onBacktrack: (runId) => state.handleAeonBacktrack(runId),
               })
             : nothing
         }
@@ -1338,6 +1380,8 @@ export function renderApp(state: AppViewState) {
         ${
           state.tab === "chat"
             ? renderChat({
+                performanceMode: resolveChatPerformanceMode(state),
+                subagentMatchMode: resolveSubagentMatchMode(state),
                 sessionKey: state.sessionKey,
                 onSessionKeyChange: (next) => switchChatSession(next),
                 thinkingLevel: state.chatThinkingLevel,
@@ -1361,6 +1405,7 @@ export function renderApp(state: AppViewState) {
                 sessions: state.sessionsResult,
                 focusMode: chatFocus,
                 taskPlan: state.sandboxTaskPlan ?? null,
+                executionWatchdog: state.executionWatchdog,
                 onRefresh: () => {
                   state.resetToolStream();
                   return Promise.all([loadChatHistory(state), refreshChatAvatar(state)]);
@@ -1405,7 +1450,11 @@ export function renderApp(state: AppViewState) {
                 manualRuntime: {
                   delivery: {
                     state: state.aeonSystemStatus?.execution?.delivery?.state ?? "persist_failed",
-                    persistedAt: state.aeonSystemStatus?.execution?.delivery?.persistedAt ?? null,
+                    persistedAt: state.aeonSystemStatus?.execution?.delivery?.persistedAt
+                      ? new Date(
+                          state.aeonSystemStatus.execution.delivery.persistedAt,
+                        ).toISOString()
+                      : null,
                   },
                   eternalMode: {
                     enabled: state.aeonEternalMode,
@@ -1458,15 +1507,72 @@ export function renderApp(state: AppViewState) {
                 webSearchEnabled: state.chatWebSearchEnabled,
                 onToggleWebSearch: (enabled: boolean) => state.handleToggleWebSearch(enabled),
                 onApprovePlan: () => {
-                  state.chatMessage = "已批准计划，请开始执行";
-                  void state.handleSendChat();
+                  void (async () => {
+                    let changedToExecution = false;
+                    try {
+                      if (state.client) {
+                        const approveRes = await state.client.request<{
+                          ok?: boolean;
+                          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+                          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+                          approvedAt?: number;
+                          phaseTransition?: {
+                            from: "planning" | "execution" | "verification" | "complete";
+                            to: "planning" | "execution" | "verification" | "complete";
+                            changed: boolean;
+                          };
+                        }>("task_plan.approve", { sessionKey: state.sessionKey });
+                        if (approveRes?.plan) {
+                          state.sandboxTaskPlan = {
+                            ...approveRes.plan,
+                            executionGraph:
+                              approveRes.executionGraph ?? approveRes.plan.executionGraph,
+                          };
+                        }
+                        changedToExecution =
+                          approveRes?.phaseTransition?.changed === true &&
+                          approveRes?.phaseTransition?.to === "execution";
+                        if (changedToExecution) {
+                          // Gateway event is the primary execution trigger.
+                          // Queue one fallback send only if event path did not arrive in time.
+                          window.setTimeout(() => {
+                            if (
+                              state.sandboxTaskPlan?.phase === "planning" &&
+                              !state.chatSending &&
+                              !state.chatStream?.trim()
+                            ) {
+                              state.chatMessage =
+                                "计划已批准。立即进入 execution 阶段，禁止再次规划，按当前 TODO 逐项执行并在每步后汇报结果。";
+                              void state.handleSendChat();
+                            }
+                          }, 1200);
+                        }
+                      }
+                    } catch (err) {
+                      state.lastError = `Failed to approve task plan: ${String(err)}`;
+                      return;
+                    }
+                    // Legacy fallback for gateways without execution trigger broadcast support.
+                    if (!changedToExecution && state.sandboxTaskPlan?.phase === "execution") {
+                      state.chatMessage =
+                        "继续执行当前 execution 阶段任务，逐项完成并回填结果。";
+                      if (state.chatSending || Boolean(state.chatStream?.trim())) {
+                        state.executionAutoQueued = true;
+                        return;
+                      }
+                      state.executionAutoQueued = false;
+                      await state.handleSendChat();
+                    }
+                  })();
                 },
                 sandboxSessions: state.sessionsResult?.sessions?.filter(
                   (r) => r.kind !== "global" && !r.systemSent,
                 ),
                 cognitiveLog: state.aeonSystemStatus?.evolution?.cognitiveLog,
-                chaosScore: state.chatChaosScore,
-                epiphanyFactor: state.chatEpiphanyFactor,
+                chaosScore,
+                epiphanyFactor,
+                riskScore,
+                memorySaturation,
                 executionDelivery: state.aeonSystemStatus?.execution?.delivery,
                 fractalState: {
                   depthLevel: (1 +

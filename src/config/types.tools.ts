@@ -446,6 +446,17 @@ export type ToolsConfig = {
       timeoutSeconds?: number;
       /** Cache TTL in minutes for search results. */
       cacheTtlMinutes?: number;
+      /** Browser fallback when provider APIs are unavailable (default: enabled). */
+      browserFallback?: {
+        /** Enable browser-driven fallback search. */
+        enabled?: boolean;
+        /** Search URL template; supports `{query}` placeholder. */
+        engineUrl?: string;
+        /** Timeout in seconds for browser fallback operations. */
+        timeoutSeconds?: number;
+        /** Auto-start browser control when it is not running (default: true). */
+        autoStart?: boolean;
+      };
       /** Perplexity-specific configuration (used when provider="perplexity"). */
       perplexity?: {
         /** API key for Perplexity or OpenRouter (defaults to PERPLEXITY_API_KEY or OPENROUTER_API_KEY env var). */
@@ -512,6 +523,10 @@ export type ToolsConfig = {
         /** Timeout in seconds for Firecrawl requests. */
         timeoutSeconds?: number;
       };
+    };
+    privateNetwork?: {
+      /** Allowlisted hostnames/IPs that web tools may access even when private-network guards are active. */
+      allowlist?: string[];
     };
   };
   media?: MediaToolsConfig;

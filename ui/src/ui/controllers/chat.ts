@@ -17,6 +17,7 @@ export type ChatState = {
   chatStream: string | null;
   chatStreamThinking: string | null;
   chatStreamStartedAt: number | null;
+  chatHistoryRequestSeq?: number;
   lastError: string | null;
 };
 
@@ -28,26 +29,77 @@ export type ChatEventPayload = {
   errorMessage?: string;
 };
 
+const CHAT_RESET_MARKER_KEY = "openaeon.chat.reset.v1";
+
+function readResetMarker(sessionKey: string): number {
+  try {
+    const raw = localStorage.getItem(CHAT_RESET_MARKER_KEY);
+    if (!raw) {
+      return 0;
+    }
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const value = parsed?.[sessionKey];
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function messageTimestamp(message: unknown): number | null {
+  if (!message || typeof message !== "object") {
+    return null;
+  }
+  const ts = (message as { timestamp?: unknown }).timestamp;
+  return typeof ts === "number" && Number.isFinite(ts) ? ts : null;
+}
+
+function filterHistoryByResetMarker(messages: unknown[], resetAt: number): unknown[] {
+  if (resetAt <= 0 || messages.length === 0) {
+    return messages;
+  }
+  const filtered = messages.filter((message) => {
+    const ts = messageTimestamp(message);
+    if (ts == null) {
+      return true;
+    }
+    return ts >= resetAt;
+  });
+  return filtered.length > 0 ? filtered : messages;
+}
+
 export async function loadChatHistory(state: ChatState) {
   if (!state.client || !state.connected) {
     return;
   }
+  const requestedSessionKey = state.sessionKey;
+  const requestSeq = (state.chatHistoryRequestSeq ?? 0) + 1;
+  state.chatHistoryRequestSeq = requestSeq;
   state.chatLoading = true;
   state.lastError = null;
   try {
     const res = await state.client.request<{ messages?: Array<unknown>; thinkingLevel?: string }>(
       "chat.history",
       {
-        sessionKey: state.sessionKey,
+        sessionKey: requestedSessionKey,
         limit: 200,
       },
     );
-    state.chatMessages = Array.isArray(res.messages) ? res.messages : [];
+    if (state.chatHistoryRequestSeq !== requestSeq || state.sessionKey !== requestedSessionKey) {
+      return;
+    }
+    const rawMessages = Array.isArray(res.messages) ? res.messages : [];
+    const resetAt = readResetMarker(requestedSessionKey);
+    state.chatMessages = filterHistoryByResetMarker(rawMessages, resetAt);
     state.chatThinkingLevel = res.thinkingLevel ?? null;
   } catch (err) {
+    if (state.chatHistoryRequestSeq !== requestSeq || state.sessionKey !== requestedSessionKey) {
+      return;
+    }
     state.lastError = String(err);
   } finally {
-    state.chatLoading = false;
+    if (state.chatHistoryRequestSeq === requestSeq) {
+      state.chatLoading = false;
+    }
   }
 }
 
