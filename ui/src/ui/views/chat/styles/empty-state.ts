@@ -401,15 +401,17 @@ export const chatEmptyStateStyles = css`
 
   :host-context([data-theme="light"]) .chat-empty-state.fractal-nexus {
     background:
-      radial-gradient(120% 80% at 50% 0%, rgba(14, 165, 233, 0.12), transparent 68%),
-      radial-gradient(90% 70% at 0% 100%, rgba(129, 140, 248, 0.13), transparent 64%),
-      radial-gradient(90% 70% at 100% 100%, rgba(45, 212, 191, 0.12), transparent 62%),
-      rgba(255, 255, 255, 0.92);
-    border-color: rgba(14, 165, 233, 0.25);
+      radial-gradient(120% 70% at 50% 0%, rgba(99, 102, 241, 0.14), transparent 60%),
+      radial-gradient(80% 60% at 0% 100%, rgba(14, 165, 233, 0.12), transparent 60%),
+      radial-gradient(80% 60% at 100% 90%, rgba(45, 212, 191, 0.10), transparent 55%),
+      rgba(255, 255, 255, 0.82);
+    border-color: rgba(99, 102, 241, 0.22);
     box-shadow:
-      inset 0 0 0 1px rgba(14, 165, 233, 0.12),
-      inset 0 20px 60px rgba(226, 232, 240, 0.45),
-      0 16px 36px rgba(148, 163, 184, 0.2);
+      inset 0 0 0 1px rgba(99, 102, 241, 0.1),
+      inset 0 -20px 60px rgba(240, 242, 255, 0.6),
+      0 16px 36px rgba(99, 102, 241, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -429,10 +431,10 @@ export const chatEmptyStateStyles = css`
   }
 
   :host-context([data-theme="light"]) .sensory-node {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(99, 102, 241, 0.4);
-    color: #475569;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+    background: rgba(99, 102, 241, 0.07);
+    border-color: rgba(99, 102, 241, 0.28);
+    color: #3730a3;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
   }
 
   :host-context([data-theme="light"]) .sensory-node-icon {
@@ -440,18 +442,23 @@ export const chatEmptyStateStyles = css`
   }
 
   :host-context([data-theme="light"]) .example-pill {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.1);
-    color: #64748b;
+    background: rgba(99, 102, 241, 0.06);
+    border-color: rgba(99, 102, 241, 0.22);
+    color: #4338ca;
   }
 
   :host-context([data-theme="light"]) .example-pill:hover {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: #7c3aed;
-    color: #4c1d95;
+    background: rgba(99, 102, 241, 0.14);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #3730a3;
+    transform: translateY(-1px);
   }
 
   :host-context([data-theme="light"]) .chat-usage-examples label {
-    color: rgba(0, 0, 0, 0.4);
+    color: rgba(71, 85, 105, 0.65);
+  }
+
+  :host-context([data-theme="light"]) .chat-empty-subtitle {
+    color: #64748b;
   }
 `;

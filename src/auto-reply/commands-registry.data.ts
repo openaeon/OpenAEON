@@ -740,7 +740,7 @@ function buildChatCommands(): ChatCommandDefinition[] {
       ],
     }),
     ...listChannelDocks()
-      .filter((dock) => dock.capabilities.nativeCommands)
+      .filter((dock) => dock?.capabilities?.nativeCommands)
       .map((dock) => defineDockCommand(dock)),
   ];
 
@@ -774,7 +774,7 @@ export function getNativeCommandSurfaces(): Set<string> {
   }
   cachedNativeCommandSurfaces = new Set(
     listChannelDocks()
-      .filter((dock) => dock.capabilities.nativeCommands)
+      .filter((dock) => dock?.capabilities?.nativeCommands)
       .map((dock) => dock.id),
   );
   cachedNativeRegistry = registry;

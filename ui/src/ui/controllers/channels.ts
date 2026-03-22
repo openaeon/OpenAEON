@@ -92,3 +92,70 @@ export async function logoutWhatsApp(state: ChannelsState) {
     state.whatsappBusy = false;
   }
 }
+
+export async function startWeixinLogin(state: ChannelsState, force: boolean) {
+  if (!state.client || !state.connected || state.weixinBusy) {
+    return;
+  }
+  state.weixinBusy = true;
+  try {
+    const res = await state.client.request<{ message?: string; qrDataUrl?: string }>(
+      "weixin.login.start",
+      {
+        force,
+        timeoutMs: 30000,
+      },
+    );
+    state.weixinLoginMessage = res.message ?? null;
+    state.weixinLoginQrDataUrl = res.qrDataUrl ?? null;
+    state.weixinLoginConnected = null;
+  } catch (err) {
+    state.weixinLoginMessage = String(err);
+    state.weixinLoginQrDataUrl = null;
+    state.weixinLoginConnected = null;
+  } finally {
+    state.weixinBusy = false;
+  }
+}
+
+export async function waitWeixinLogin(state: ChannelsState) {
+  if (!state.client || !state.connected || state.weixinBusy) {
+    return;
+  }
+  state.weixinBusy = true;
+  try {
+    const res = await state.client.request<{ message?: string; connected?: boolean }>(
+      "weixin.login.wait",
+      {
+        timeoutMs: 120000,
+      },
+    );
+    state.weixinLoginMessage = res.message ?? null;
+    state.weixinLoginConnected = res.connected ?? null;
+    if (res.connected) {
+      state.weixinLoginQrDataUrl = null;
+    }
+  } catch (err) {
+    state.weixinLoginMessage = String(err);
+    state.weixinLoginConnected = null;
+  } finally {
+    state.weixinBusy = false;
+  }
+}
+
+export async function logoutWeixin(state: ChannelsState) {
+  if (!state.client || !state.connected || state.weixinBusy) {
+    return;
+  }
+  state.weixinBusy = true;
+  try {
+    await state.client.request("channels.logout", { channel: "tencent-weixin" });
+    state.weixinLoginMessage = "Logged out.";
+    state.weixinLoginQrDataUrl = null;
+    state.weixinLoginConnected = null;
+  } catch (err) {
+    state.weixinLoginMessage = String(err);
+  } finally {
+    state.weixinBusy = false;
+  }
+}

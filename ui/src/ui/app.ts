@@ -13,6 +13,9 @@ import {
   handleWhatsAppLogout as handleWhatsAppLogoutInternal,
   handleWhatsAppStart as handleWhatsAppStartInternal,
   handleWhatsAppWait as handleWhatsAppWaitInternal,
+  handleWeixinLogout as handleWeixinLogoutInternal,
+  handleWeixinStart as handleWeixinStartInternal,
+  handleWeixinWait as handleWeixinWaitInternal,
 } from "./app-channels.ts";
 import {
   handleAbortChat as handleAbortChatInternal,
@@ -227,6 +230,10 @@ export class OPENAEONApp extends LitElement {
   @state() whatsappLoginQrDataUrl: string | null = null;
   @state() whatsappLoginConnected: boolean | null = null;
   @state() whatsappBusy = false;
+  @state() weixinLoginMessage: string | null = null;
+  @state() weixinLoginQrDataUrl: string | null = null;
+  @state() weixinLoginConnected: boolean | null = null;
+  @state() weixinBusy = false;
   @state() nostrProfileFormState: NostrProfileFormState | null = null;
   @state() nostrProfileAccountId: string | null = null;
 
@@ -595,6 +602,18 @@ export class OPENAEONApp extends LitElement {
 
   async handleWhatsAppLogout() {
     await handleWhatsAppLogoutInternal(this);
+  }
+
+  async handleWeixinStart(force: boolean) {
+    await handleWeixinStartInternal(this, force);
+  }
+
+  async handleWeixinWait() {
+    await handleWeixinWaitInternal(this);
+  }
+
+  async handleWeixinLogout() {
+    await handleWeixinLogoutInternal(this);
   }
 
   async handleChannelConfigSave() {

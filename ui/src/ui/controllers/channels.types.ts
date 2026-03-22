@@ -12,4 +12,8 @@ export type ChannelsState = {
   whatsappLoginQrDataUrl: string | null;
   whatsappLoginConnected: boolean | null;
   whatsappBusy: boolean;
+  weixinLoginMessage: string | null;
+  weixinLoginQrDataUrl: string | null;
+  weixinLoginConnected: boolean | null;
+  weixinBusy: boolean;
 };

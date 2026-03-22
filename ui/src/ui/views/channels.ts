@@ -13,6 +13,7 @@ import type {
   SlackStatus,
   TelegramStatus,
   WhatsAppStatus,
+  WeixinStatus,
 } from "../types.ts";
 import { renderChannelConfigSection } from "./channels.config.ts";
 import { renderDiscordCard } from "./channels.discord.ts";
@@ -25,6 +26,7 @@ import { renderSlackCard } from "./channels.slack.ts";
 import { renderTelegramCard } from "./channels.telegram.ts";
 import type { ChannelKey, ChannelsChannelData, ChannelsProps } from "./channels.types.ts";
 import { renderWhatsAppCard } from "./channels.whatsapp.ts";
+import { renderWeixinCard } from "./channels.tencent-weixin.ts";
 
 export function renderChannels(props: ChannelsProps) {
   const channels = props.snapshot?.channels as Record<string, unknown> | null;
@@ -36,6 +38,7 @@ export function renderChannels(props: ChannelsProps) {
   const signal = (channels?.signal ?? null) as SignalStatus | null;
   const imessage = (channels?.imessage ?? null) as IMessageStatus | null;
   const nostr = (channels?.nostr ?? null) as NostrStatus | null;
+  const weixin = (channels?.["tencent-weixin"] ?? undefined) as WeixinStatus | undefined;
   const channelOrder = resolveChannelOrder(props.snapshot);
   const orderedChannels = channelOrder
     .map((key, index) => ({
@@ -62,6 +65,7 @@ export function renderChannels(props: ChannelsProps) {
           signal,
           imessage,
           nostr,
+          "tencent-weixin": weixin,
           channelAccounts: props.snapshot?.channelAccounts ?? null,
         }),
       )}
@@ -172,6 +176,12 @@ function renderChannel(key: ChannelKey, props: ChannelsProps, data: ChannelsChan
         onEditProfile: () => props.onNostrProfileEdit(accountId, profile),
       });
     }
+    case "tencent-weixin":
+      return renderWeixinCard({
+        props,
+        weixin: data["tencent-weixin"],
+        accountCountLabel,
+      });
     default:
       return renderGenericChannelCard(key, props, data.channelAccounts ?? {});
   }

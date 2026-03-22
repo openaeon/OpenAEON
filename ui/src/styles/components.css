@@ -993,17 +993,20 @@
 :root[data-theme="light"] .field input,
 :root[data-theme="light"] .field textarea,
 :root[data-theme="light"] .field select {
-  background: var(--card);
+  background: #ffffff;
   border-color: var(--input);
+  box-shadow: inset 0 1px 2px rgba(99, 102, 241, 0.03);
 }
 
 :root[data-theme="light"] .btn {
-  background: var(--bg);
+  background: #ffffff;
   border-color: var(--input);
+  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.05);
 }
 
 :root[data-theme="light"] .btn:hover {
   background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
 :root[data-theme="light"] .btn.active {
@@ -1013,8 +1016,9 @@
 }
 
 :root[data-theme="light"] .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 /* ===========================================
@@ -1142,7 +1146,9 @@
 :root[data-theme="light"] .list-item,
 :root[data-theme="light"] .table-row,
 :root[data-theme="light"] .chip {
-  background: var(--bg);
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.04);
 }
 
 /* ===========================================

@@ -7,6 +7,7 @@ import type { ChannelId } from "./plugins/types.js";
 export const CHAT_CHANNEL_ORDER = [
   "telegram",
   "whatsapp",
+  "tencent-weixin",
   "discord",
   "irc",
   "googlechat",
@@ -47,6 +48,16 @@ const CHAT_CHANNEL_META: Record<ChatChannelId, ChannelMeta> = {
     docsLabel: "whatsapp",
     blurb: "works with your own number; recommend a separate phone + eSIM.",
     systemImage: "message",
+  },
+  "tencent-weixin": {
+    id: "tencent-weixin",
+    label: "Weixin",
+    selectionLabel: "Weixin (Tencent)",
+    detailLabel: "Weixin",
+    docsPath: "/channels/tencent-weixin",
+    docsLabel: "tencent-weixin",
+    blurb: "official Tencent Weixin (WeChat) channel integration.",
+    systemImage: "message.circle",
   },
   discord: {
     id: "discord",
@@ -125,6 +136,8 @@ export const CHAT_CHANNEL_ALIASES: Record<string, ChatChannelId> = {
   "internet-relay-chat": "irc",
   "google-chat": "googlechat",
   gchat: "googlechat",
+  weixin: "tencent-weixin",
+  wechat: "tencent-weixin",
 };
 
 const normalizeChannelKey = (raw?: string | null): string | undefined => {

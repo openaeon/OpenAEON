@@ -10,8 +10,8 @@ import { requestHeartbeatNow } from "../infra/heartbeat-wake.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveWorkspaceRoot } from "../agents/workspace-dir.js";
 import { resolveSessionAgentId } from "../agents/agent-scope.js";
-import { calculateEpiphanyFactor } from "./server-methods/aeon.js";
 import {
+  calculateEpiphanyFactor,
   getAeonScopeKey,
   type AeonStateScope,
   type GuardrailDecision,
@@ -26,6 +26,8 @@ import {
   recordMemoryPersistence,
   setConsciousnessRuntimePolicy,
   updateAeonAutospawnTelemetry,
+  updateAeonCognitiveParameters,
+  updateAeonMemoryTelemetry,
 } from "./aeon-state.js";
 import { logEvolutionDecisionEvent, logEvolutionEvent } from "./aeon-evolution-log.js";
 import { recordDeliveryTransition } from "./aeon-delivery-log.js";
@@ -113,7 +115,6 @@ function resolveMaintenanceIntensity(params: {
   const currentTemp = state.cognitiveParameters.temperature ?? baselineTemp;
   
   if (Math.abs(currentTemp - targetTemp) > 0.05) {
-    const { updateAeonCognitiveParameters } = require("./aeon-state.js");
     updateAeonCognitiveParameters({ temperature: targetTemp, top_p: targetTemp + 0.3 }, params.scope);
     log.info(`Dynamic Tuning: Adjusted temperature to ${targetTemp.toFixed(2)} due to risk=${risk.toFixed(2)}`);
   }
@@ -121,7 +122,6 @@ function resolveMaintenanceIntensity(params: {
   // --- Intent Stability Calculation (Layer 2) ---
   const goalDrift = state.consciousness.intent.turnDriftScore;
   const stability = Math.max(0, 1 - goalDrift);
-  const { updateAeonMemoryTelemetry } = require("./aeon-state.js");
   // We'll reuse memory telemetry or add a dedicated setter if needed, but for now we update the inference score
   // Actually AeonTelemetryV4.inference already has integrityScore which we can map to stability.
 

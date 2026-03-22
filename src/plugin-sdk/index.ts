@@ -225,7 +225,11 @@ export {
   type SenderGroupAccessDecision,
   type SenderGroupAccessReason,
 } from "./group-access.js";
-export { resolveSenderCommandAuthorization } from "./command-auth.js";
+export {
+  resolveSenderCommandAuthorization,
+  resolveSenderCommandAuthorizationWithRuntime,
+  resolveDirectDmAuthorizationOutcome,
+} from "./command-auth.js";
 export { createScopedPairingAccess } from "./pairing-access.js";
 export { issuePairingChallenge } from "../pairing/pairing-challenge.js";
 export { handleSlackMessageAction } from "./slack-message-actions.js";
@@ -635,3 +639,20 @@ export { loadWebMedia, type WebMediaResult } from "../web/media.js";
 
 // Security utilities
 export { redactSensitiveText } from "../logging/redact.js";
+
+// Aeon state management
+export {
+  getAeonScopeKey,
+  type AeonStateScope,
+  recordConsciousnessPulse,
+  recordAeonDreaming,
+  recordAeonEvidenceEvent,
+  recordAeonEpiphanyFactor,
+  recordAeonMaintenance,
+  recordMaintenancePolicyDecision,
+  recordMemoryPersistence,
+  setConsciousnessRuntimePolicy,
+  updateAeonAutospawnTelemetry,
+  updateAeonCognitiveParameters,
+  updateAeonMemoryTelemetry,
+} from "../gateway/aeon-state.js";

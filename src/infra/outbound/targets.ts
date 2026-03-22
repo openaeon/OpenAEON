@@ -416,6 +416,13 @@ function inferWhatsAppTargetChatType(to: string): ChatType | undefined {
   return isWhatsAppGroupJid(normalized) ? "group" : "direct";
 }
 
+function inferWeixinTargetChatType(to: string): ChatType | undefined {
+  if (!to.trim()) {
+    return undefined;
+  }
+  return "direct";
+}
+
 function inferSignalTargetChatType(rawTo: string): ChatType | undefined {
   let to = rawTo.trim();
   if (!to) {
@@ -445,6 +452,7 @@ const HEARTBEAT_TARGET_CHAT_TYPE_INFERERS: Partial<
   telegram: inferTelegramTargetChatType,
   whatsapp: inferWhatsAppTargetChatType,
   signal: inferSignalTargetChatType,
+  "tencent-weixin": inferWeixinTargetChatType,
 };
 
 function inferChatTypeFromTarget(params: {

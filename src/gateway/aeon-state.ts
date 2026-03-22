@@ -518,6 +518,37 @@ type AeonStateContext = {
 
 const DEFAULT_SCOPE_KEY = "session:main|agent:main";
 const stateByScope = new Map<string, AeonStateContext>();
+
+export function updateAeonCognitiveParameters(
+  params: Partial<CognitiveParameters>,
+  scope?: AeonStateScope,
+): void {
+  const ctx = getContext(scope);
+  ctx.cognitiveParameters = { ...ctx.cognitiveParameters, ...params };
+}
+
+/**
+ * Calculates the "Epiphany Factor" (顿悟) based on system resonance.
+ * High values trigger the "Resonance Flash" in UI.
+ */
+export function calculateEpiphanyFactor(chaos: number, saturation: number, depth: number) {
+  // Normalize chaos (0-10 -> 0-1) and depth (0-20 -> 0-1)
+  const normChaos = Math.min(1, chaos / 10);
+  const normDepth = Math.min(1, depth / 20);
+  const normSaturation = saturation / 100;
+
+  const base = normChaos * 0.4 + normDepth * 0.3 + normSaturation * 0.3;
+  const jitter = ((Math.sin(Date.now() / 800) + 1) / 2) * 0.05;
+  return Math.max(0, Math.min(1, base + jitter));
+}
+
+export function updateAeonMemoryTelemetry(
+  params: Partial<MemoryStateTelemetry>,
+  scope?: AeonStateScope,
+): void {
+  const ctx = getContext(scope);
+  ctx.telemetryV4.memory = { ...ctx.telemetryV4.memory, ...params };
+}
 const DEFAULT_CHARTER_VALUE_ORDER: ConsciousnessCharterTelemetry["valueOrder"] = [
   "SAFETY",
   "TRUTH",
@@ -2153,3 +2184,4 @@ export function getAeonEvolutionState(scope?: AeonStateScope): AeonEvolutionStat
     peanoTrajectory: [...ctx.peanoTrajectory],
   };
 }
+

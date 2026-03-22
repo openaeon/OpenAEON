@@ -4,6 +4,9 @@ import {
   logoutWhatsApp,
   startWhatsAppLogin,
   waitWhatsAppLogin,
+  logoutWeixin,
+  startWeixinLogin,
+  waitWeixinLogin,
 } from "./controllers/channels.ts";
 import { loadConfig, saveConfig } from "./controllers/config.ts";
 import type { NostrProfile } from "./types.ts";
@@ -21,6 +24,21 @@ export async function handleWhatsAppWait(host: OPENAEONApp) {
 
 export async function handleWhatsAppLogout(host: OPENAEONApp) {
   await logoutWhatsApp(host);
+  await loadChannels(host, true);
+}
+
+export async function handleWeixinStart(host: OPENAEONApp, force: boolean) {
+  await startWeixinLogin(host, force);
+  await loadChannels(host, true);
+}
+
+export async function handleWeixinWait(host: OPENAEONApp) {
+  await waitWeixinLogin(host);
+  await loadChannels(host, true);
+}
+
+export async function handleWeixinLogout(host: OPENAEONApp) {
+  await logoutWeixin(host);
   await loadChannels(host, true);
 }
 

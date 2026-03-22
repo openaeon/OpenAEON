@@ -568,8 +568,10 @@ pnpm format:fix
 pnpm test
 pnpm test:coverage
 pnpm test:ui
+pnpm openaeon gateway stop
 ```
-
+# 以开发者模式启动网关（支持 TypeScript 热更新）
+pnpm gateway:watch
 ---
 
 ## 🧹 维护与卸载

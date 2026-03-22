@@ -70,3 +70,57 @@ export async function resolveSenderCommandAuthorization(
     commandAuthorized,
   };
 }
+
+export async function resolveSenderCommandAuthorizationWithRuntime(params: {
+  cfg: OPENAEONConfig;
+  rawBody: string;
+  isGroup: boolean;
+  dmPolicy: string;
+  configuredAllowFrom: string[];
+  configuredGroupAllowFrom?: string[];
+  senderId: string;
+  isSenderAllowed: (senderId: string, allowFrom: string[]) => boolean;
+  readAllowFromStore: () => Promise<string[]>;
+  runtime: {
+    shouldComputeCommandAuthorized: (rawBody: string, cfg: OPENAEONConfig) => boolean;
+    resolveCommandAuthorizedFromAuthorizers: (params: {
+      useAccessGroups: boolean;
+      authorizers: Array<{ configured: boolean; allowed: boolean }>;
+    }) => boolean;
+  };
+}): Promise<{
+  senderAllowedForCommands: boolean;
+  commandAuthorized: boolean | undefined;
+}> {
+  const result = await resolveSenderCommandAuthorization({
+    ...params,
+    shouldComputeCommandAuthorized: params.runtime.shouldComputeCommandAuthorized,
+    resolveCommandAuthorizedFromAuthorizers: params.runtime.resolveCommandAuthorizedFromAuthorizers,
+  });
+  return {
+    senderAllowedForCommands: result.senderAllowedForCommands,
+    commandAuthorized: result.commandAuthorized,
+  };
+}
+
+export type DirectDmAuthorizationOutcome = "allow" | "unauthorized" | "disabled" | "pairing";
+
+export function resolveDirectDmAuthorizationOutcome(params: {
+  isGroup: boolean;
+  dmPolicy: string;
+  senderAllowedForCommands: boolean;
+}): DirectDmAuthorizationOutcome {
+  if (params.isGroup) {
+    return "allow"; // Groups use different gating
+  }
+  if (params.dmPolicy === "disabled") {
+    return "disabled";
+  }
+  if (params.senderAllowedForCommands) {
+    return "allow";
+  }
+  if (params.dmPolicy === "pairing") {
+    return "pairing";
+  }
+  return "unauthorized";
+}

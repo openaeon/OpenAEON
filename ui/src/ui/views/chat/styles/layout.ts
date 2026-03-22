@@ -72,19 +72,19 @@ export const chatLayoutStyles = css`
   }
 
   :host-context([data-theme="light"]) .chat {
+    /* Premium Celestial Luminous base */
     --chat-border-glow: linear-gradient(
       135deg,
-      rgba(14, 165, 233, 0.5),
-      rgba(168, 85, 247, 0.3),
-      rgba(236, 72, 153, 0.3)
+      rgba(99, 102, 241, 0.25),
+      rgba(14, 165, 233, 0.15),
+      rgba(168, 85, 247, 0.1)
     );
-    --fractal-bg: radial-gradient(
-      circle at 10% 20%,
-      #ffffff 0%,
-      #f8fafc 50%,
-      rgba(224, 231, 255, 0.6) 100%
-    );
-    --fractal-shadow: inset 0 0 60px rgba(255, 255, 255, 0.9);
+    --fractal-bg:
+      radial-gradient(ellipse at 80% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 0% 100%, rgba(14, 165, 233, 0.07) 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%),
+      linear-gradient(175deg, #fdfdfd 0%, #f8f9ff 55%, #f5f7ff 100%);
+    --fractal-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 14px rgba(99,102,241,0.04);
   }
 
   /* Fractal background subtle noise/glow */
@@ -106,8 +106,8 @@ export const chatLayoutStyles = css`
 
   :host-context([data-theme="light"]) .chat::after {
     --fractal-glow:
-      radial-gradient(ellipse at 80% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 20% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+      radial-gradient(ellipse at 75% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 85%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
   }
 
   .chat-split-container {
@@ -118,11 +118,11 @@ export const chatLayoutStyles = css`
     gap: 12px; /* Spacer for resizer */
   }
 
+  /* Background cosmos layers disabled — the dynamic CSS variable updates
+     (--fractal-resonance, --fractal-noise-level) triggered constant repaints
+     even with animation:none, causing visible flickering.  */
   .chat-cosmos {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
+    display: none;
   }
 
   .chat-cosmos__grid,
@@ -133,12 +133,9 @@ export const chatLayoutStyles = css`
   .chat-cosmos__emergence,
   .chat-cosmos__lifelines,
   .chat-cosmos__formula-cloud {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    transition: none;
-    will-change: auto;
+    display: none;
   }
+
 
   .chat-cosmos__grid {
     background-image:
@@ -375,26 +372,29 @@ export const chatLayoutStyles = css`
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(340px, 38%);
+    width: min(300px, 34%);
     pointer-events: none;
-    border-left: 1px solid rgba(56, 189, 248, 0.16);
+    border-left: 1px solid rgba(56, 189, 248, 0.10);
     background:
-      linear-gradient(180deg, rgba(2, 6, 23, 0.4) 0%, rgba(2, 6, 23, 0.25) 100%),
-      radial-gradient(circle at 50% 16%, rgba(14, 165, 233, 0.12), transparent 52%),
-      radial-gradient(circle at 50% 78%, rgba(45, 212, 191, 0.1), transparent 58%);
+      linear-gradient(180deg, rgba(2, 6, 23, 0.3) 0%, rgba(2, 6, 23, 0.18) 100%),
+      radial-gradient(circle at 50% 16%, rgba(14, 165, 233, 0.08), transparent 52%),
+      radial-gradient(circle at 50% 78%, rgba(45, 212, 191, 0.07), transparent 58%);
     z-index: 1;
   }
 
   .chat-main--with-formula .chat-thread,
   .chat-main--with-formula .chat-main-status,
   .chat-main--with-formula .chat-input-wrapper {
-    padding-right: min(360px, 40%);
+    padding-right: min(316px, 36%);
   }
 
   :host-context([data-theme="light"]) .chat-main {
-    --glass-bg: rgba(255, 255, 255, 0.5);
-    --glass-border: rgba(99, 102, 241, 0.2);
-    --glass-shadow: 0 8px 32px rgba(99, 102, 241, 0.05), inset 0 0 40px rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(99, 102, 241, 0.15);
+    --glass-shadow:
+      0 12px 40px rgba(99, 102, 241, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 0 60px rgba(245, 247, 255, 0.4);
   }
 
   .chat-thread {
@@ -547,16 +547,18 @@ export const chatLayoutStyles = css`
 
   .chat-utility-rail {
     position: absolute;
-    right: 18px;
-    top: 96px;
-    width: min(440px, 46%);
-    bottom: 12px;
+    right: 12px;
+    top: 88px;
+    width: min(300px, 34%);
+    bottom: 10px;
     z-index: 4;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    pointer-events: none;
+    gap: 8px;
+    pointer-events: auto;
     align-items: stretch;
+    max-height: calc(100% - 100px);
+    overflow: hidden;
   }
 
   /* HUD-Specific Styles (Moved to hud.ts) */

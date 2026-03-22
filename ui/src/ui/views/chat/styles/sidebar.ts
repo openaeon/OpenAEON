@@ -18,9 +18,12 @@ export const chatSidebarStyles = css`
   }
 
   :host-context([data-theme="light"]) .chat-sidebar {
-    --glass-bg: rgba(255, 255, 255, 0.65);
-    --glass-border: rgba(99, 102, 241, 0.3);
-    --glass-shadow: rgba(99, 102, 241, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: var(--border);
+    --glass-shadow:
+      0 4px 12px rgba(99, 102, 241, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(248, 249, 255, 0.8) 100%);
   }
   .chat-sidebar[hidden] {
     transform: translateX(20px);

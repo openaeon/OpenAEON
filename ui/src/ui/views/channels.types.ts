@@ -11,6 +11,7 @@ import type {
   SlackStatus,
   TelegramStatus,
   WhatsAppStatus,
+  WeixinStatus,
 } from "../types.ts";
 import type { NostrProfileFormState } from "./channels.nostr-profile-form.ts";
 
@@ -26,6 +27,10 @@ export type ChannelsProps = {
   whatsappQrDataUrl: string | null;
   whatsappConnected: boolean | null;
   whatsappBusy: boolean;
+  weixinMessage: string | null;
+  weixinQrDataUrl: string | null;
+  weixinConnected: boolean | null;
+  weixinBusy: boolean;
   configSchema: unknown;
   configSchemaLoading: boolean;
   configForm: Record<string, unknown> | null;
@@ -38,6 +43,9 @@ export type ChannelsProps = {
   onWhatsAppStart: (force: boolean) => void;
   onWhatsAppWait: () => void;
   onWhatsAppLogout: () => void;
+  onWeixinStart: (force: boolean) => void;
+  onWeixinWait: () => void;
+  onWeixinLogout: () => void;
   onConfigPatch: (path: Array<string | number>, value: unknown) => void;
   onConfigSave: () => void;
   onConfigReload: () => void;
@@ -58,5 +66,6 @@ export type ChannelsChannelData = {
   signal?: SignalStatus | null;
   imessage?: IMessageStatus | null;
   nostr?: NostrStatus | null;
+  "tencent-weixin"?: WeixinStatus | null;
   channelAccounts?: Record<string, ChannelAccountSnapshot[]> | null;
 };

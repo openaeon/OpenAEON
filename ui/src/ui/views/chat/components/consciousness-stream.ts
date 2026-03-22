@@ -81,39 +81,48 @@ export function renderConsciousnessStream(props: ConsciousnessStreamProps) {
       entries,
       (entry) => `${entry.timestamp}:${entry.type}:${entry.normalizedContent}`,
       (entry) => {
-        const typeIcon = 
+        const typeIcon =
           entry.type === "anomaly" ? "⚠" :
           entry.type === "dreaming" ? "⌬" :
           entry.type === "reflection" ? "∿" :
           entry.type === "synthesis" ? "❖" :
           "⚬";
-        const timeStr = new Date(entry.timestamp).toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-        
+        const timeStr = new Date(entry.timestamp).toLocaleTimeString([], {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        const dedupeSuffix = entry.dedupeCount > 1 ? ` ×${entry.dedupeCount}` : "";
+
         return html`
           <div class="consciousness-entry ${entry.type}">
-            <div class="consciousness-entry-meta">
-              <span class="consciousness-type">${typeIcon} ${entry.type.toUpperCase()}${entry.dedupeCount > 1 ? ` (×${entry.dedupeCount})` : ""}</span>
-              <span class="consciousness-time">${timeStr}</span>
-            </div>
-            <div class="consciousness-content ${entry.content?.trim() ? "" : "consciousness-content--placeholder"}">${entry.normalizedContent}</div>
-            ${entry.metadata?.focus ? html`<div class="consciousness-focus">⌗ FOCUS: ${entry.metadata.focus}</div>` : nothing}
-            ${
-              entry.metadata && typeof entry.metadata.eventId === "string"
-                ? html`<div class="consciousness-focus">⇢ EVENT: ${entry.metadata.eventId}</div>`
-                : nothing
-            }
-            ${entry.metadata?.pivot ? html`<div class="consciousness-pivot">⇢ PIVOT: ${entry.metadata.pivot}</div>` : nothing}
-            ${
-              entry.type === "anomaly" && entry.metadata?.runId
-                ? html`
+            <span class="consciousness-type">${typeIcon}${dedupeSuffix}</span>
+            <span class="consciousness-time">${timeStr}</span>
+            <span class="consciousness-content ${entry.content?.trim() ? "" : "consciousness-content--placeholder"}"
+              >${entry.normalizedContent}</span
+            >
+            ${entry.metadata?.focus
+              ? html`<div class="consciousness-focus">⌗ ${entry.metadata.focus}</div>`
+              : nothing}
+            ${entry.metadata && typeof entry.metadata.eventId === "string"
+              ? html`<div class="consciousness-focus">⇢ ${entry.metadata.eventId}</div>`
+              : nothing}
+            ${entry.metadata?.pivot
+              ? html`<div class="consciousness-pivot">⇢ ${entry.metadata.pivot}</div>`
+              : nothing}
+            ${entry.type === "anomaly" && entry.metadata?.runId
+              ? html`
                   <div class="consciousness-entry-actions">
-                    <button class="aeon-button aeon-button-mini aeon-button--warning" @click=${() => props.onBacktrack?.(entry.metadata!.runId as string)}>
-                      ↺ BACKTRACK SIMULATION
+                    <button
+                      class="aeon-button aeon-button-mini aeon-button--warning"
+                      @click=${() => props.onBacktrack?.(entry.metadata!.runId as string)}
+                    >
+                      ↺ BACKTRACK
                     </button>
                   </div>
                 `
-                : nothing
-            }
+              : nothing}
           </div>
         `;
       },
@@ -125,6 +134,16 @@ export function renderConsciousnessStream(props: ConsciousnessStreamProps) {
         <div class="aeon-shushu-pulse" style="width: 8px; height: 8px; background: var(--aeon-cyan);"></div>
         <span class="mono">${t("chat.consciousnessStream") || "CONSCIOUSNESS_STREAM"}</span>
         <span class="consciousness-count">${sortedLog.length}</span>
+        <button
+          class="consciousness-scroll-btn"
+          title="跳到最新"
+          @click=${(e: Event) => {
+            const body = (e.currentTarget as HTMLElement)
+              .closest(".consciousness-stream")
+              ?.querySelector(".consciousness-stream-body");
+            if (body) body.scrollTop = body.scrollHeight;
+          }}
+        >↓</button>
       </div>
       
       <!-- FCA Layer 9: Cognitive Dashboard -->

@@ -69,7 +69,8 @@ export class ChatLayout extends LitElement {
     const sessionStatusLabel = sessionWorking ? t("chat.sidebarWorking") : t("chat.sidebarIdle");
     const sessionModel = activeSession?.model || "auto";
     const sessionThinking = this.props.thinkingLevel || "default";
-    const deliveryState = this.props.executionDelivery?.state ?? "persist_failed";
+    // Use null when no delivery info — avoids showing the misleading "persist_failed" default
+    const deliveryState: string | null = this.props.executionDelivery?.state ?? null;
     const persistedAt = this.props.executionDelivery?.persistedAt ?? null;
     const deliveryHint = persistedAt
       ? new Date(persistedAt).toLocaleTimeString([], {
@@ -94,14 +95,19 @@ export class ChatLayout extends LitElement {
       noiseLevel: 0.2,
       deliveryBand: "pending" as const,
     };
-    const formulaRows = buildFormulaRows({
+    const formulaMetrics = buildFormulaMetrics({
       chaosScore: this.props.chaosScore,
       epiphanyFactor: this.props.epiphanyFactor,
       deliveryState,
       depthLevel: fractal.depthLevel,
       sessionWorking,
     });
-    const showUtilityRail = !sidebarOpen;
+    // Hide the rail entirely when there is no meaningful signal yet
+    const hasSignal =
+      (this.props.epiphanyFactor ?? 0) > 0 ||
+      (this.props.chaosScore ?? 0) > 0 ||
+      deliveryState !== null;
+    const showUtilityRail = !sidebarOpen && hasSignal;
     const performanceMode = this.props.performanceMode ?? "balanced";
 
     return html`
@@ -149,18 +155,30 @@ export class ChatLayout extends LitElement {
             ${
               showUtilityRail
                 ? html`
-                    <aside class="chat-utility-rail" aria-label=${t("chat.formulaRailLabel") || "Fractal utility rail"}>
-                      <section class="formula-rail" aria-label=${t("chat.formulaRailLabel") || "Fractal formula rail"}>
-                        <div class="formula-rail__title">${t("chat.formulaRailTitle") || "Recursive Formula Rail"}</div>
-                        <div class="formula-rail__body">
-                          ${formulaRows.map(
-                            (row) => html`
-                              <div class="formula-rail__item ${row.phase}">
-                                <div class="formula-rail__expr">${row.expr}</div>
-                                <div class="formula-rail__value">${row.value}</div>
+                    <aside class="chat-utility-rail" aria-label=${t("chat.formulaRailLabel") || "AEON metrics rail"}>
+                      <section class="formula-rail">
+                        <div class="formula-rail__header">
+                          <span class="formula-rail__icon">⬡</span>
+                          <span class="formula-rail__label">AEON</span>
+                          <span class="formula-rail__phase ${formulaMetrics.phase}">${formulaMetrics.phase}</span>
+                        </div>
+                        <div class="formula-rail__metrics">
+                          ${formulaMetrics.cards.map(
+                            (card) => html`
+                              <div class="formula-metric ${card.state}">
+                                <div class="formula-metric__label">${card.label}</div>
+                                <div class="formula-metric__value">${card.value}</div>
+                                <div class="formula-metric__bar-wrap">
+                                  <div class="formula-metric__bar" style="width:${card.pct}%"></div>
+                                </div>
                               </div>
                             `,
                           )}
+                        </div>
+                        <div class="formula-rail__equation">
+                          <span class="formula-rail__eq-text">Z→Z²+C</span>
+                          <span class="formula-rail__eq-text">R(n+1)=f(R,𝑒)</span>
+                          <span class="formula-rail__eq-text ${formulaMetrics.deliveryState}">${formulaMetrics.deliveryLabel}</span>
                         </div>
                       </section>
                       ${renderConsciousnessStream({
@@ -324,35 +342,48 @@ export class ChatLayout extends LitElement {
   }
 }
 
-function buildFormulaRows(params: {
+/** Returns display data for the compact AEON metric cards in the formula rail. */
+function buildFormulaMetrics(params: {
   chaosScore: number;
   epiphanyFactor: number;
-  deliveryState: string;
+  deliveryState: string | null;
   depthLevel: number;
   sessionWorking: boolean;
 }) {
-  const chaos = Number.isFinite(params.chaosScore) ? params.chaosScore : 0;
-  const resonance = Number.isFinite(params.epiphanyFactor) ? params.epiphanyFactor : 0;
-  const rN = (chaos / 10).toFixed(2);
-  const rN1 = (chaos / 10 + resonance * 0.2).toFixed(2);
-  const intent = params.sessionWorking ? "active" : "idle";
-  return [
-    {
-      expr: "Z -> Z² + C",
-      value: `C=${resonance.toFixed(2)} · depth=${params.depthLevel}`,
-      phase: params.sessionWorking ? "active" : "idle",
-    },
-    {
-      expr: "R(n+1)=f(R(n),intent,entropy)",
-      value: `R(n)=${rN} -> R(n+1)=${rN1} · intent=${intent}`,
-      phase: params.sessionWorking ? "active" : "idle",
-    },
-    {
-      expr: "D=argmin(risk) under guardrail",
-      value: `delivery=${params.deliveryState}`,
-      phase: params.deliveryState === "persist_failed" ? "error" : "idle",
-    },
-  ];
+  const chaos    = Number.isFinite(params.chaosScore)    ? params.chaosScore    : 0;
+  const resonance= Number.isFinite(params.epiphanyFactor)? params.epiphanyFactor: 0;
+  const phase    = params.sessionWorking ? "active" : "idle";
+
+  // Delivery display
+  const ds = params.deliveryState;
+  const deliveryLabel   = ds === null ? "—" : ds;
+  const deliveryState   = ds === "persist_failed" ? "error" : ds === null ? "muted" : "ok";
+
+  return {
+    phase,
+    deliveryState,
+    deliveryLabel,
+    cards: [
+      {
+        label: "Epiphany",
+        value: resonance.toFixed(2),
+        pct: Math.min(100, resonance * 100),
+        state: resonance > 0.7 ? "active" : "idle",
+      },
+      {
+        label: "Chaos",
+        value: chaos.toFixed(1),
+        pct: Math.min(100, chaos * 10),
+        state: params.sessionWorking ? "active" : "idle",
+      },
+      {
+        label: `Δdepth`,
+        value: String(params.depthLevel),
+        pct: Math.min(100, params.depthLevel * 25),
+        state: "idle",
+      },
+    ],
+  };
 }
 
 declare global {

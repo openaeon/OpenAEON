@@ -40,7 +40,7 @@ export function loadSettings(): UiSettings {
     token: "",
     sessionKey: "main",
     lastActiveSessionKey: "main",
-    theme: "system",
+    theme: "dark",
     chatFocusMode: false,
     chatShowThinking: true,
     splitRatio: 0.6,

@@ -6,6 +6,7 @@ import { getActiveEmbeddedRunHandle } from "../../agents/pi-embedded-runner/runs
 import { loadConfig } from "../../config/config.js";
 import { loadPlanDigest } from "../../agents/planner-context.js";
 import {
+  calculateEpiphanyFactor,
   getAeonEvolutionState,
   getThinkingStream,
   setConsciousnessCharter,
@@ -638,17 +639,4 @@ export function calculatePeanoTraversedPoint(entropy: number) {
   };
 }
 
-/**
- * Calculates the "Epiphany Factor" (顿悟) based on system resonance.
- * High values trigger the "Resonance Flash" in UI.
- */
-export function calculateEpiphanyFactor(chaos: number, saturation: number, depth: number) {
-  // Normalize chaos (0-10 -> 0-1) and depth (0-20 -> 0-1)
-  const normChaos = Math.min(1, chaos / 10);
-  const normDepth = Math.min(1, depth / 20);
-  const normSaturation = saturation / 100;
 
-  const base = normChaos * 0.4 + normDepth * 0.3 + normSaturation * 0.3;
-  const jitter = ((Math.sin(Date.now() / 800) + 1) / 2) * 0.05;
-  return Math.max(0, Math.min(1, base + jitter));
-}

@@ -17,6 +17,19 @@ const ENTRY_WRAPPER_PAIRS = [
   { wrapperBasename: "openaeon.js", entryBasename: "entry.js" },
 ] as const;
 
+function hasExperimentalWarningSuppressed(): boolean {
+  const nodeOptions = process.env.NODE_OPTIONS ?? "";
+  if (nodeOptions.includes("--disable-warning=ExperimentalWarning") || nodeOptions.includes("--no-warnings")) {
+    return true;
+  }
+  for (const arg of process.execArgv) {
+    if (arg === "--disable-warning=ExperimentalWarning" || arg === "--no-warnings") {
+      return true;
+    }
+  }
+  return false;
+}
+
 function shouldForceReadOnlyAuthStore(argv: string[]): boolean {
   const tokens = argv.slice(2).filter((token) => token.length > 0 && !token.startsWith("-"));
   for (let index = 0; index < tokens.length - 1; index += 1) {
@@ -60,20 +73,6 @@ if (
     process.env.FORCE_COLOR = "0";
   }
 
-  const EXPERIMENTAL_WARNING_FLAG = "--disable-warning=ExperimentalWarning";
-
-  function hasExperimentalWarningSuppressed(): boolean {
-    const nodeOptions = process.env.NODE_OPTIONS ?? "";
-    if (nodeOptions.includes(EXPERIMENTAL_WARNING_FLAG) || nodeOptions.includes("--no-warnings")) {
-      return true;
-    }
-    for (const arg of process.execArgv) {
-      if (arg === EXPERIMENTAL_WARNING_FLAG || arg === "--no-warnings") {
-        return true;
-      }
-    }
-    return false;
-  }
 
   function ensureExperimentalWarningSuppressed(): boolean {
     if (shouldSkipRespawnForArgv(process.argv)) {
@@ -94,7 +93,7 @@ if (
     // Pass flag as a Node CLI option, not via NODE_OPTIONS (--disable-warning is disallowed in NODE_OPTIONS).
     const child = spawn(
       process.execPath,
-      [EXPERIMENTAL_WARNING_FLAG, ...process.execArgv, ...process.argv.slice(1)],
+      ["--disable-warning=ExperimentalWarning", ...process.execArgv, ...process.argv.slice(1)],
       {
         stdio: "inherit",
         env: process.env,

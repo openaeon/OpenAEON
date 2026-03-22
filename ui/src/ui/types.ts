@@ -85,6 +85,25 @@ export type WhatsAppStatus = {
   lastError?: string | null;
 };
 
+export type WeixinSelf = {
+  nickname?: string | null;
+  uin?: string | null;
+  alias?: string | null;
+};
+
+export type WeixinStatus = {
+  configured: boolean;
+  linked: boolean;
+  self?: WeixinSelf | null;
+  running: boolean;
+  connected: boolean;
+  lastConnectedAt?: number | null;
+  reconnectAttempts: number;
+  lastMessageAt?: number | null;
+  lastEventAt?: number | null;
+  lastError?: string | null;
+};
+
 export type TelegramBot = {
   id?: number | null;
   username?: string | null;
