@@ -1,6 +1,6 @@
 {
   "name": "openaeon",
-  "version": "2026.3.23",
+  "version": "2026.4.10",
   "description": "OPENAEON: High-dimensional AI gateway with N-dimensional cognitive traversal",
   "keywords": [
     "aeon",
@@ -129,6 +129,7 @@
     "protocol:gen": "node --import tsx scripts/protocol-gen.ts",
     "protocol:gen:swift": "node --import tsx scripts/protocol-gen-swift.ts",
     "release:check": "node --import tsx scripts/release-check.ts",
+    "release": "pnpm release:check && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release $(node -p \"require('./package.json').version\")\" && git push origin main && git push origin v$(node -p \"require('./package.json').version\")",
     "start": "node scripts/run-node.mjs",
     "test": "node scripts/test-parallel.mjs",
     "test:all": "pnpm lint && pnpm build && pnpm test && pnpm test:e2e && pnpm test:live && pnpm test:docker:all",

@@ -11,6 +11,7 @@ export const DEFAULT_MEMORY_FLUSH_SOFT_TOKENS = 4000;
 export const DEFAULT_MEMORY_FLUSH_FORCE_TRANSCRIPT_BYTES = 2 * 1024 * 1024;
 export const MEMORY_FLUSH_BACKOFF_MIN_MS = 2 * 60 * 1000;
 export const MEMORY_FLUSH_BACKOFF_MAX_MS = 60 * 60 * 1000;
+export const DEFAULT_MEMORY_FLUSH_JITTER_RATIO = 0.15; // 15% max jitter
 
 export const DEFAULT_MEMORY_FLUSH_PROMPT = [
   "Pre-compaction memory flush.",
@@ -159,7 +160,13 @@ export function shouldRunMemoryFlush(params: {
   if (threshold <= 0) {
     return false;
   }
-  if (totalTokens < threshold) {
+
+  // Add jitter to avoid synchronized flushes in multi-agent sessions
+  const jitterMax = Math.floor(softThreshold * DEFAULT_MEMORY_FLUSH_JITTER_RATIO);
+  const jitter = Math.floor(Math.random() * jitterMax);
+  const effectiveThreshold = Math.max(0, threshold - jitter);
+
+  if (totalTokens < effectiveThreshold) {
     return false;
   }
 

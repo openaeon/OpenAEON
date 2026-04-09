@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/diffs",
-  "version": "2026.3.23",
+  "version": "2026.4.10",
   "private": true,
   "description": "OpenAEON diff viewer plugin",
   "type": "module",

@@ -263,14 +263,29 @@ OpenAEON 使用一种被称为 **Dreaming（睡眠模式）** 的复杂闲置演
 - 通过视图级样式命名空间隔离，修复全局样式污染导致的错位重叠。
 - 已修复左栏/顶栏/遥测面板多处叠层与错位问题。
 
-### 7) 测试验证入口
+### 7) 分布式 Autopilot 与任务生命周期
+
+- **自主派发 (Autonomous Dispatch)**：具备 Ready 队列自动分发机制，并支持指数级退避重试 (Backoff)。
+- **任务状态机 (v2)**：实现严格的五段闭环 (`planned` → `in_progress` → `done` → `verified` → `closed`)，确保任务收敛可验证。
+- **心跳与看门狗**：实时任务监控，支持停滞任务自动检测 (3m) 与恢复建议提醒。
+- **内存同步抖动 (Jitter)**：引入随机化 Flush 阈值，防止多 Agent 协作时触发同步压缩。
+
+### 8) QA-Lab 场景化测试系统
+
+- **自动化校验**：支持场景化 (Scenario) 稳定性目录，集成自动命令执行与结果报告生成。
+- **引用审计**：支持对仓库资源与文档链接进行静态和动态可用性审计。
+
+### 9) 测试验证入口
 
 - 会话压缩与历史修复：
   - `src/agents/history-compactor.test.ts`
   - `src/agents/pi-embedded-runner.sanitize-session-history.test.ts`
   - `src/agents/pi-embedded-runner/run/attempt.test.ts`
-- 演化日志回退：
+- 任务规划与 Autopilot：
+  - `src/agents/tools/task-planner-tool.test.ts`
+- 演化日志与内存机制：
   - `src/gateway/aeon-evolution-log.test.ts`
+  - `src/auto-reply/reply/memory-flush.test.ts`
 - AEON 状态契约覆盖：
   - `src/gateway/server-methods/aeon.test.ts`
 
@@ -567,6 +582,30 @@ pnpm openaeon gateway
 打开：
 
 - [http://127.0.0.1:18789/](http://127.0.0.1:18789/)
+- [http://localhost:18789/](http://localhost:18789/)
+
+### 📱 常用通道配置
+
+#### 微信 (WeChat)
+
+1. **安装插件**：
+   ```bash
+   openaeon plugins install @openaeon/tencent-weixin
+   ```
+2. **配置通道**：
+   ```bash
+   openaeon channels add weixin
+   ```
+3. **扫码登录**：
+   ```bash
+   openaeon channels login weixin
+   ```
+   > [!TIP]
+   > **稳定性建议**：在扫码登录流程中，如果环境支持，建议选择 **iPad 或 Mac 模式** 登录。这样可以确保手机端与其同时在线，且连接状态更加稳定持久。
+
+#### Telegram / WhatsApp / Discord
+
+更多详细的 Bot Token 获取与会话配对指南，请参考 **[通道文档](https://docs.openaeon.ai/channels/telegram)**。
 
 ### UI 开发模式
 

@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/feishu",
-  "version": "2026.3.23",
+  "version": "2026.4.10",
   "description": "OpenAEON Feishu/Lark channel plugin (community maintained by @m1heng)",
   "type": "module",
   "dependencies": {

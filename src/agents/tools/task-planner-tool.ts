@@ -361,23 +361,29 @@ function assertValidStatusTransition(from: TodoStatus, to: TodoStatus): void {
 }
 
 function ensureClosureFields(item: TodoItem): void {
+  const label = item.id.slice(0, 8);
   if (!item.owner?.trim()) {
-    throw new ToolInputError(`Todo '${item.id}' missing owner`);
+    throw new ToolInputError(`Todo '${label}' missing mandatory 'owner'`);
   }
   if (!Array.isArray(item.acceptance) || item.acceptance.length === 0) {
-    throw new ToolInputError(`Todo '${item.id}' missing acceptance`);
+    throw new ToolInputError(`Todo '${label}' missing mandatory 'acceptance' criteria`);
   }
   if (item.status === "done" || item.status === "verified" || item.status === "closed") {
     if (!item.result || item.result.trim().length === 0) {
-      throw new ToolInputError(`Todo '${item.id}' missing result for status ${item.status}`);
+      throw new ToolInputError(`Todo '${label}' missing 'result' for status '${item.status}'`);
     }
-    if (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0) {
-      throw new ToolInputError(`Todo '${item.id}' missing evidenceRefs for status ${item.status}`);
+    const isLowRisk = item.riskLevel === "low";
+    if (!isLowRisk) {
+      if (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0) {
+        throw new ToolInputError(
+          `Todo '${label}' requires 'evidenceRefs' for status '${item.status}' (riskLevel: ${item.riskLevel ?? "medium"})`,
+        );
+      }
     }
   }
   if (item.status === "verified" || item.status === "closed") {
     if (!item.verifiedBy || item.verifiedBy.trim().length === 0) {
-      throw new ToolInputError(`Todo '${item.id}' missing verifiedBy for status ${item.status}`);
+      throw new ToolInputError(`Todo '${label}' missing 'verifiedBy' for status '${item.status}'`);
     }
   }
   if (item.status === "closed" && typeof item.closedAt !== "number") {

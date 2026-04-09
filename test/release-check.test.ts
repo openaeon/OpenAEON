@@ -13,15 +13,15 @@ describe("collectAppcastSparkleVersionErrors", () => {
   });
 
   it("requires lane-floor builds on and after lane-floor cutover", () => {
-    const xml = `<rss><channel>${makeItem("2026.3.1", "202603010")}</channel></rss>`;
+    const xml = `<rss><channel>${makeItem("2026.4.10", "202604100")}</channel></rss>`;
 
     expect(collectAppcastSparkleVersionErrors(xml)).toEqual([
-      "appcast item '2026.3.1' has sparkle:version 202603010 below lane floor 2026030190.",
+      "appcast item '2026.4.10' has sparkle:version 202604100 below lane floor 2026041090.",
     ]);
   });
 
   it("accepts canonical stable lane builds on and after lane-floor cutover", () => {
-    const xml = `<rss><channel>${makeItem("2026.3.1", "2026030190")}</channel></rss>`;
+    const xml = `<rss><channel>${makeItem("2026.4.10", "2026041090")}</channel></rss>`;
 
     expect(collectAppcastSparkleVersionErrors(xml)).toEqual([]);
   });

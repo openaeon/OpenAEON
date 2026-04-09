@@ -394,6 +394,9 @@ export async function spawnSubagentDirect(
     ctx.requesterAgentIdOverride ?? parseAgentSessionKey(requesterInternalKey)?.agentId,
   );
   const targetAgentId = requestedAgentId ? normalizeAgentId(requestedAgentId) : requesterAgentId;
+  console.log(
+    `[SubagentSpawn] request: target=${targetAgentId}, requester=${requesterAgentId}, label=${label}`,
+  );
   if (targetAgentId !== requesterAgentId) {
     const allowAgents = resolveAgentConfig(cfg, requesterAgentId)?.subagents?.allowAgents ?? [];
     const allowAny = allowAgents.some((value) => value.trim() === "*");
@@ -405,12 +408,15 @@ export async function spawnSubagentDirect(
     );
     if (!allowAny && !allowSet.has(normalizedTargetId)) {
       const allowedText = allowSet.size > 0 ? Array.from(allowSet).join(", ") : "none";
+      const err = `agentId "${targetAgentId}" is not allowed for requester "${requesterAgentId}" (allowed: ${allowedText})`;
+      console.error(`[SubagentSpawn] auth_denied: ${err}`);
       return {
         status: "forbidden",
-        error: `agentId "${targetAgentId}" is not allowed for requester "${requesterAgentId}" (allowed: ${allowedText})`,
+        error: err,
       };
     }
   }
+  console.log(`[SubagentSpawn] auth_granted: target=${targetAgentId}`);
   const childSessionKey = `agent:${targetAgentId}:subagent:${crypto.randomUUID()}`;
   const requesterRuntime = resolveSandboxRuntimeStatus({
     cfg,
@@ -506,6 +512,9 @@ export async function spawnSubagentDirect(
     shouldWaitForCompletion: false,
     spawnPhase: "registered",
   });
+  console.log(
+    `[SubagentSpawn] registered: runId=${childRunId} session=${childSessionKey} mode=${spawnMode}`,
+  );
 
   try {
     await callGateway({

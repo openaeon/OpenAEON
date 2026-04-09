@@ -89,16 +89,9 @@ type TaskPlanExecutionGraph = {
 
 type TaskPlanPhase = NonNullable<TaskPlan["phase"]>;
 
-const TASK_PLAN_PHASE_ORDER: Record<TaskPlanPhase, number> = {
-  planning: 0,
-  execution: 1,
-  verification: 2,
-  complete: 3,
-};
-
 const LONG_RUNNING_TODO_MS = 20 * 60_000;
-const STALE_TODO_IDLE_MS = 8 * 60_000;
-const RECOVERY_BROADCAST_COOLDOWN_MS = 3 * 60_000;
+const STALE_TODO_IDLE_MS = 3 * 60_000;
+const RECOVERY_BROADCAST_COOLDOWN_MS = 1 * 60_000;
 const STALE_TODO_NOTIFY_COOLDOWN_MS = 10 * 60_000;
 const AUTOPILOT_MAX_CONCURRENT_DEFAULT = 2;
 const AUTOPILOT_RETRY_LIMIT_DEFAULT = 3;

@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/zalouser",
-  "version": "2026.3.23",
+  "version": "2026.4.10",
   "description": "OpenAEON Zalo Personal Account plugin via zca-cli",
   "type": "module",
   "dependencies": {

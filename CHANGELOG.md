@@ -2,6 +2,17 @@
 
 Docs: https://docs.openaeon.ai
 
+## 2026.4.10
+
+### Changes
+
+- Autopilot: accelerate stale task detection (3m) and recovery watchdog (1m) frequency for improved system responsiveness.
+- Task Planner: upgrade to State Machine v2 with 5-stage closed-loop verification (`planned` → `in_progress` → `done` → `verified` → `closed`), and relaxed evidence requirements for low-risk tasks.
+- Memory: introduce 15% synchronization jitter in memory compaction triggers to prevent concurrent agent I/O spikes.
+- Subagents: inject granular lifecycle audit logging into subagent spawning for improved observability and diagnostic tracking.
+- QA-Lab: add scenario toolkit support for verifiable command execution and environment audit.
+- WeChat: add first-class tencent-weixin channel support with plugin-based installation and interactive login.
+
 ## 2026.3.1
 
 ### Changes

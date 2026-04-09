@@ -247,15 +247,30 @@ The following capabilities are now implemented in the current OpenAEON stack and
 - Layout and style isolation were hardened by scoping view-local classes (to avoid global shell/topbar collisions).
 - Recent fixes include overlap/stacking cleanup for left rail, top action row, and telemetry panel consistency.
 
-### 7) Test-backed implementation checkpoints
+### 7) Distributed Autopilot and Task Lifecycle
+
+- **Autonomous Dispatch**: Automated subagent spawning from ready-queue with binary exponential backoff and retry limits.
+- **Task State Machine (v2)**: Strict 5-stage closed-loop (`planned` → `in_progress` → `done` → `verified` → `closed`) for verifiable task convergence.
+- **Heartbeat & Watchdog**: Active task monitoring with automated stale detection (3m) and recovery prompts.
+- **Memory Sync Jitter**: Randomized flush thresholds to prevent synchronized compaction in multi-agent sessions.
+
+### 8) QA-Lab Scenario System
+
+- **Automated Checks**: Scenario-based reliability catalog with automated command execution and result report generation.
+- **Reference Auditing**: Static/dynamic verification of repository assets and documentation links.
+
+### 9) Test-backed implementation checkpoints
 
 - Compaction and history integrity:
   - `src/agents/history-compactor.test.ts`
   - `src/agents/pi-embedded-runner.sanitize-session-history.test.ts`
   - `src/agents/pi-embedded-runner/run/attempt.test.ts`
-- Evolution logging fallback:
+- Task planning and Autopilot:
+  - `src/agents/tools/task-planner-tool.test.ts`
+- Evolution logging and Memory:
   - `src/gateway/aeon-evolution-log.test.ts`
-- AEON status contract and schema coverage:
+  - `src/auto-reply/reply/memory-flush.test.ts`
+- AEON status contract:
   - `src/gateway/server-methods/aeon.test.ts`
 
 ---
@@ -553,6 +568,30 @@ pnpm openaeon gateway
 Open:
 
 - [http://127.0.0.1:18789/](http://127.0.0.1:18789/)
+- [http://localhost:18789/](http://localhost:18789/)
+
+### 📱 Common Channels Setup
+
+#### WeChat (Weixin)
+
+1. **Install extension**:
+   ```bash
+   openaeon plugins install @openaeon/tencent-weixin
+   ```
+2. **Configure channel**:
+   ```bash
+   openaeon channels add weixin
+   ```
+3. **Scan to Login**:
+   ```bash
+   openaeon channels login weixin
+   ```
+   > [!TIP]
+   > **Stability Tip**: We recommend using the **iPad or Mac login mode** during the login prompt if available, as it allows your phone to stay online simultaneously and provides a more stable long-term connection.
+
+#### Telegram / WhatsApp / Discord
+
+Refer to the **[Channel Documentation](https://docs.openaeon.ai/channels/telegram)** for detailed bot token and session pairing guides.
 
 ### UI development mode
 

@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/acpx",
-  "version": "2026.3.23",
+  "version": "2026.4.10",
   "description": "OpenAEON ACP runtime backend via acpx",
   "type": "module",
   "dependencies": {

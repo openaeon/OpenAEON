@@ -5418,3 +5418,21 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Range: [0.53, 0.73]
 - Intensity: low
 - Health: N/A
+
+## 2026-04-09 19:01:25 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1085,"memorySaturation":1,"idleTimeMs":923929,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: falling
+- Ethics trusted: false

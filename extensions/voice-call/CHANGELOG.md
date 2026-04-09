@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.4.10
+
+### Changes
+
+- Version alignment with core OpenAEON release numbers.
+
 ## 2026.3.1
 
 ### Changes
