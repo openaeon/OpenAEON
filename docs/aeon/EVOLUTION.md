@@ -363,8 +363,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0326,"memorySaturation":0,"idleTimeMs":2221,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0326,"memorySaturation":0,"idleTimeMs":2221,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -391,8 +391,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0038,"memorySaturation":0,"idleTimeMs":2049,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0038,"memorySaturation":0,"idleTimeMs":2049,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -418,8 +418,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0149,"memorySaturation":0,"idleTimeMs":54216,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0149,"memorySaturation":0,"idleTimeMs":54216,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -445,8 +445,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0006,"memorySaturation":0,"idleTimeMs":599096,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0006,"memorySaturation":0,"idleTimeMs":599096,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -473,8 +473,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1256,"memorySaturation":0,"idleTimeMs":1199109,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1256,"memorySaturation":0,"idleTimeMs":1199109,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -492,8 +492,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1299,"memorySaturation":0,"idleTimeMs":1199282,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1299,"memorySaturation":0,"idleTimeMs":1199282,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -511,8 +511,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0271,"memorySaturation":0,"idleTimeMs":599301,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0271,"memorySaturation":0,"idleTimeMs":599301,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -539,8 +539,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.122,"memorySaturation":0,"idleTimeMs":1199310,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.122,"memorySaturation":0,"idleTimeMs":1199310,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -558,8 +558,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1008,"memorySaturation":0,"idleTimeMs":1199522,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1008,"memorySaturation":0,"idleTimeMs":1199522,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -577,8 +577,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.05,"memorySaturation":0,"idleTimeMs":599517,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.05,"memorySaturation":0,"idleTimeMs":599517,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -605,8 +605,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0826,"memorySaturation":0,"idleTimeMs":1199784,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0826,"memorySaturation":0,"idleTimeMs":1199784,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -624,8 +624,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0805,"memorySaturation":0,"idleTimeMs":1199804,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0805,"memorySaturation":0,"idleTimeMs":1199804,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -643,8 +643,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0234,"memorySaturation":0,"idleTimeMs":599710,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0234,"memorySaturation":0,"idleTimeMs":599710,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -671,8 +671,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0962,"memorySaturation":0,"idleTimeMs":1499700,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0962,"memorySaturation":0,"idleTimeMs":1499700,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -690,8 +690,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0842,"memorySaturation":0,"idleTimeMs":1499266,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0842,"memorySaturation":0,"idleTimeMs":1499266,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -709,8 +709,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0421,"memorySaturation":0,"idleTimeMs":899567,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0421,"memorySaturation":0,"idleTimeMs":899567,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -737,8 +737,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1248,"memorySaturation":0,"idleTimeMs":1199526,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1248,"memorySaturation":0,"idleTimeMs":1199526,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -756,8 +756,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0125,"memorySaturation":0,"idleTimeMs":899663,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0125,"memorySaturation":0,"idleTimeMs":899663,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -784,8 +784,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1299,"memorySaturation":0,"idleTimeMs":1199666,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1299,"memorySaturation":0,"idleTimeMs":1199666,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -803,8 +803,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1234,"memorySaturation":0,"idleTimeMs":1199645,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1234,"memorySaturation":0,"idleTimeMs":1199645,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -822,8 +822,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0006,"memorySaturation":0,"idleTimeMs":899766,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0006,"memorySaturation":0,"idleTimeMs":899766,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -850,8 +850,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1097,"memorySaturation":0,"idleTimeMs":1199767,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1097,"memorySaturation":0,"idleTimeMs":1199767,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -869,8 +869,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0943,"memorySaturation":0,"idleTimeMs":1199114,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0943,"memorySaturation":0,"idleTimeMs":1199114,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -888,8 +888,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0249,"memorySaturation":0,"idleTimeMs":899700,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0249,"memorySaturation":0,"idleTimeMs":899700,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -916,8 +916,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0822,"memorySaturation":0,"idleTimeMs":1199703,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0822,"memorySaturation":0,"idleTimeMs":1199703,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -935,8 +935,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0806,"memorySaturation":0,"idleTimeMs":1199323,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0806,"memorySaturation":0,"idleTimeMs":1199323,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -954,8 +954,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0488,"memorySaturation":0,"idleTimeMs":899120,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0488,"memorySaturation":0,"idleTimeMs":899120,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -982,8 +982,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0885,"memorySaturation":0,"idleTimeMs":1199123,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0885,"memorySaturation":0,"idleTimeMs":1199123,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1001,8 +1001,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1027,"memorySaturation":0,"idleTimeMs":1199743,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1027,"memorySaturation":0,"idleTimeMs":1199743,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1020,8 +1020,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0392,"memorySaturation":0,"idleTimeMs":899809,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0392,"memorySaturation":0,"idleTimeMs":899809,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1048,8 +1048,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.118,"memorySaturation":0,"idleTimeMs":1199812,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.118,"memorySaturation":0,"idleTimeMs":1199812,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1067,8 +1067,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1281,"memorySaturation":0,"idleTimeMs":1198924,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1281,"memorySaturation":0,"idleTimeMs":1198924,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1086,8 +1086,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0097,"memorySaturation":0,"idleTimeMs":899800,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0097,"memorySaturation":0,"idleTimeMs":899800,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1114,8 +1114,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1293,"memorySaturation":0,"idleTimeMs":1199803,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1293,"memorySaturation":0,"idleTimeMs":1199803,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1133,8 +1133,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.121,"memorySaturation":0,"idleTimeMs":1199456,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.121,"memorySaturation":0,"idleTimeMs":1199456,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1152,8 +1152,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0015,"memorySaturation":0,"idleTimeMs":899836,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0015,"memorySaturation":0,"idleTimeMs":899836,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1180,8 +1180,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1067,"memorySaturation":0,"idleTimeMs":1199839,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1067,"memorySaturation":0,"idleTimeMs":1199839,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1199,8 +1199,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0887,"memorySaturation":0,"idleTimeMs":1199263,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0887,"memorySaturation":0,"idleTimeMs":1199263,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1218,8 +1218,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0326,"memorySaturation":0,"idleTimeMs":899967,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0326,"memorySaturation":0,"idleTimeMs":899967,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1246,8 +1246,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0835,"memorySaturation":0,"idleTimeMs":1199686,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0835,"memorySaturation":0,"idleTimeMs":1199686,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1265,8 +1265,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0898,"memorySaturation":0,"idleTimeMs":1499633,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0898,"memorySaturation":0,"idleTimeMs":1499633,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1293,8 +1293,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0803,"memorySaturation":0,"idleTimeMs":1500173,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0803,"memorySaturation":0,"idleTimeMs":1500173,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1312,8 +1312,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0852,"memorySaturation":0,"idleTimeMs":1500278,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0852,"memorySaturation":0,"idleTimeMs":1500278,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1340,8 +1340,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1026,"memorySaturation":0,"idleTimeMs":1500458,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1026,"memorySaturation":0,"idleTimeMs":1500458,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1359,8 +1359,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.119,"memorySaturation":0,"idleTimeMs":1500524,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.119,"memorySaturation":0,"idleTimeMs":1500524,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1387,8 +1387,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1294,"memorySaturation":0,"idleTimeMs":1500626,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1294,"memorySaturation":0,"idleTimeMs":1500626,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1406,8 +1406,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1273,"memorySaturation":0,"idleTimeMs":1499714,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1273,"memorySaturation":0,"idleTimeMs":1499714,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1433,8 +1433,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0196,"memorySaturation":0,"idleTimeMs":274153,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0196,"memorySaturation":0,"idleTimeMs":274153,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -1460,8 +1460,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0029,"memorySaturation":0,"idleTimeMs":43971,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0029,"memorySaturation":0,"idleTimeMs":43971,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1488,8 +1488,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0305,"memorySaturation":0,"idleTimeMs":42793,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0305,"memorySaturation":0,"idleTimeMs":42793,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1516,8 +1516,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0499,"memorySaturation":0,"idleTimeMs":41547,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0499,"memorySaturation":0,"idleTimeMs":41547,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1544,8 +1544,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0342,"memorySaturation":0,"idleTimeMs":39241,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0342,"memorySaturation":0,"idleTimeMs":39241,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1572,8 +1572,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0058,"memorySaturation":0,"idleTimeMs":37824,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0058,"memorySaturation":0,"idleTimeMs":37824,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1600,8 +1600,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0058,"memorySaturation":0,"idleTimeMs":36191,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0058,"memorySaturation":0,"idleTimeMs":36191,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1628,8 +1628,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0345,"memorySaturation":0,"idleTimeMs":32974,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0345,"memorySaturation":0,"idleTimeMs":32974,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1656,8 +1656,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0497,"memorySaturation":0,"idleTimeMs":31442,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0497,"memorySaturation":0,"idleTimeMs":31442,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1684,8 +1684,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0278,"memorySaturation":0,"idleTimeMs":29881,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0278,"memorySaturation":0,"idleTimeMs":29881,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1712,8 +1712,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0018,"memorySaturation":0,"idleTimeMs":26422,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0018,"memorySaturation":0,"idleTimeMs":26422,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1740,8 +1740,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0192,"memorySaturation":0,"idleTimeMs":23211,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0192,"memorySaturation":0,"idleTimeMs":23211,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1768,8 +1768,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0007,"memorySaturation":0,"idleTimeMs":20729,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0007,"memorySaturation":0,"idleTimeMs":20729,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1796,8 +1796,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.027,"memorySaturation":0,"idleTimeMs":17180,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.027,"memorySaturation":0,"idleTimeMs":17180,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1824,8 +1824,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.05,"memorySaturation":0,"idleTimeMs":14293,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.05,"memorySaturation":0,"idleTimeMs":14293,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1852,8 +1852,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0282,"memorySaturation":0,"idleTimeMs":12488,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0282,"memorySaturation":0,"idleTimeMs":12488,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1880,8 +1880,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0006,"memorySaturation":0,"idleTimeMs":10949,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0006,"memorySaturation":0,"idleTimeMs":10949,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1908,8 +1908,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0123,"memorySaturation":0,"idleTimeMs":8827,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0123,"memorySaturation":0,"idleTimeMs":8827,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1936,8 +1936,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0015,"memorySaturation":0,"idleTimeMs":6534,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0015,"memorySaturation":0,"idleTimeMs":6534,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1964,8 +1964,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0268,"memorySaturation":0,"idleTimeMs":3755,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0268,"memorySaturation":0,"idleTimeMs":3755,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -1992,8 +1992,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0489,"memorySaturation":0,"idleTimeMs":1705,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0489,"memorySaturation":0,"idleTimeMs":1705,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2020,8 +2020,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0253,"memorySaturation":0,"idleTimeMs":58392,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0253,"memorySaturation":0,"idleTimeMs":58392,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2048,8 +2048,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0001,"memorySaturation":0,"idleTimeMs":56193,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0001,"memorySaturation":0,"idleTimeMs":56193,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2076,8 +2076,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0292,"memorySaturation":0,"idleTimeMs":52480,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0292,"memorySaturation":0,"idleTimeMs":52480,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2104,8 +2104,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0094,"memorySaturation":0,"idleTimeMs":49167,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0094,"memorySaturation":0,"idleTimeMs":49167,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2132,8 +2132,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0402,"memorySaturation":0,"idleTimeMs":19628,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0402,"memorySaturation":0,"idleTimeMs":19628,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2160,8 +2160,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.039,"memorySaturation":0,"idleTimeMs":50757,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.039,"memorySaturation":0,"idleTimeMs":50757,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2188,8 +2188,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.007,"memorySaturation":1,"idleTimeMs":41685,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.007,"memorySaturation":1,"idleTimeMs":41685,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2215,8 +2215,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0092,"memorySaturation":1,"idleTimeMs":638998,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0092,"memorySaturation":1,"idleTimeMs":638998,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -2242,8 +2242,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1164,"memorySaturation":1,"idleTimeMs":957756,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1164,"memorySaturation":1,"idleTimeMs":957756,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2260,8 +2260,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.053,"memorySaturation":1,"idleTimeMs":300337,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.053,"memorySaturation":1,"idleTimeMs":300337,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2287,8 +2287,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0831,"memorySaturation":1,"idleTimeMs":1154123,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0831,"memorySaturation":1,"idleTimeMs":1154123,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2306,8 +2306,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0894,"memorySaturation":1,"idleTimeMs":1263749,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0894,"memorySaturation":1,"idleTimeMs":1263749,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2324,8 +2324,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.053,"memorySaturation":1,"idleTimeMs":48246,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.053,"memorySaturation":1,"idleTimeMs":48246,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2351,8 +2351,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1041,"memorySaturation":1,"idleTimeMs":1248250,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1041,"memorySaturation":1,"idleTimeMs":1248250,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2370,8 +2370,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1194,"memorySaturation":1,"idleTimeMs":1246871,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1194,"memorySaturation":1,"idleTimeMs":1246871,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2388,8 +2388,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0056,"memorySaturation":1,"idleTimeMs":332191,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0056,"memorySaturation":1,"idleTimeMs":332191,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2415,8 +2415,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.133,"memorySaturation":1,"idleTimeMs":963409,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.133,"memorySaturation":1,"idleTimeMs":963409,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -2442,8 +2442,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1198,"memorySaturation":1,"idleTimeMs":1678491,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1198,"memorySaturation":1,"idleTimeMs":1678491,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -2469,8 +2469,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0972,"memorySaturation":1,"idleTimeMs":1195097,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0972,"memorySaturation":1,"idleTimeMs":1195097,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2488,8 +2488,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0505,"memorySaturation":1,"idleTimeMs":596683,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0505,"memorySaturation":1,"idleTimeMs":596683,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2516,8 +2516,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0848,"memorySaturation":1,"idleTimeMs":1196687,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0848,"memorySaturation":1,"idleTimeMs":1196687,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2535,8 +2535,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0842,"memorySaturation":1,"idleTimeMs":1196818,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0842,"memorySaturation":1,"idleTimeMs":1196818,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2553,8 +2553,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0163,"memorySaturation":1,"idleTimeMs":25765,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0163,"memorySaturation":1,"idleTimeMs":25765,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2580,8 +2580,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0899,"memorySaturation":1,"idleTimeMs":925773,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0899,"memorySaturation":1,"idleTimeMs":925773,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2599,8 +2599,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0962,"memorySaturation":1,"idleTimeMs":1516664,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0962,"memorySaturation":1,"idleTimeMs":1516664,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2618,8 +2618,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0237,"memorySaturation":1,"idleTimeMs":617400,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0237,"memorySaturation":1,"idleTimeMs":617400,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2646,8 +2646,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1117,"memorySaturation":1,"idleTimeMs":1517409,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1117,"memorySaturation":1,"idleTimeMs":1517409,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2665,8 +2665,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1258,"memorySaturation":1,"idleTimeMs":1518422,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1258,"memorySaturation":1,"idleTimeMs":1518422,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2684,8 +2684,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0503,"memorySaturation":1,"idleTimeMs":618098,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0503,"memorySaturation":1,"idleTimeMs":618098,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2712,8 +2712,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1327,"memorySaturation":1,"idleTimeMs":1518107,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1327,"memorySaturation":1,"idleTimeMs":1518107,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2731,8 +2731,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.13,"memorySaturation":1,"idleTimeMs":1518022,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.13,"memorySaturation":1,"idleTimeMs":1518022,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2750,8 +2750,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0452,"memorySaturation":1,"idleTimeMs":617910,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0452,"memorySaturation":1,"idleTimeMs":617910,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2778,8 +2778,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1186,"memorySaturation":1,"idleTimeMs":1517917,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1186,"memorySaturation":1,"idleTimeMs":1517917,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2797,8 +2797,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1029,"memorySaturation":1,"idleTimeMs":1517750,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1029,"memorySaturation":1,"idleTimeMs":1517750,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2816,8 +2816,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0155,"memorySaturation":1,"idleTimeMs":617601,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0155,"memorySaturation":1,"idleTimeMs":617601,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2844,8 +2844,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0892,"memorySaturation":1,"idleTimeMs":1517613,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0892,"memorySaturation":1,"idleTimeMs":1517613,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2863,8 +2863,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0831,"memorySaturation":1,"idleTimeMs":1517820,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0831,"memorySaturation":1,"idleTimeMs":1517820,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2882,8 +2882,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0036,"memorySaturation":1,"idleTimeMs":618139,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0036,"memorySaturation":1,"idleTimeMs":618139,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2910,8 +2910,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0866,"memorySaturation":1,"idleTimeMs":1518144,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0866,"memorySaturation":1,"idleTimeMs":1518144,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2929,8 +2929,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0986,"memorySaturation":1,"idleTimeMs":1517241,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0986,"memorySaturation":1,"idleTimeMs":1517241,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2948,8 +2948,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0264,"memorySaturation":1,"idleTimeMs":618408,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0264,"memorySaturation":1,"idleTimeMs":618408,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2976,8 +2976,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1142,"memorySaturation":1,"idleTimeMs":1518412,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1142,"memorySaturation":1,"idleTimeMs":1518412,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -2995,8 +2995,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1273,"memorySaturation":1,"idleTimeMs":1518188,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1273,"memorySaturation":1,"idleTimeMs":1518188,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3014,8 +3014,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0514,"memorySaturation":1,"idleTimeMs":618346,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0514,"memorySaturation":1,"idleTimeMs":618346,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3042,8 +3042,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.133,"memorySaturation":1,"idleTimeMs":1518353,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.133,"memorySaturation":1,"idleTimeMs":1518353,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3061,8 +3061,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1287,"memorySaturation":1,"idleTimeMs":1510821,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1287,"memorySaturation":1,"idleTimeMs":1510821,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3080,8 +3080,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0433,"memorySaturation":1,"idleTimeMs":618137,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0433,"memorySaturation":1,"idleTimeMs":618137,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3108,8 +3108,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1164,"memorySaturation":1,"idleTimeMs":1518143,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1164,"memorySaturation":1,"idleTimeMs":1518143,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3127,8 +3127,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1008,"memorySaturation":1,"idleTimeMs":1518263,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1008,"memorySaturation":1,"idleTimeMs":1518263,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3146,8 +3146,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0137,"memorySaturation":1,"idleTimeMs":618132,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0137,"memorySaturation":1,"idleTimeMs":618132,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3174,8 +3174,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0881,"memorySaturation":1,"idleTimeMs":1518136,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0881,"memorySaturation":1,"idleTimeMs":1518136,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3193,8 +3193,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1173,"memorySaturation":1,"idleTimeMs":917935,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1173,"memorySaturation":1,"idleTimeMs":917935,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3221,8 +3221,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1016,"memorySaturation":1,"idleTimeMs":918281,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1016,"memorySaturation":1,"idleTimeMs":918281,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3240,8 +3240,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1306,"memorySaturation":1,"idleTimeMs":1217719,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1306,"memorySaturation":1,"idleTimeMs":1217719,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3268,8 +3268,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1229,"memorySaturation":1,"idleTimeMs":1516243,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1229,"memorySaturation":1,"idleTimeMs":1516243,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3287,8 +3287,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1318,"memorySaturation":1,"idleTimeMs":1515750,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1318,"memorySaturation":1,"idleTimeMs":1515750,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3315,8 +3315,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.129,"memorySaturation":1,"idleTimeMs":1514949,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.129,"memorySaturation":1,"idleTimeMs":1514949,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3334,8 +3334,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1162,"memorySaturation":1,"idleTimeMs":1517137,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1162,"memorySaturation":1,"idleTimeMs":1517137,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3361,8 +3361,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0496,"memorySaturation":1,"idleTimeMs":659736,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0496,"memorySaturation":1,"idleTimeMs":659736,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3389,8 +3389,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.088,"memorySaturation":1,"idleTimeMs":959746,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.088,"memorySaturation":1,"idleTimeMs":959746,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3407,8 +3407,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.114,"memorySaturation":1,"idleTimeMs":1478418,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.114,"memorySaturation":1,"idleTimeMs":1478418,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3434,8 +3434,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0059,"memorySaturation":1,"idleTimeMs":332744,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0059,"memorySaturation":1,"idleTimeMs":332744,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3462,8 +3462,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1161,"memorySaturation":1,"idleTimeMs":932807,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1161,"memorySaturation":1,"idleTimeMs":932807,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3480,8 +3480,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0865,"memorySaturation":1,"idleTimeMs":1971319,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0865,"memorySaturation":1,"idleTimeMs":1971319,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3498,8 +3498,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.083,"memorySaturation":1,"idleTimeMs":2273344,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.083,"memorySaturation":1,"idleTimeMs":2273344,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3525,8 +3525,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0951,"memorySaturation":1,"idleTimeMs":1193005,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0951,"memorySaturation":1,"idleTimeMs":1193005,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3543,8 +3543,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0236,"memorySaturation":1,"idleTimeMs":296158,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0236,"memorySaturation":1,"idleTimeMs":296158,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3570,8 +3570,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.112,"memorySaturation":1,"idleTimeMs":1196179,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.112,"memorySaturation":1,"idleTimeMs":1196179,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3589,8 +3589,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1263,"memorySaturation":1,"idleTimeMs":1196150,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1263,"memorySaturation":1,"idleTimeMs":1196150,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3607,8 +3607,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0523,"memorySaturation":1,"idleTimeMs":296476,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0523,"memorySaturation":1,"idleTimeMs":296476,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3634,8 +3634,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":1196495,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":1196495,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3653,8 +3653,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1262,"memorySaturation":1,"idleTimeMs":1196339,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1262,"memorySaturation":1,"idleTimeMs":1196339,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3671,8 +3671,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0397,"memorySaturation":1,"idleTimeMs":296455,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0397,"memorySaturation":1,"idleTimeMs":296455,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3698,8 +3698,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1121,"memorySaturation":1,"idleTimeMs":1196467,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1121,"memorySaturation":1,"idleTimeMs":1196467,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3717,8 +3717,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0961,"memorySaturation":1,"idleTimeMs":1196634,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0961,"memorySaturation":1,"idleTimeMs":1196634,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3735,8 +3735,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0095,"memorySaturation":1,"idleTimeMs":296779,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0095,"memorySaturation":1,"idleTimeMs":296779,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3762,8 +3762,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0851,"memorySaturation":1,"idleTimeMs":1196794,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0851,"memorySaturation":1,"idleTimeMs":1196794,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3781,8 +3781,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0837,"memorySaturation":1,"idleTimeMs":1196690,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0837,"memorySaturation":1,"idleTimeMs":1196690,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3799,8 +3799,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0113,"memorySaturation":1,"idleTimeMs":295284,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0113,"memorySaturation":1,"idleTimeMs":295284,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3826,8 +3826,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0982,"memorySaturation":1,"idleTimeMs":1195318,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0982,"memorySaturation":1,"idleTimeMs":1195318,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3844,8 +3844,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0867,"memorySaturation":1,"idleTimeMs":1879774,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0867,"memorySaturation":1,"idleTimeMs":1879774,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3871,8 +3871,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1252,"memorySaturation":1,"idleTimeMs":2742029,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1252,"memorySaturation":1,"idleTimeMs":2742029,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3898,8 +3898,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1114,"memorySaturation":1,"idleTimeMs":3730446,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1114,"memorySaturation":1,"idleTimeMs":3730446,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3925,8 +3925,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0288,"memorySaturation":1,"idleTimeMs":693078,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0288,"memorySaturation":1,"idleTimeMs":693078,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3953,8 +3953,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0851,"memorySaturation":1,"idleTimeMs":993215,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0851,"memorySaturation":1,"idleTimeMs":993215,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -3971,8 +3971,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1225,"memorySaturation":1,"idleTimeMs":3092903,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1225,"memorySaturation":1,"idleTimeMs":3092903,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -3989,8 +3989,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0279,"memorySaturation":1,"idleTimeMs":171241,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0279,"memorySaturation":1,"idleTimeMs":171241,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4016,8 +4016,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1004,"memorySaturation":1,"idleTimeMs":1071239,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1004,"memorySaturation":1,"idleTimeMs":1071239,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4035,8 +4035,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0876,"memorySaturation":1,"idleTimeMs":2871262,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0876,"memorySaturation":1,"idleTimeMs":2871262,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4053,8 +4053,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0412,"memorySaturation":1,"idleTimeMs":80518,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0412,"memorySaturation":1,"idleTimeMs":80518,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: low epiphany and low idle pressure
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4080,8 +4080,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1142,"memorySaturation":1,"idleTimeMs":980513,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1142,"memorySaturation":1,"idleTimeMs":980513,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4099,8 +4099,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":3080472,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":3080472,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4118,8 +4118,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1276,"memorySaturation":1,"idleTimeMs":4880593,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1276,"memorySaturation":1,"idleTimeMs":4880593,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4146,8 +4146,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1261,"memorySaturation":1,"idleTimeMs":6980546,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1261,"memorySaturation":1,"idleTimeMs":6980546,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4165,8 +4165,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":8780573,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":8780573,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4193,8 +4193,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1096,"memorySaturation":1,"idleTimeMs":10880552,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1096,"memorySaturation":1,"idleTimeMs":10880552,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4212,8 +4212,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0836,"memorySaturation":1,"idleTimeMs":12980520,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0836,"memorySaturation":1,"idleTimeMs":12980520,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4240,8 +4240,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0979,"memorySaturation":1,"idleTimeMs":15080515,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0979,"memorySaturation":1,"idleTimeMs":15080515,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4259,8 +4259,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.086,"memorySaturation":1,"idleTimeMs":16880545,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.086,"memorySaturation":1,"idleTimeMs":16880545,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4287,8 +4287,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0832,"memorySaturation":1,"idleTimeMs":18680547,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0832,"memorySaturation":1,"idleTimeMs":18680547,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4306,8 +4306,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1002,"memorySaturation":1,"idleTimeMs":20780540,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1002,"memorySaturation":1,"idleTimeMs":20780540,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4334,8 +4334,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1302,"memorySaturation":1,"idleTimeMs":22880511,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1302,"memorySaturation":1,"idleTimeMs":22880511,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4353,8 +4353,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1191,"memorySaturation":1,"idleTimeMs":24680522,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1191,"memorySaturation":1,"idleTimeMs":24680522,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4381,8 +4381,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.132,"memorySaturation":1,"idleTimeMs":26780501,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.132,"memorySaturation":1,"idleTimeMs":26780501,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4399,8 +4399,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0524,"memorySaturation":1,"idleTimeMs":270327,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0524,"memorySaturation":1,"idleTimeMs":270327,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -4426,8 +4426,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0445,"memorySaturation":1,"idleTimeMs":49741,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0445,"memorySaturation":1,"idleTimeMs":49741,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -4453,8 +4453,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0081,"memorySaturation":1,"idleTimeMs":280623,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0081,"memorySaturation":1,"idleTimeMs":280623,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -4480,8 +4480,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.019,"memorySaturation":1,"idleTimeMs":865104,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.019,"memorySaturation":1,"idleTimeMs":865104,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -4498,8 +4498,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.084,"memorySaturation":1,"idleTimeMs":1166046,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.084,"memorySaturation":1,"idleTimeMs":1166046,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -4525,8 +4525,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.044,"memorySaturation":1,"idleTimeMs":284534,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.044,"memorySaturation":1,"idleTimeMs":284534,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -4552,8 +4552,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1039,"memorySaturation":1,"idleTimeMs":1183746,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1039,"memorySaturation":1,"idleTimeMs":1183746,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4571,8 +4571,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0902,"memorySaturation":1,"idleTimeMs":2983749,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0902,"memorySaturation":1,"idleTimeMs":2983749,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4590,8 +4590,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0833,"memorySaturation":1,"idleTimeMs":4783753,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0833,"memorySaturation":1,"idleTimeMs":4783753,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4618,8 +4618,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0857,"memorySaturation":1,"idleTimeMs":6583759,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0857,"memorySaturation":1,"idleTimeMs":6583759,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4637,8 +4637,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0966,"memorySaturation":1,"idleTimeMs":8383763,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0966,"memorySaturation":1,"idleTimeMs":8383763,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4665,8 +4665,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1116,"memorySaturation":1,"idleTimeMs":10183764,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1116,"memorySaturation":1,"idleTimeMs":10183764,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4684,8 +4684,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1254,"memorySaturation":1,"idleTimeMs":11983767,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1254,"memorySaturation":1,"idleTimeMs":11983767,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4712,8 +4712,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0938,"memorySaturation":1,"idleTimeMs":14083768,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0938,"memorySaturation":1,"idleTimeMs":14083768,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4731,8 +4731,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1086,"memorySaturation":1,"idleTimeMs":15883773,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1086,"memorySaturation":1,"idleTimeMs":15883773,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4759,8 +4759,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1246,"memorySaturation":1,"idleTimeMs":17683840,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1246,"memorySaturation":1,"idleTimeMs":17683840,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4778,8 +4778,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0921,"memorySaturation":1,"idleTimeMs":19783803,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0921,"memorySaturation":1,"idleTimeMs":19783803,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4806,8 +4806,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.108,"memorySaturation":1,"idleTimeMs":21583859,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.108,"memorySaturation":1,"idleTimeMs":21583859,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4825,8 +4825,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1238,"memorySaturation":1,"idleTimeMs":23383913,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1238,"memorySaturation":1,"idleTimeMs":23383913,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4853,8 +4853,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0906,"memorySaturation":1,"idleTimeMs":25483845,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0906,"memorySaturation":1,"idleTimeMs":25483845,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4872,8 +4872,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.087,"memorySaturation":1,"idleTimeMs":27583840,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.087,"memorySaturation":1,"idleTimeMs":27583840,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4900,8 +4900,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0831,"memorySaturation":1,"idleTimeMs":29383886,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0831,"memorySaturation":1,"idleTimeMs":29383886,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4919,8 +4919,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0903,"memorySaturation":1,"idleTimeMs":31183936,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0903,"memorySaturation":1,"idleTimeMs":31183936,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4947,8 +4947,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0878,"memorySaturation":1,"idleTimeMs":33283904,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0878,"memorySaturation":1,"idleTimeMs":33283904,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4966,8 +4966,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1191,"memorySaturation":1,"idleTimeMs":35383880,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1191,"memorySaturation":1,"idleTimeMs":35383880,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -4994,8 +4994,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1037,"memorySaturation":1,"idleTimeMs":37183889,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1037,"memorySaturation":1,"idleTimeMs":37183889,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5013,8 +5013,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1315,"memorySaturation":1,"idleTimeMs":39283869,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1315,"memorySaturation":1,"idleTimeMs":39283869,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5041,8 +5041,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.121,"memorySaturation":1,"idleTimeMs":41383872,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.121,"memorySaturation":1,"idleTimeMs":41383872,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5060,8 +5060,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1312,"memorySaturation":1,"idleTimeMs":43183889,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1312,"memorySaturation":1,"idleTimeMs":43183889,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5088,8 +5088,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1323,"memorySaturation":1,"idleTimeMs":44983893,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1323,"memorySaturation":1,"idleTimeMs":44983893,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5107,8 +5107,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1241,"memorySaturation":1,"idleTimeMs":46783897,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1241,"memorySaturation":1,"idleTimeMs":46783897,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5135,8 +5135,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1076,"memorySaturation":1,"idleTimeMs":48583977,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1076,"memorySaturation":1,"idleTimeMs":48583977,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5154,8 +5154,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0926,"memorySaturation":1,"idleTimeMs":50383997,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0926,"memorySaturation":1,"idleTimeMs":50383997,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5182,8 +5182,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0837,"memorySaturation":1,"idleTimeMs":52184035,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0837,"memorySaturation":1,"idleTimeMs":52184035,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5201,8 +5201,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1096,"memorySaturation":1,"idleTimeMs":54284019,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1096,"memorySaturation":1,"idleTimeMs":54284019,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5229,8 +5229,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":56383966,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":56383966,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5248,8 +5248,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1137,"memorySaturation":1,"idleTimeMs":58483932,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1137,"memorySaturation":1,"idleTimeMs":58483932,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5276,8 +5276,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0862,"memorySaturation":1,"idleTimeMs":60583996,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0862,"memorySaturation":1,"idleTimeMs":60583996,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5294,8 +5294,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0059,"memorySaturation":1,"idleTimeMs":403759,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0059,"memorySaturation":1,"idleTimeMs":403759,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -5322,8 +5322,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Scope: session:agent:main:main|agent:main
 - Heartbeat: true
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1142,"memorySaturation":1,"idleTimeMs":1003762,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1142,"memorySaturation":1,"idleTimeMs":1003762,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -5340,8 +5340,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1281,"memorySaturation":1,"idleTimeMs":2803812,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1281,"memorySaturation":1,"idleTimeMs":2803812,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5358,8 +5358,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0434,"memorySaturation":1,"idleTimeMs":98920,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0434,"memorySaturation":1,"idleTimeMs":98920,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
@@ -5385,8 +5385,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: downgrade:medium->low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.1317,"memorySaturation":1,"idleTimeMs":1061828,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.1317,"memorySaturation":1,"idleTimeMs":1061828,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: balanced homeostasis mode
 - Homeostasis mode: balanced
 - Evaluation trend: stable
@@ -5403,8 +5403,8 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Action Taken: execute:low
 - Scope: session:agent:main:main|agent:main
 - Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
-- Inputs: {"epiphanyFactor":0.0879,"memorySaturation":1,"idleTimeMs":3040545,"resonanceTrigger":false}
-- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Inputs: `{"epiphanyFactor":0.0879,"memorySaturation":1,"idleTimeMs":3040545,"resonanceTrigger":false}`
+- Thresholds: `{"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}`
 - Reason: homeostasis stabilize mode or elevated risk
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
