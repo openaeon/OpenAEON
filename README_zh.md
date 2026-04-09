@@ -48,6 +48,28 @@
 
 ---
 
+# 克隆仓库
+
+git clone https://github.com/openaeon/OpenAEON.git
+cd OpenAEON
+
+# 安装项目依赖
+
+pnpm install
+
+# 编译项目（首次运行会自动构建 UI 前端）
+
+pnpm build
+pnpm ui:build
+
+# 启动全中文沉浸式配置向导，注册基础设置并安装后台守护进程
+
+pnpm openaeon onboard --install-daemon
+
+# 启动网关 watch 模式
+
+pnpm gateway:watch
+
 ## 🧠 FCA Core (分形认知适配器)
 
 OpenAEON 由 **FCA Core** 驱动。这是一个多层认知架构，专门处理复杂推理任务，将代码执行转变为一个**可验证、自纠错的认知闭环**。
