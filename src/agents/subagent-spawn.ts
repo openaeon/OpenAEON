@@ -1,10 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-  DEFAULT_SUBAGENT_MAX_CHILDREN,
-  DEFAULT_SUBAGENT_MAX_SPAWN_DEPTH,
-} from "../config/agent-limits.js";
+import { DEFAULT_SUBAGENT_MAX_SPAWN_DEPTH } from "../config/agent-limits.js";
 import { loadConfig } from "../config/config.js";
 import { formatThinkingLevels, normalizeThinkLevel } from "../auto-reply/thinking.js";
 import { callGateway } from "../gateway/call.js";
@@ -39,7 +36,7 @@ import {
 } from "./subagent-registry.js";
 import { resolveAgentTimeoutMs } from "./timeout.js";
 import { readStringParam } from "./tools/common.js";
-import { runAgentStep, readLatestAssistantReply } from "./tools/agent-step.js";
+import { readLatestAssistantReply } from "./tools/agent-step.js";
 import {
   resolveDisplaySessionKey,
   resolveInternalSessionKey,
