@@ -5436,3 +5436,30 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Homeostasis mode: balanced
 - Evaluation trend: falling
 - Ethics trusted: false
+
+## 2026-04-09 19:31:25 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1237,"memorySaturation":1,"idleTimeMs":2723959,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-09 19:31:25 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.47, 0.67]
+- Intensity: low
+- Health: N/A
