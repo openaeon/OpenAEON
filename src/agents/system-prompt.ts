@@ -280,8 +280,8 @@ export function buildAgentSystemPrompt(params: {
     sessions_history: "Fetch history for another session/sub-agent",
     sessions_send: "Send a message to another session/sub-agent",
     sessions_spawn: acpEnabled
-      ? 'Spawn an isolated sub-agent or ACP coding session (runtime="acp" requires `agentId` unless `acp.defaultAgent` is configured; ACP harness ids follow acp.allowedAgents, not agents_list)'
-      : "Spawn an isolated sub-agent session",
+      ? 'Spawn an isolated sub-agent or ACP coding session (omit `agentId` for standard sub-agents unless cross-agent delegation is intended; runtime="acp" requires `agentId` unless `acp.defaultAgent` is configured)'
+      : "Spawn an isolated sub-agent session (omit `agentId` to spawn your own agent type)",
     subagents: "List, steer, or kill sub-agent runs for this requester session",
     session_status:
       "Show a /status-equivalent status card (usage + time + Reasoning/Verbose/Elevated); use for model-use questions (📊 session_status); optional per-session model override",
@@ -473,15 +473,15 @@ export function buildAgentSystemPrompt(params: {
     "If a task is complex, requires web research, or involves tedious coding/repetitive tasks, ALWAYS delegate it by spawning a sub-agent via `sessions_spawn`. You act as the Orchestrator (Main Brain): your role is to plan, delegate tasks with clear Acceptance Criteria, and verify sub-agent results. Do not perform heavy execution yourself. Delegate early and often; your main strength is recursive strategic oversight (Z\u00B2 + C). The tool will automatically wait for the sub-agent to finish and return its output inline.",
     "## Task Matrix & Self-Evolution Progress (UI Tracking)",
     "Whenever you delegate work or begin a multi-step execution, you MUST maintain the Task Planner (Self-Evolution Matrix) via `write_todos` so the user can track your progress:",
-    "1. Before starting a step/subagent: ensure `write_todos(add_todo)` has added the step, then use `write_todos(update_todo, taskId, status=\"in_progress\")`.",
+    '1. Before starting a step/subagent: ensure `write_todos(add_todo)` has added the step, then use `write_todos(update_todo, taskId, status="in_progress")`.',
     "2. When waiting: if you call `sessions_spawn` or long-running commands, the UI will stay on `in_progress` while it runs in the background.",
-    "3. When finished: use `write_todos(update_todo, taskId, status=\"done\", result=\"...\")` immediately after the sub-agent or command completes.",
+    '3. When finished: use `write_todos(update_todo, taskId, status="done", result="...")` immediately after the sub-agent or command completes.',
     "Never leave the user blind. Always keep the UI progress (`write_todos`) in sync with your actual execution state so the matrix updates.",
     ...(hasSessionsSpawn && acpEnabled
       ? [
           'For requests like "do this in codex/claude code/gemini", treat it as ACP harness intent and call `sessions_spawn` with `runtime: "acp"`.',
           'On Discord, default ACP harness requests to thread-bound persistent sessions (`thread: true`, `mode: "session"`) unless the user asks otherwise.',
-          "Set `agentId` explicitly unless `acp.defaultAgent` is configured, and do not route ACP harness requests through `subagents`/`agents_list` or local PTY exec flows.",
+          'Set `agentId` explicitly ONLY for `runtime="acp"` or when targeting a specific agent from `agents_list`; for standard sub-agents of your own type, omit `agentId` to avoid authorization errors.',
           'For ACP harness thread spawns, do not call `message` with `action=thread-create`; use `sessions_spawn` (`runtime: "acp"`, `thread: true`) as the single thread creation path.',
         ]
       : []),

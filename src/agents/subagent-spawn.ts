@@ -407,7 +407,7 @@ export async function spawnSubagentDirect(
       const allowedText = allowSet.size > 0 ? Array.from(allowSet).join(", ") : "none";
       return {
         status: "forbidden",
-        error: `agentId is not allowed for sessions_spawn (allowed: ${allowedText})`,
+        error: `agentId "${targetAgentId}" is not allowed for requester "${requesterAgentId}" (allowed: ${allowedText})`,
       };
     }
   }
