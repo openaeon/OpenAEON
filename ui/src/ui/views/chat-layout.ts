@@ -1,6 +1,6 @@
 /* oxlint-disable typescript-eslint/no-unnecessary-boolean-literal-compare */
 import { LitElement, html, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { t } from "../../i18n/index.ts";
 import { icons } from "../icons.ts";
 import type { ChatProps } from "./chat.ts";
@@ -30,6 +30,9 @@ export type ChatLayoutProps = ChatProps & {
 @customElement("chat-layout")
 export class ChatLayout extends LitElement {
   @property({ type: Object }) props!: ChatLayoutProps;
+  @state() private agentQuery = "";
+  @state() private agentStatusFilter: "all" | "running" | "blocked" | "done" | "ready" = "all";
+  @state() private selectedAgentTodoId: string | null = null;
 
   static styles = [
     chatLayoutStyles,
@@ -107,8 +110,15 @@ export class ChatLayout extends LitElement {
       (this.props.epiphanyFactor ?? 0) > 0 ||
       (this.props.chaosScore ?? 0) > 0 ||
       deliveryState !== null;
-    const showUtilityRail = !sidebarOpen && hasSignal;
+    const showUtilityRail = false && !sidebarOpen && hasSignal;
     const performanceMode = this.props.performanceMode ?? "balanced";
+    const showVisualEffects = performanceMode === "visual";
+    const staleCount = this.props.taskPlan?.executionGraph?.staleTodoIds?.length ?? 0;
+    const longRunningCount = this.props.taskPlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
+    const shouldShowExecutionHealth =
+      (this.props.taskPlan?.phase === "execution" ||
+        this.props.taskPlan?.phase === "verification") &&
+      (staleCount > 0 || longRunningCount > 0 || Boolean(this.props.executionWatchdog?.degraded));
 
     return html`
       <section
@@ -119,16 +129,22 @@ export class ChatLayout extends LitElement {
         data-performance-mode=${performanceMode}
         style=${`--fractal-noise-level:${fractal.noiseLevel};--fractal-resonance:${fractal.resonanceLevel};`}
       >
-        <div class="chat-cosmos" aria-hidden="true">
-          <div class="chat-cosmos__edge-pulse"></div>
-          <div class="chat-cosmos__grid"></div>
-          <div class="chat-cosmos__recursive-web"></div>
-          <div class="chat-cosmos__rings"></div>
-          <div class="chat-cosmos__branchfield"></div>
-          <div class="chat-cosmos__emergence"></div>
-          <div class="chat-cosmos__lifelines"></div>
-          <div class="chat-cosmos__formula-cloud"></div>
-        </div>
+        ${
+          showVisualEffects
+            ? html`
+                <div class="chat-cosmos" aria-hidden="true">
+                  <div class="chat-cosmos__edge-pulse"></div>
+                  <div class="chat-cosmos__grid"></div>
+                  <div class="chat-cosmos__recursive-web"></div>
+                  <div class="chat-cosmos__rings"></div>
+                  <div class="chat-cosmos__branchfield"></div>
+                  <div class="chat-cosmos__emergence"></div>
+                  <div class="chat-cosmos__lifelines"></div>
+                  <div class="chat-cosmos__formula-cloud"></div>
+                </div>
+              `
+            : nothing
+        }
         ${this.props.error ? html`<div class="callout danger">${this.props.error}</div>` : nothing}
 
         ${
@@ -153,7 +169,7 @@ export class ChatLayout extends LitElement {
             style="flex: ${sidebarOpen ? `0 0 ${splitRatio * 100}%` : "1 1 100%"}"
           >
             ${
-              showUtilityRail
+              showUtilityRail && showVisualEffects
                 ? html`
                     <aside class="chat-utility-rail" aria-label=${t("chat.formulaRailLabel") || "AEON metrics rail"}>
                       <section class="formula-rail">
@@ -196,70 +212,99 @@ export class ChatLayout extends LitElement {
                   `
                 : nothing
             }
+            <div class="chat-main-status chat-main-status--workbench" role="status" aria-live="polite">
+              <div class="chat-main-status__left">
+                <div class="chat-main-status__title">
+                  ${activeSession?.label?.trim() || (isMainSession ? "Main Session" : this.props.sessionKey)}
+                </div>
+                <div class="chat-main-status__subline">
+                  <span class="chat-main-status__badge">${sessionModel}</span>
+                  <span class="chat-main-status__item">thinking: ${sessionThinking}</span>
+                  <span class="chat-main-status__item">${deliveryLabel}: ${deliveryState ?? "pending"}</span>
+                  <span class="chat-main-status__item">${persistedLabel}: ${deliveryHint}</span>
+                  <span class="chat-main-status__item">${eternalLabel}</span>
+                  <span class="chat-main-status__item">${sessionStatusLabel}</span>
+                </div>
+              </div>
+              <div class="chat-main-status__actions">
+                <button
+                  type="button"
+                  class="chat-main-status__btn"
+                  @click=${() => this.props.onOpenSandbox?.()}
+                >
+                  ${t("tabs.sandbox")}
+                </button>
+                <button
+                  type="button"
+                  class="chat-main-status__btn"
+                  @click=${() => this.props.onOpenAgents?.()}
+                >
+                  ${t("tabs.agents") || "Agents"}
+                </button>
+                <button
+                  type="button"
+                  class="chat-main-status__btn"
+                  @click=${() => this.props.onToggleEternalMode?.()}
+                >
+                  ${eternalToggleLabel}
+                </button>
+              </div>
+            </div>
+            ${renderStickyPlanBar(this.props)}
             ${
-              isMainSession
+              shouldShowExecutionHealth
                 ? html`
-                    <div class="chat-main-status" role="status" aria-live="polite">
-                      <div class="chat-main-status__left">
-                        <span class="chat-main-status__badge">${t("chat.mainSessionMode") || "MAIN SESSION MODE"}</span>
-                        <button
-                          type="button"
-                          class="chat-main-status__item chat-main-status__item--button"
-                          @click=${() => this.props.onManualSectionChange?.("overview")}
-                        >
-                          ${sessionStatusLabel}
-                        </button>
-                        <span class="chat-main-status__item">${sessionModel}</span>
-                        <span class="chat-main-status__item">thinking: ${sessionThinking}</span>
-                        <button
-                          type="button"
-                          class="chat-main-status__item chat-main-status__item--button"
-                          @click=${() => this.props.onManualSectionChange?.("status")}
-                        >
-                          ${deliveryLabel}: ${deliveryState}
-                        </button>
-                        <span class="chat-main-status__item">${persistedLabel}: ${deliveryHint}</span>
-                        <button
-                          type="button"
-                          class="chat-main-status__item chat-main-status__item--button"
-                          @click=${() => this.props.onManualSectionChange?.("status")}
-                        >
-                          ${eternalLabel}
-                        </button>
+                    <div class="callout info callout--recoverable" role="status" aria-live="polite">
+                      <div class="callout__content">
+                        <div class="callout__title">Execution health</div>
+                        <div class="callout__message">
+                          ${
+                            this.props.executionWatchdog?.degraded
+                              ? `Degraded: ${this.props.executionWatchdog.reason ?? "No progress detected"}`
+                              : "Execution is active. Keep stale and long-running tasks under control."
+                          }
+                        </div>
+                        <div class="callout__meta">
+                          <span>Stale ${staleCount}</span>
+                          <span>Long-running ${longRunningCount}</span>
+                          <span>Retries ${this.props.executionWatchdog?.retryCount ?? 0}</span>
+                        </div>
                       </div>
-                      <div class="chat-main-status__actions">
-                        <button
-                          type="button"
-                          class="chat-main-status__btn"
-                          @click=${() => this.props.onOpenSandbox?.()}
-                        >
-                          ${t("tabs.sandbox")}
-                        </button>
-                        <button
-                          type="button"
-                          class="chat-main-status__btn"
-                          @click=${() => this.props.onOpenAeon?.()}
-                        >
-                          ${t("tabs.aeon")}
-                        </button>
-                        <button
-                          type="button"
-                          class="chat-main-status__btn"
-                          @click=${() => this.props.onToggleEternalMode?.()}
-                        >
-                          ${eternalToggleLabel}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        class="callout__action"
+                        ?disabled=${Boolean(this.props.sending)}
+                        @click=${() => this.props.onRecoverExecution?.()}
+                      >
+                        Resume Execution
+                      </button>
                     </div>
                   `
                 : nothing
             }
-            ${renderStickyPlanBar(this.props)}
             ${
-              this.props.executionWatchdog?.degraded
+              this.props.executionWatchdog?.degraded && !shouldShowExecutionHealth
                 ? html`
-                    <div class="callout warning" role="status" aria-live="polite">
-                      Execution watchdog degraded: ${this.props.executionWatchdog.reason ?? "No progress detected in execution phase."}
+                    <div class="callout warning callout--recoverable" role="status" aria-live="polite">
+                      <div class="callout__content">
+                        <div class="callout__title">Execution watchdog degraded</div>
+                        <div class="callout__message">
+                          ${this.props.executionWatchdog.reason ?? "No progress detected in execution phase."}
+                        </div>
+                        <div class="callout__meta">
+                          <span>Retries ${this.props.executionWatchdog.retryCount ?? 0}</span>
+                          <span>Stale ${this.props.taskPlan?.executionGraph?.staleTodoIds?.length ?? 0}</span>
+                          <span>Long-running ${this.props.taskPlan?.executionGraph?.longRunningTodoIds?.length ?? 0}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="callout__action"
+                        ?disabled=${Boolean(this.props.sending)}
+                        @click=${() => this.props.onRecoverExecution?.()}
+                      >
+                        Resume Execution
+                      </button>
                     </div>
                   `
                 : nothing
@@ -294,7 +339,6 @@ export class ChatLayout extends LitElement {
                 @abort=${() => this.props.onAbort?.()}
                 @new-session=${() => this.props.onNewSession()}
               ></chat-input-area>
-              <div class="chat-tagline">Works for you, grows with you</div>
             </div>
           </div>
 
@@ -320,7 +364,29 @@ export class ChatLayout extends LitElement {
                       },
                     })
                   : hasSubagentSidebar
-                    ? renderSubagentSidebar(this.props)
+                    ? renderSubagentSidebar(this.props, {
+                        query: this.agentQuery,
+                        onQueryChange: (next) => {
+                          this.agentQuery = next;
+                        },
+                        statusFilter: this.agentStatusFilter,
+                        onStatusFilterChange: (next) => {
+                          this.agentStatusFilter = next;
+                        },
+                        selectedTodoId: this.selectedAgentTodoId,
+                        onSelectTodoId: (todoId) => {
+                          this.selectedAgentTodoId = todoId;
+                        },
+                        onCreateAgent: () => {
+                          if (this.props.onSpawnAgentsFromPlan) {
+                            this.props.onSpawnAgentsFromPlan();
+                            return;
+                          }
+                          this.props.onOpenAgents?.();
+                        },
+                        autopilotEnabled: this.props.autopilotEnabled,
+                        onToggleAutopilot: (enabled) => this.props.onToggleAutopilot?.(enabled),
+                      })
                     : renderPlanSidebar(this.props)
               }
             </div>

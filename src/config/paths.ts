@@ -58,7 +58,8 @@ export function resolveLegacyStateDir(homedir: () => string = resolveDefaultHome
 }
 
 export function resolveLegacyStateDirs(homedir: () => string = resolveDefaultHomeDir): string[] {
-  return legacyStateDirs(homedir);
+  const target = newStateDir(homedir);
+  return legacyStateDirs(homedir).filter((dir) => dir !== target);
 }
 
 export function resolveNewStateDir(homedir: () => string = resolveDefaultHomeDir): string {

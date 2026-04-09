@@ -221,6 +221,25 @@ export async function resolveApiKeyForProvider(params: {
     }
   }
 
+  const customConfig = resolveProviderConfig(cfg, provider);
+  if (customConfig?.baseUrl) {
+    try {
+      const url = new URL(customConfig.baseUrl);
+      const host = url.hostname.toLowerCase();
+      const isLocal =
+        host === "localhost" ||
+        host === "127.0.0.1" ||
+        host === "[::1]" ||
+        host === "0.0.0.0" ||
+        host.endsWith(".local");
+      if (isLocal) {
+        return { apiKey: "local", source: "models.json:local", mode: "api-key" };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const authStorePath = resolveAuthStorePathForDisplay(params.agentDir);
   const resolvedAgentDir = path.dirname(authStorePath);
   throw new Error(

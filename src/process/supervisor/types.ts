@@ -4,6 +4,7 @@ export type TerminationReason =
   | "manual-cancel"
   | "overall-timeout"
   | "no-output-timeout"
+  | "orphaned"
   | "spawn-error"
   | "signal"
   | "exit";

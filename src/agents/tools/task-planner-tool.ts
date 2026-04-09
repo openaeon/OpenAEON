@@ -11,8 +11,10 @@ const TaskPlannerSchema = Type.Object({
     Type.Literal("create_plan"),
     Type.Literal("add_todo"),
     Type.Literal("update_todo"),
+    Type.Literal("touch_todo"),
     Type.Literal("read_plan"),
     Type.Literal("complete_plan"),
+    Type.Literal("close_plan"),
     Type.Literal("set_phase"),
   ]),
   description: Type.Optional(
@@ -21,17 +23,35 @@ const TaskPlannerSchema = Type.Object({
   taskId: Type.Optional(Type.String({ description: "ID of the task to update" })),
   title: Type.Optional(Type.String({ description: "Task title for add_todo or update_todo" })),
   status: Type.Optional(
-    Type.Union([Type.Literal("todo"), Type.Literal("in_progress"), Type.Literal("done")]),
+    Type.Union([
+      Type.Literal("planned"),
+      Type.Literal("in_progress"),
+      Type.Literal("blocked"),
+      Type.Literal("done"),
+      Type.Literal("verified"),
+      Type.Literal("closed"),
+      // legacy compatibility
+      Type.Literal("todo"),
+    ]),
   ),
   result: Type.Optional(
     Type.String({
-      description:
-        "Only used when status is 'done'. The result output from the subagent or execution step.",
+      description: "Result output from subagent or execution step.",
+    }),
+  ),
+  note: Type.Optional(
+    Type.String({
+      description: "Optional heartbeat/progress note for touch_todo.",
+    }),
+  ),
+  owner: Type.Optional(
+    Type.String({
+      description: "Owner for closure tracking.",
     }),
   ),
   ownerAgent: Type.Optional(
     Type.String({
-      description: "Optional owner agent/session label for this task.",
+      description: "Legacy owner field; mapped into owner.",
     }),
   ),
   dependsOn: Type.Optional(
@@ -39,11 +59,23 @@ const TaskPlannerSchema = Type.Object({
       description: "Optional dependency task IDs that must complete before this task.",
     }),
   ),
-  acceptanceCriteria: Type.Optional(
+  acceptance: Type.Optional(
     Type.Array(Type.String(), {
-      description: "Optional acceptance criteria checklist for objective verification.",
+      description: "Required acceptance checklist for closure validation.",
     }),
   ),
+  acceptanceCriteria: Type.Optional(
+    Type.Array(Type.String(), {
+      description: "Legacy acceptance field; mapped into acceptance.",
+    }),
+  ),
+  evidenceRefs: Type.Optional(
+    Type.Array(Type.String(), {
+      description: "Evidence references proving acceptance criteria completion.",
+    }),
+  ),
+  verifiedBy: Type.Optional(Type.String({ description: "Verifier identity for verified status." })),
+  closedAt: Type.Optional(Type.Number({ minimum: 0 })),
   outputSchema: Type.Optional(
     Type.String({
       description: "Optional output contract/schema description for task result.",
@@ -76,7 +108,7 @@ const TaskPlannerSchema = Type.Object({
       ],
       {
         description:
-          "Phase for set_phase action. Transitions: planning → execution → verification → complete",
+          "Phase for set_phase action. Transitions: planning -> execution -> verification -> complete",
       },
     ),
   ),
@@ -94,24 +126,46 @@ const TaskPlannerSchema = Type.Object({
   ),
 });
 
-type TodoItem = {
+export type TodoStatus = "planned" | "in_progress" | "blocked" | "done" | "verified" | "closed";
+
+export type TodoItem = {
   id: string;
   title: string;
-  status: "todo" | "in_progress" | "done";
+  status: TodoStatus;
   result?: string;
+  owner: string;
   ownerAgent?: string;
   dependsOn?: string[];
+  acceptance: string[];
   acceptanceCriteria?: string[];
+  evidenceRefs: string[];
+  verifiedBy?: string;
+  closedAt?: number;
   outputSchema?: string;
   riskLevel?: "low" | "medium" | "high";
   mergeKey?: string;
   retryLimit?: number;
+  createdAt?: number;
+  updatedAt?: number;
+  startedAt?: number;
+  completedAt?: number;
+  heartbeatAt?: number;
+  attemptCount?: number;
+  lastProgressNote?: string;
+  lastProgressAt?: number;
 };
 
-type TaskPlan = {
+export type TaskPlan = {
   description: string;
   todos: TodoItem[];
   phase: "planning" | "execution" | "verification" | "complete";
+  updatedAt?: number;
+  closureStatus?: "open" | "closed" | "closed_with_gaps";
+  closureGaps?: {
+    failed: string[];
+    missingEvidence: string[];
+    nextActions: string[];
+  };
 };
 
 const TASK_PLAN_PHASE_ORDER: Record<TaskPlan["phase"], number> = {
@@ -120,6 +174,88 @@ const TASK_PLAN_PHASE_ORDER: Record<TaskPlan["phase"], number> = {
   verification: 2,
   complete: 3,
 };
+
+const STATUS_ICON: Record<TodoStatus, string> = {
+  planned: "📝",
+  in_progress: "🔄",
+  blocked: "⛔",
+  done: "✅",
+  verified: "🧪",
+  closed: "🔒",
+};
+
+function normalizeTodoStatus(status: string | undefined): TodoStatus {
+  if (status === "todo") {
+    return "planned";
+  }
+  if (
+    status === "planned" ||
+    status === "in_progress" ||
+    status === "blocked" ||
+    status === "done" ||
+    status === "verified" ||
+    status === "closed"
+  ) {
+    return status;
+  }
+  return "planned";
+}
+
+function normalizeTodo(todo: Partial<TodoItem>, fallbackOwner: string): TodoItem {
+  const owner =
+    (typeof todo.owner === "string" && todo.owner.trim()) ||
+    (typeof todo.ownerAgent === "string" && todo.ownerAgent.trim()) ||
+    fallbackOwner;
+  const acceptance = Array.isArray(todo.acceptance)
+    ? todo.acceptance.filter(
+        (entry): entry is string => typeof entry === "string" && entry.trim().length > 0,
+      )
+    : Array.isArray(todo.acceptanceCriteria)
+      ? todo.acceptanceCriteria.filter(
+          (entry): entry is string => typeof entry === "string" && entry.trim().length > 0,
+        )
+      : [];
+
+  return {
+    id:
+      typeof todo.id === "string" && todo.id.trim().length > 0
+        ? todo.id
+        : crypto.randomUUID().slice(0, 8),
+    title: typeof todo.title === "string" ? todo.title : "Untitled todo",
+    status: normalizeTodoStatus(typeof todo.status === "string" ? todo.status : undefined),
+    result: typeof todo.result === "string" ? todo.result : undefined,
+    owner,
+    ownerAgent: typeof todo.ownerAgent === "string" ? todo.ownerAgent : owner,
+    dependsOn: Array.isArray(todo.dependsOn)
+      ? todo.dependsOn.filter((d): d is string => typeof d === "string")
+      : undefined,
+    acceptance: acceptance.length > 0 ? acceptance : ["Provide result with verifiable evidence"],
+    acceptanceCriteria:
+      acceptance.length > 0 ? acceptance : ["Provide result with verifiable evidence"],
+    evidenceRefs: Array.isArray(todo.evidenceRefs)
+      ? todo.evidenceRefs.filter(
+          (entry): entry is string => typeof entry === "string" && entry.trim().length > 0,
+        )
+      : [],
+    verifiedBy: typeof todo.verifiedBy === "string" ? todo.verifiedBy : undefined,
+    closedAt: typeof todo.closedAt === "number" ? todo.closedAt : undefined,
+    outputSchema: typeof todo.outputSchema === "string" ? todo.outputSchema : undefined,
+    riskLevel:
+      todo.riskLevel === "low" || todo.riskLevel === "medium" || todo.riskLevel === "high"
+        ? todo.riskLevel
+        : undefined,
+    mergeKey: typeof todo.mergeKey === "string" ? todo.mergeKey : undefined,
+    retryLimit: typeof todo.retryLimit === "number" ? todo.retryLimit : undefined,
+    createdAt: typeof todo.createdAt === "number" ? todo.createdAt : undefined,
+    updatedAt: typeof todo.updatedAt === "number" ? todo.updatedAt : undefined,
+    startedAt: typeof todo.startedAt === "number" ? todo.startedAt : undefined,
+    completedAt: typeof todo.completedAt === "number" ? todo.completedAt : undefined,
+    heartbeatAt: typeof todo.heartbeatAt === "number" ? todo.heartbeatAt : undefined,
+    attemptCount: typeof todo.attemptCount === "number" ? todo.attemptCount : 0,
+    lastProgressNote: typeof todo.lastProgressNote === "string" ? todo.lastProgressNote : undefined,
+    lastProgressAt: typeof todo.lastProgressAt === "number" ? todo.lastProgressAt : undefined,
+  };
+}
 
 function isPlaceholderTodoTitle(title: string): boolean {
   const normalized = title.trim();
@@ -207,17 +343,300 @@ function readNumberParam(
   return value;
 }
 
-function ensureDoneResultWhenRequired(item: TodoItem): void {
-  if (item.status !== "done") {
+function assertValidStatusTransition(from: TodoStatus, to: TodoStatus): void {
+  if (from === to) {
     return;
   }
-  if (!item.acceptanceCriteria || item.acceptanceCriteria.length === 0) {
-    return;
+  const allowed: Record<TodoStatus, TodoStatus[]> = {
+    planned: ["in_progress", "blocked"],
+    in_progress: ["blocked", "done"],
+    blocked: ["in_progress", "done"],
+    done: ["blocked", "verified"],
+    verified: ["blocked", "closed"],
+    closed: [],
+  };
+  if (!allowed[from].includes(to)) {
+    throw new ToolInputError(`Invalid todo transition: ${from} -> ${to}`);
   }
-  if (!item.result || item.result.trim().length === 0) {
-    throw new ToolInputError(
-      "Cannot set todo to done without non-empty result when acceptanceCriteria is defined.",
-    );
+}
+
+function ensureClosureFields(item: TodoItem): void {
+  if (!item.owner?.trim()) {
+    throw new ToolInputError(`Todo '${item.id}' missing owner`);
+  }
+  if (!Array.isArray(item.acceptance) || item.acceptance.length === 0) {
+    throw new ToolInputError(`Todo '${item.id}' missing acceptance`);
+  }
+  if (item.status === "done" || item.status === "verified" || item.status === "closed") {
+    if (!item.result || item.result.trim().length === 0) {
+      throw new ToolInputError(`Todo '${item.id}' missing result for status ${item.status}`);
+    }
+    if (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0) {
+      throw new ToolInputError(`Todo '${item.id}' missing evidenceRefs for status ${item.status}`);
+    }
+  }
+  if (item.status === "verified" || item.status === "closed") {
+    if (!item.verifiedBy || item.verifiedBy.trim().length === 0) {
+      throw new ToolInputError(`Todo '${item.id}' missing verifiedBy for status ${item.status}`);
+    }
+  }
+  if (item.status === "closed" && typeof item.closedAt !== "number") {
+    throw new ToolInputError(`Todo '${item.id}' missing closedAt for status closed`);
+  }
+}
+
+function extractPlanGaps(plan: TaskPlan) {
+  const failed: string[] = [];
+  const missingEvidence: string[] = [];
+  const nextActions: string[] = [];
+
+  for (const todo of plan.todos) {
+    if (!todo.owner?.trim()) {
+      failed.push(`${todo.id}:missing_owner`);
+    }
+    if (!Array.isArray(todo.acceptance) || todo.acceptance.length === 0) {
+      failed.push(`${todo.id}:missing_acceptance`);
+      nextActions.push(`补充 ${todo.id} 的 acceptance`);
+    }
+    if (
+      (todo.status === "done" || todo.status === "verified" || todo.status === "closed") &&
+      (!Array.isArray(todo.evidenceRefs) || todo.evidenceRefs.length === 0)
+    ) {
+      missingEvidence.push(todo.id);
+      nextActions.push(`补充 ${todo.id} 的 evidenceRefs`);
+    }
+    if ((todo.status === "verified" || todo.status === "closed") && !todo.verifiedBy) {
+      failed.push(`${todo.id}:missing_verifiedBy`);
+      nextActions.push(`补充 ${todo.id} 的 verifiedBy`);
+    }
+    if (todo.status !== "verified" && todo.status !== "closed") {
+      failed.push(`${todo.id}:not_verified`);
+      nextActions.push(`将 ${todo.id} 推进到 verified`);
+    }
+  }
+
+  return {
+    failed,
+    missingEvidence,
+    nextActions: Array.from(new Set(nextActions)),
+  };
+}
+
+async function upsertClosureSkill(params: {
+  workspaceDir: string;
+  plan: TaskPlan;
+  targetSessionKey: string;
+}) {
+  const skillsDir = path.join(params.workspaceDir, ".agents", "skills", "plan-closure-playbook");
+  await fs.mkdir(skillsDir, { recursive: true });
+  const closedCount = params.plan.todos.filter((todo) => todo.status === "closed").length;
+  const total = params.plan.todos.length;
+  const acceptanceHints = params.plan.todos
+    .flatMap((todo) => todo.acceptance)
+    .slice(0, 12)
+    .map((line) => `- ${line}`)
+    .join("\n");
+  const evidenceHints = params.plan.todos
+    .flatMap((todo) => todo.evidenceRefs)
+    .slice(0, 12)
+    .map((line) => `- ${line}`)
+    .join("\n");
+
+  const content = `---
+name: task_plan_closure
+description: Hermes-style closure checklist for OPENAEON plans.
+---
+
+# Closure Playbook
+
+Use this skill after execution to enforce strong closure consistency.
+
+## Session
+- session: ${params.targetSessionKey}
+- closure: ${closedCount}/${total}
+
+## Acceptance Signals
+${acceptanceHints || "- (none)"}
+
+## Evidence Signals
+${evidenceHints || "- (none)"}
+`;
+
+  await fs.writeFile(path.join(skillsDir, "SKILL.md"), content, "utf-8");
+}
+
+function sanitizeSessionKey(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function loadTaskPlan(params: {
+  workspaceDir: string;
+  targetSessionKey: string;
+}): Promise<TaskPlan> {
+  const plannerFile = path.join(
+    params.workspaceDir,
+    ".openaeon",
+    "planner",
+    `${params.targetSessionKey}.json`,
+  );
+
+  try {
+    const content = await fs.readFile(plannerFile, "utf-8");
+    const raw = JSON.parse(content) as Partial<TaskPlan>;
+    const fallbackOwner = params.targetSessionKey || "main";
+    const todosRaw = Array.isArray(raw.todos) ? raw.todos : [];
+    return {
+      description: typeof raw.description === "string" ? raw.description : "",
+      todos: todosRaw.map((todo) => normalizeTodo(todo as Partial<TodoItem>, fallbackOwner)),
+      phase:
+        raw.phase === "planning" ||
+        raw.phase === "execution" ||
+        raw.phase === "verification" ||
+        raw.phase === "complete"
+          ? raw.phase
+          : "planning",
+      updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : undefined,
+      closureStatus:
+        raw.closureStatus === "closed" || raw.closureStatus === "closed_with_gaps"
+          ? raw.closureStatus
+          : "open",
+      closureGaps:
+        raw.closureGaps &&
+        Array.isArray(raw.closureGaps.failed) &&
+        Array.isArray(raw.closureGaps.missingEvidence) &&
+        Array.isArray(raw.closureGaps.nextActions)
+          ? raw.closureGaps
+          : undefined,
+    };
+  } catch {
+    return { description: "", todos: [], phase: "planning", closureStatus: "open" };
+  }
+}
+
+async function saveTaskPlan(params: {
+  workspaceDir: string;
+  targetSessionKey: string;
+  plan: TaskPlan;
+}) {
+  const plannerDir = path.join(params.workspaceDir, ".openaeon", "planner");
+  const plannerFile = path.join(plannerDir, `${params.targetSessionKey}.json`);
+  params.plan.updatedAt = Date.now();
+  await fs.mkdir(plannerDir, { recursive: true });
+  await fs.writeFile(plannerFile, JSON.stringify(params.plan, null, 2), "utf-8");
+  try {
+    const { getDiagnosticSessionState } = await import("../../logging/diagnostic-session-state.js");
+    const state = getDiagnosticSessionState({ sessionKey: params.targetSessionKey });
+    state.currentTaskPhase = params.plan.phase;
+  } catch {
+    // no-op
+  }
+}
+
+export async function updateTaskPlannerTodo(params: {
+  workspaceDir: string;
+  targetSessionKey: string;
+  taskId: string;
+  status?: TodoStatus;
+  result?: string;
+  owner?: string;
+  acceptance?: string[];
+  evidenceRefs?: string[];
+  verifiedBy?: string;
+  closedAt?: number;
+  note?: string;
+}): Promise<{ ok: true; updated: TodoItem } | { ok: false; error: string }> {
+  const plannerFile = path.join(
+    params.workspaceDir,
+    ".openaeon",
+    "planner",
+    `${params.targetSessionKey}.json`,
+  );
+
+  let release: (() => Promise<void>) | undefined;
+  try {
+    const lock = await acquireSessionWriteLock({ sessionFile: plannerFile, timeoutMs: 15_000 });
+    release = lock.release;
+
+    const plan = await loadTaskPlan({
+      workspaceDir: params.workspaceDir,
+      targetSessionKey: params.targetSessionKey,
+    });
+    const item = plan.todos.find((todo) => todo.id === params.taskId);
+    if (!item) {
+      return { ok: false, error: `Task ID ${params.taskId} not found.` };
+    }
+
+    const now = Date.now();
+    const previousStatus = item.status;
+    if (params.status) {
+      assertValidStatusTransition(previousStatus, params.status);
+      item.status = params.status;
+    }
+
+    if (typeof params.result === "string" && params.result.trim().length > 0) {
+      item.result = params.result;
+      item.lastProgressAt = now;
+    }
+    if (params.owner?.trim()) {
+      item.owner = params.owner;
+      item.ownerAgent = params.owner;
+    }
+    if (Array.isArray(params.acceptance)) {
+      const nextAcceptance = params.acceptance.filter((entry) => entry.trim().length > 0);
+      if (nextAcceptance.length > 0) {
+        item.acceptance = nextAcceptance;
+        item.acceptanceCriteria = nextAcceptance;
+      }
+    }
+    if (Array.isArray(params.evidenceRefs)) {
+      item.evidenceRefs = params.evidenceRefs.filter((entry) => entry.trim().length > 0);
+    }
+    if (typeof params.verifiedBy === "string" && params.verifiedBy.trim().length > 0) {
+      item.verifiedBy = params.verifiedBy;
+    }
+    if (typeof params.closedAt === "number") {
+      item.closedAt = params.closedAt;
+    }
+    if (params.note?.trim()) {
+      item.lastProgressNote = params.note;
+      item.lastProgressAt = now;
+    }
+
+    item.updatedAt = now;
+    if (item.status === "in_progress") {
+      if (previousStatus !== "in_progress") {
+        item.startedAt = item.startedAt ?? now;
+        item.attemptCount = (item.attemptCount ?? 0) + 1;
+      }
+      item.heartbeatAt = now;
+    }
+    if (item.status === "done") {
+      item.completedAt = item.completedAt ?? now;
+      item.heartbeatAt = now;
+    }
+    if (item.status === "verified") {
+      item.heartbeatAt = now;
+    }
+    if (item.status === "closed") {
+      item.closedAt = item.closedAt ?? now;
+      item.heartbeatAt = now;
+    }
+
+    ensureClosureFields(item);
+
+    await saveTaskPlan({
+      workspaceDir: params.workspaceDir,
+      targetSessionKey: params.targetSessionKey,
+      plan,
+    });
+    return { ok: true, updated: item };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
+  } finally {
+    if (release) {
+      await release();
+    }
   }
 }
 
@@ -229,63 +648,48 @@ export function createTaskPlannerTool(options?: {
     return null;
   }
   const workspaceDir = options.workspaceDir;
-  // Use a fallback key if session key is not provided. Sanitize to prevent path traversal.
   const sessionKey = options.agentSessionKey
-    ? options.agentSessionKey.replace(/[^a-zA-Z0-9_-]/g, "_")
+    ? sanitizeSessionKey(options.agentSessionKey)
     : "default";
 
   return {
     label: "Task Planner",
     name: "write_todos",
     description:
-      "Manage a task plan and todo list to coordinate complex multi-step work. Useful for breaking down long tasks, tracking progress, and communicating steps between sub-agents. Use 'create_plan' to initialize, 'add_todo' to add items, 'update_todo' to change status, and 'read_plan' to view current plan.",
+      "Manage a strict closure-oriented task plan. Lifecycle: planned -> in_progress -> blocked|done -> verified -> closed.",
     parameters: TaskPlannerSchema,
     execute: async (_toolCallId, params) => {
       const action = readStringParam(params, "action", { required: true });
       const parentSessionKeyRaw = readStringParam(params, "parentSessionKey");
       const targetSessionKey = parentSessionKeyRaw
-        ? parentSessionKeyRaw.replace(/[^a-zA-Z0-9_-]/g, "_")
+        ? sanitizeSessionKey(parentSessionKeyRaw)
         : sessionKey;
-
-      const plannerDir = path.join(workspaceDir, ".openaeon", "planner");
-      const plannerFile = path.join(plannerDir, `${targetSessionKey}.json`);
+      const plannerFile = path.join(
+        workspaceDir,
+        ".openaeon",
+        "planner",
+        `${targetSessionKey}.json`,
+      );
 
       let lockRelease: (() => Promise<void>) | undefined;
       try {
         const lock = await acquireSessionWriteLock({ sessionFile: plannerFile, timeoutMs: 15000 });
         lockRelease = lock.release;
 
-        const loadPlan = async (): Promise<TaskPlan> => {
-          try {
-            const content = await fs.readFile(plannerFile, "utf-8");
-            const raw = JSON.parse(content) as TaskPlan;
-            // Backcompat: old plans without phase default to "execution"
-            if (!raw.phase) {
-              raw.phase = "execution";
-            }
-            return raw;
-          } catch {
-            return { description: "", todos: [], phase: "planning" };
-          }
-        };
-
-        const savePlan = async (plan: TaskPlan) => {
-          await fs.mkdir(plannerDir, { recursive: true });
-          await fs.writeFile(plannerFile, JSON.stringify(plan, null, 2), "utf-8");
-          try {
-            const { getDiagnosticSessionState } = await import(
-              "../../logging/diagnostic-session-state.js"
-            );
-            const state = getDiagnosticSessionState({ sessionKey: targetSessionKey });
-            state.currentTaskPhase = plan.phase;
-          } catch {
-            // ignore diagnostic updates if module is not available
-          }
-        };
+        const loadPlan = async (): Promise<TaskPlan> =>
+          await loadTaskPlan({ workspaceDir, targetSessionKey });
+        const savePlan = async (plan: TaskPlan) =>
+          await saveTaskPlan({ workspaceDir, targetSessionKey, plan });
 
         if (action === "create_plan") {
           const description = readStringParam(params, "description", { required: true });
-          const plan: TaskPlan = { description, todos: [], phase: "planning" };
+          const plan: TaskPlan = {
+            description,
+            todos: [],
+            phase: "planning",
+            updatedAt: Date.now(),
+            closureStatus: "open",
+          };
           await savePlan(plan);
           return jsonResult({ status: "ok", plan });
         }
@@ -298,42 +702,18 @@ export function createTaskPlannerTool(options?: {
           }
           const format = readStringParam(params, "format");
           if (format === "digest") {
-            const statusIcons: Record<string, string> = {
-              todo: "⏳",
-              in_progress: "🔄",
-              done: "✅",
-            };
-            const doneCount = plan.todos.filter((t) => t.status === "done").length;
+            const doneCount = plan.todos.filter((t) => t.status === "closed").length;
             const total = plan.todos.length;
             const items = plan.todos
-              .map((t, i) => {
-                const icon = statusIcons[t.status] ?? "⏳";
-                return `${i + 1}. ${t.title} ${icon}`;
-              })
+              .map((t, i) => `${i + 1}. ${t.title} ${STATUS_ICON[t.status]}`)
               .join(" | ");
             return jsonResult({
               status: "ok",
-              digest: `TODO[${doneCount}/${total}]: ${items}`,
+              digest: `TODO[${doneCount}/${total} closed]: ${items}`,
               plan,
             });
           }
           return jsonResult({ status: "ok", plan });
-        }
-
-        if (action === "complete_plan") {
-          const plan = await loadPlan();
-          const removed = prunePlaceholderTodos(plan);
-          if (removed > 0) {
-            await savePlan(plan);
-          }
-          plan.todos = plan.todos.map((t) => ({ ...t, status: "done" as const }));
-          plan.phase = "complete";
-          await savePlan(plan);
-          try {
-            const { autoDistillSessionToMemory } = await import("./memory-writeback.js");
-            autoDistillSessionToMemory(targetSessionKey).catch(() => {});
-          } catch {}
-          return jsonResult({ status: "ok", message: "All tasks marked as done.", plan });
         }
 
         if (action === "set_phase") {
@@ -345,10 +725,6 @@ export function createTaskPlannerTool(options?: {
             );
           }
           const plan = await loadPlan();
-          const removed = prunePlaceholderTodos(plan);
-          if (removed > 0) {
-            await savePlan(plan);
-          }
           const currentOrder = TASK_PLAN_PHASE_ORDER[plan.phase];
           const nextOrder = TASK_PLAN_PHASE_ORDER[phaseStr as TaskPlan["phase"]];
           if (nextOrder < currentOrder) {
@@ -362,10 +738,7 @@ export function createTaskPlannerTool(options?: {
         }
 
         const plan = await loadPlan();
-        const removed = prunePlaceholderTodos(plan);
-        if (removed > 0) {
-          await savePlan(plan);
-        }
+        prunePlaceholderTodos(plan);
 
         if (action === "add_todo") {
           const title = readStringParam(params, "title", { required: true });
@@ -376,28 +749,36 @@ export function createTaskPlannerTool(options?: {
               plan,
             });
           }
-          const id = crypto.randomUUID().substring(0, 8);
-          const ownerAgent = readStringParam(params, "ownerAgent");
-          const dependsOn = readStringArrayParam(params, "dependsOn");
-          const acceptanceCriteria = readStringArrayParam(params, "acceptanceCriteria");
-          const outputSchema = readStringParam(params, "outputSchema");
-          const riskLevel = readStringParam(params, "riskLevel") as
-            | TodoItem["riskLevel"]
-            | undefined;
-          const mergeKey = readStringParam(params, "mergeKey");
-          const retryLimit = readNumberParam(params, "retryLimit", { min: 0, max: 10 });
+          const now = Date.now();
+          const owner =
+            readStringParam(params, "owner") ||
+            readStringParam(params, "ownerAgent") ||
+            targetSessionKey;
+          const acceptance = readStringArrayParam(params, "acceptance") ||
+            readStringArrayParam(params, "acceptanceCriteria") || [
+              "Provide result with evidence refs",
+            ];
           const item: TodoItem = {
-            id,
+            id: crypto.randomUUID().substring(0, 8),
             title,
-            status: "todo",
-            ...(ownerAgent ? { ownerAgent } : {}),
-            ...(dependsOn && dependsOn.length > 0 ? { dependsOn } : {}),
-            ...(acceptanceCriteria && acceptanceCriteria.length > 0 ? { acceptanceCriteria } : {}),
-            ...(outputSchema ? { outputSchema } : {}),
-            ...(riskLevel ? { riskLevel } : {}),
-            ...(mergeKey ? { mergeKey } : {}),
-            ...(retryLimit !== undefined ? { retryLimit } : {}),
+            status: "planned",
+            owner,
+            ownerAgent: owner,
+            dependsOn: readStringArrayParam(params, "dependsOn"),
+            acceptance,
+            acceptanceCriteria: acceptance,
+            evidenceRefs: readStringArrayParam(params, "evidenceRefs") || [],
+            verifiedBy: readStringParam(params, "verifiedBy"),
+            closedAt: readNumberParam(params, "closedAt", { min: 0 }),
+            outputSchema: readStringParam(params, "outputSchema"),
+            riskLevel: readStringParam(params, "riskLevel") as TodoItem["riskLevel"] | undefined,
+            mergeKey: readStringParam(params, "mergeKey"),
+            retryLimit: readNumberParam(params, "retryLimit", { min: 0, max: 10 }),
+            createdAt: now,
+            updatedAt: now,
+            attemptCount: 0,
           };
+          ensureClosureFields({ ...item, status: "planned" });
           plan.todos.push(item);
           await savePlan(plan);
           return jsonResult({ status: "ok", added: item, plan });
@@ -405,65 +786,112 @@ export function createTaskPlannerTool(options?: {
 
         if (action === "update_todo") {
           const taskId = readStringParam(params, "taskId", { required: true });
-          const statusStr = readStringParam(params, "status");
-          const titleStr = readStringParam(params, "title");
-          const resultStr = readStringParam(params, "result");
-          const ownerAgent = readStringParam(params, "ownerAgent");
-          const dependsOn = readStringArrayParam(params, "dependsOn");
-          const acceptanceCriteria = readStringArrayParam(params, "acceptanceCriteria");
-          const outputSchema = readStringParam(params, "outputSchema");
-          const riskLevel = readStringParam(params, "riskLevel") as
-            | TodoItem["riskLevel"]
-            | undefined;
-          const mergeKey = readStringParam(params, "mergeKey");
-          const retryLimit = readNumberParam(params, "retryLimit", { min: 0, max: 10 });
+          const nextStatusRaw = readStringParam(params, "status");
+          const nextStatus = nextStatusRaw ? normalizeTodoStatus(nextStatusRaw) : undefined;
+          const updateResult = await updateTaskPlannerTodo({
+            workspaceDir,
+            targetSessionKey,
+            taskId,
+            status: nextStatus,
+            result: readStringParam(params, "result"),
+            owner: readStringParam(params, "owner") || readStringParam(params, "ownerAgent"),
+            acceptance:
+              readStringArrayParam(params, "acceptance") ||
+              readStringArrayParam(params, "acceptanceCriteria"),
+            evidenceRefs: readStringArrayParam(params, "evidenceRefs"),
+            verifiedBy: readStringParam(params, "verifiedBy"),
+            closedAt: readNumberParam(params, "closedAt", { min: 0 }),
+          });
+          if (!updateResult.ok) {
+            throw new ToolInputError(updateResult.error);
+          }
+          const nextPlan = await loadPlan();
+          return jsonResult({ status: "ok", updated: updateResult.updated, plan: nextPlan });
+        }
 
-          const item = plan.todos.find((t) => t.id === taskId);
-          if (!item) {
-            throw new ToolInputError(`Task ID ${taskId} not found.`);
+        if (action === "touch_todo") {
+          const taskId = readStringParam(params, "taskId", { required: true });
+          const note = readStringParam(params, "note");
+          const update = await updateTaskPlannerTodo({
+            workspaceDir,
+            targetSessionKey,
+            taskId,
+            note,
+          });
+          if (!update.ok) {
+            throw new ToolInputError(update.error);
           }
-          if (statusStr) {
-            item.status = statusStr as "todo" | "in_progress" | "done";
+          const nextPlan = await loadPlan();
+          return jsonResult({
+            status: "ok",
+            touched: {
+              id: update.updated.id,
+              heartbeatAt: update.updated.heartbeatAt,
+              lastProgressAt: update.updated.lastProgressAt,
+            },
+            plan: nextPlan,
+          });
+        }
+
+        if (action === "complete_plan" || action === "close_plan") {
+          const gaps = extractPlanGaps(plan);
+          if (gaps.failed.length > 0 || gaps.missingEvidence.length > 0) {
+            plan.closureStatus = "open";
+            plan.closureGaps = gaps;
+            await savePlan(plan);
+            return jsonResult({
+              status: "closure_blocked",
+              message:
+                "Plan cannot be closed. Some todos are not verified or missing acceptance/evidence.",
+              gaps,
+              plan,
+            });
           }
-          if (titleStr) {
-            if (isPlaceholderTodoTitle(titleStr)) {
-              throw new ToolInputError("Placeholder todo titles are not allowed.");
+
+          const now = Date.now();
+          for (const todo of plan.todos) {
+            if (todo.status === "verified") {
+              todo.status = "closed";
+              todo.closedAt = now;
+              todo.updatedAt = now;
             }
-            item.title = titleStr;
+            ensureClosureFields(todo);
           }
-          if (resultStr) {
-            item.result = resultStr;
+          plan.phase = "complete";
+          plan.closureStatus = "closed";
+          plan.closureGaps = undefined;
+
+          const sinkGaps: string[] = [];
+          try {
+            const { distillMemory } = await import("./memory-distill-tool.js");
+            await distillMemory({ workspaceDir });
+          } catch (err) {
+            sinkGaps.push(`distill_failed:${err instanceof Error ? err.message : String(err)}`);
           }
-          if (ownerAgent) {
-            item.ownerAgent = ownerAgent;
+          try {
+            await upsertClosureSkill({ workspaceDir, plan, targetSessionKey });
+          } catch (err) {
+            sinkGaps.push(
+              `skills_upsert_failed:${err instanceof Error ? err.message : String(err)}`,
+            );
           }
-          if (dependsOn) {
-            item.dependsOn = dependsOn;
+
+          if (sinkGaps.length > 0) {
+            plan.closureStatus = "closed_with_gaps";
+            plan.closureGaps = {
+              failed: sinkGaps,
+              missingEvidence: [],
+              nextActions: ["下次 heartbeat 优先补齐沉淀阶段失败项"],
+            };
           }
-          if (acceptanceCriteria) {
-            item.acceptanceCriteria = acceptanceCriteria;
-          }
-          if (outputSchema) {
-            item.outputSchema = outputSchema;
-          }
-          if (riskLevel) {
-            item.riskLevel = riskLevel;
-          }
-          if (mergeKey) {
-            item.mergeKey = mergeKey;
-          }
-          if (retryLimit !== undefined) {
-            item.retryLimit = retryLimit;
-          }
-          ensureDoneResultWhenRequired(item);
+
           await savePlan(plan);
-          if (item.status === "done") {
-            try {
-              const { autoDistillSessionToMemory } = await import("./memory-writeback.js");
-              autoDistillSessionToMemory(targetSessionKey).catch(() => {});
-            } catch {}
-          }
-          return jsonResult({ status: "ok", updated: item, plan });
+          return jsonResult({
+            status: "ok",
+            message: "Plan closed with strong closure checks.",
+            closureStatus: plan.closureStatus,
+            plan,
+          });
         }
 
         throw new ToolInputError(`Unknown action: ${action}`);

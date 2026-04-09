@@ -337,6 +337,8 @@ async function discoverOllamaModels(
           const contextWindow = await queryOllamaContextWindow(apiBase, modelId);
           const isReasoning =
             modelId.toLowerCase().includes("r1") || modelId.toLowerCase().includes("reasoning");
+          const isGemma3 = modelId.toLowerCase().includes("gemma3");
+
           return {
             id: modelId,
             name: modelId,
@@ -345,6 +347,7 @@ async function discoverOllamaModels(
             cost: OLLAMA_DEFAULT_COST,
             contextWindow: contextWindow ?? OLLAMA_DEFAULT_CONTEXT_WINDOW,
             maxTokens: OLLAMA_DEFAULT_MAX_TOKENS,
+            compat: isGemma3 ? { requiresToolSimulation: true } : undefined,
           } satisfies ModelDefinitionConfig;
         }),
       );

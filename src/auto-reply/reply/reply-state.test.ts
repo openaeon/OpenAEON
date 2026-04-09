@@ -17,8 +17,12 @@ import {
 import {
   DEFAULT_MEMORY_FLUSH_FORCE_TRANSCRIPT_BYTES,
   DEFAULT_MEMORY_FLUSH_SOFT_TOKENS,
+  MEMORY_FLUSH_BACKOFF_MAX_MS,
+  MEMORY_FLUSH_BACKOFF_MIN_MS,
+  resolveMemoryFlushBackoffMs,
   resolveMemoryFlushContextWindowTokens,
   resolveMemoryFlushSettings,
+  shouldSkipMemoryFlushByBackoff,
   shouldRunMemoryFlush,
 } from "./memory-flush.js";
 import { CURRENT_MESSAGE_MARKER } from "./mentions.js";
@@ -353,6 +357,37 @@ describe("shouldRunMemoryFlush", () => {
 describe("resolveMemoryFlushContextWindowTokens", () => {
   it("falls back to agent config or default tokens", () => {
     expect(resolveMemoryFlushContextWindowTokens({ agentCfgContextTokens: 42_000 })).toBe(42_000);
+  });
+});
+
+describe("memory flush backoff", () => {
+  it("uses exponential backoff and caps at max", () => {
+    expect(resolveMemoryFlushBackoffMs(0)).toBe(0);
+    expect(resolveMemoryFlushBackoffMs(1)).toBe(MEMORY_FLUSH_BACKOFF_MIN_MS);
+    expect(resolveMemoryFlushBackoffMs(2)).toBe(MEMORY_FLUSH_BACKOFF_MIN_MS * 2);
+    expect(resolveMemoryFlushBackoffMs(3)).toBe(MEMORY_FLUSH_BACKOFF_MIN_MS * 4);
+    expect(resolveMemoryFlushBackoffMs(20)).toBe(MEMORY_FLUSH_BACKOFF_MAX_MS);
+  });
+
+  it("skips while skip-until is in the future", () => {
+    expect(
+      shouldSkipMemoryFlushByBackoff({
+        entry: { memoryFlushSkipUntil: 2_000 },
+        nowMs: 1_999,
+      }),
+    ).toBe(true);
+    expect(
+      shouldSkipMemoryFlushByBackoff({
+        entry: { memoryFlushSkipUntil: 2_000 },
+        nowMs: 2_000,
+      }),
+    ).toBe(false);
+    expect(
+      shouldSkipMemoryFlushByBackoff({
+        entry: {},
+        nowMs: 2_000,
+      }),
+    ).toBe(false);
   });
 });
 

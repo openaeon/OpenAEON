@@ -18,11 +18,13 @@ type PollingHost = {
 type SandboxWatchdogHost = PollingHost & {
   client: import("./gateway.ts").GatewayBrowserClient | null;
   connected: boolean;
+  settings: import("./storage.ts").UiSettings;
   sessionKey: string;
   sandboxTaskPlan: TaskPlanSnapshot | null;
   chatSending: boolean;
   chatStream: string | null;
   chatMessage: string;
+  chatChaosScore: number;
   aeonEternalMode: boolean;
   executionAutoQueued: boolean;
   lastError: string | null;
@@ -120,6 +122,39 @@ function mirrorWatchdogToTelemetry(host: SandboxWatchdogHost) {
   auto.degraded = host.executionWatchdog.degraded;
   auto.degradedReason = host.executionWatchdog.reason;
   auto.retryCount = host.executionWatchdog.retryCount;
+}
+
+async function runExecutionAutopilotTick(host: SandboxWatchdogHost): Promise<void> {
+  const plan = host.sandboxTaskPlan;
+  if (!host.connected || !host.client) {
+    return;
+  }
+  if (!plan || plan.phase !== "execution") {
+    return;
+  }
+  if ((host.settings.chatAutopilotEnabled ?? true) !== true) {
+    return;
+  }
+  try {
+    const res = await host.client.request<{
+      ok?: boolean;
+      plan?: TaskPlanSnapshot | null;
+      executionGraph?: TaskPlanSnapshot["executionGraph"];
+    }>("task_plan.autopilot.tick", {
+      sessionKey: host.sessionKey,
+      autopilot: true,
+      maxConcurrent: 2,
+      chaosScore: host.chatChaosScore,
+    });
+    if (res?.plan) {
+      host.sandboxTaskPlan = {
+        ...res.plan,
+        executionGraph: res.executionGraph ?? res.plan.executionGraph,
+      };
+    }
+  } catch {
+    // best-effort tick; watchdog handles degraded recovery path
+  }
 }
 
 async function runExecutionWatchdog(host: SandboxWatchdogHost) {
@@ -276,6 +311,7 @@ export function startSandboxPolling(host: PollingHost & { sessionKey: string }) 
     void (async () => {
       await loadSandboxTaskPlan(host as unknown as OPENAEONApp);
       await runEternalPlanningAutodrive(host as unknown as SandboxWatchdogHost);
+      await runExecutionAutopilotTick(host as unknown as SandboxWatchdogHost);
       await runExecutionWatchdog(host as unknown as SandboxWatchdogHost);
     })();
   }, 2000);

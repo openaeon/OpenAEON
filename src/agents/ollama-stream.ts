@@ -10,6 +10,11 @@ import type {
 } from "@mariozechner/pi-ai";
 import { createAssistantMessageEventStream } from "@mariozechner/pi-ai";
 import { createSubsystemLogger } from "../logging/subsystem.js";
+import {
+  createCognitiveOrchestrator,
+  createJsonOrchestrator,
+  injectCognitiveOSScaffold,
+} from "./tool-simulator.js";
 
 const log = createSubsystemLogger("ollama-stream");
 
@@ -417,31 +422,68 @@ export function createOllamaStreamFn(baseUrl: string): StreamFn {
   return (model, context, options) => {
     const stream = createAssistantMessageEventStream();
 
-    const run = async () => {
+    const run = async (isRetry = false): Promise<void> => {
       try {
+        const shouldSimulateTools =
+          isRetry || (model.compat as any)?.requiresToolSimulation === true;
+
+        if (shouldSimulateTools && !isRetry) {
+          log.info(
+            `Model ${model.id} is configured for Cognitive OS Schema Enforcement. Using structural output for robust tool calling.`,
+          );
+        }
+
         const ollamaMessages = convertToOllamaMessages(
           context.messages ?? [],
-          context.systemPrompt,
+          shouldSimulateTools
+            ? injectCognitiveOSScaffold({
+                systemPrompt: context.systemPrompt,
+                tools: context.tools,
+              })
+            : context.systemPrompt,
         );
 
-        const ollamaTools = extractOllamaTools(context.tools);
+        const ollamaTools = shouldSimulateTools ? [] : extractOllamaTools(context.tools);
 
         // Ollama defaults to num_ctx=4096 which is too small for large
         // system prompts + many tool definitions. Use model's contextWindow.
         const ollamaOptions: Record<string, unknown> = { num_ctx: model.contextWindow ?? 65536 };
-        if (typeof options?.temperature === "number") {
+        if (shouldSimulateTools) {
+          ollamaOptions.temperature = 0;
+        } else if (typeof options?.temperature === "number") {
           ollamaOptions.temperature = options.temperature;
         }
         if (typeof options?.maxTokens === "number") {
           ollamaOptions.num_predict = options.maxTokens;
         }
 
-        const body: OllamaChatRequest = {
+        const toolSchema = {
+          type: "object",
+          properties: {
+            thought: { type: "string", description: "Reasoning trace following Peano mapping" },
+            tool_calls: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  arguments: { type: "object" },
+                },
+                required: ["name", "arguments"],
+              },
+            },
+            audit: { type: "string", description: "Final self-check for accuracy" },
+          },
+          required: ["thought", "tool_calls"],
+        };
+
+        const body: OllamaChatRequest & { format?: object } = {
           model: model.id,
           messages: ollamaMessages,
           stream: true,
           ...(ollamaTools.length > 0 ? { tools: ollamaTools } : {}),
           options: ollamaOptions,
+          ...(shouldSimulateTools ? { format: toolSchema } : {}),
         };
 
         const headers: Record<string, string> = {
@@ -461,6 +503,16 @@ export function createOllamaStreamFn(baseUrl: string): StreamFn {
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => "unknown error");
+          if (
+            !isRetry &&
+            response.status === 400 &&
+            (errorText.includes("does not support tools") || errorText.includes("tools"))
+          ) {
+            log.info(
+              `Model ${model.id} does not support native tools. Falling back to Cognitive OS Schema Enforcement.`,
+            );
+            return run(true);
+          }
           throw new Error(`Ollama API error ${response.status}: ${errorText}`);
         }
 
@@ -468,23 +520,75 @@ export function createOllamaStreamFn(baseUrl: string): StreamFn {
           throw new Error("Ollama API returned empty response body");
         }
 
+        const innerStream = createAssistantMessageEventStream();
+        const orchestrator = shouldSimulateTools
+          ? createJsonOrchestrator({
+              innerStream,
+              modelInfo: { api: model.api, provider: model.provider, id: model.id },
+            })
+          : innerStream;
+
+        // Pipe events from orchestrator to the main stream return
+        (async () => {
+          try {
+            for await (const event of orchestrator) {
+              stream.push(event);
+            }
+          } finally {
+            stream.end();
+          }
+        })();
+
         const reader = response.body.getReader();
         let accumulatedContent = "";
         const accumulatedToolCalls: OllamaToolCall[] = [];
         let finalResponse: OllamaChatResponse | undefined;
 
+        // Epiphany Detection (Fractal Uncertainty)
+        let epiphanyFactor = 0;
+        const recentTokens: string[] = [];
+        let chunkCount = 0;
+
         for await (const chunk of parseNdjsonStream(reader)) {
-          if (chunk.message?.content) {
-            accumulatedContent += chunk.message.content;
-          } else if (chunk.message?.reasoning) {
-            // Qwen 3 reasoning mode: content may be empty, output in reasoning
-            accumulatedContent += chunk.message.reasoning;
+          const content = chunk.message?.content || chunk.message?.reasoning || "";
+          if (content) {
+            accumulatedContent += content;
+
+            // Optimization: Only calculate epiphanyFactor every 10 chunks to reduce overhead
+            if (chunkCount++ % 10 === 0) {
+              recentTokens.push(content);
+              if (recentTokens.length > 50) recentTokens.shift();
+              const uniqueCount = new Set(recentTokens).size;
+              epiphanyFactor = (recentTokens.length - uniqueCount) / (recentTokens.length || 1);
+
+              if (epiphanyFactor > 0.7 && accumulatedContent.length > 200) {
+                log.warn(
+                  `Model ${model.id} epiphanyFactor (${epiphanyFactor.toFixed(2)}) exceeded threshold. Topological breakthrough required.`,
+                );
+              }
+            }
           }
 
-          // Ollama sends tool_calls in intermediate (done:false) chunks,
-          // NOT in the final done:true chunk. Collect from all chunks.
           if (chunk.message?.tool_calls) {
             accumulatedToolCalls.push(...chunk.message.tool_calls);
+          }
+
+          if (shouldSimulateTools) {
+            if (chunk.message?.content) {
+              innerStream.push({
+                type: "text_delta",
+                contentIndex: 0,
+                delta: chunk.message.content,
+                partial: {} as any,
+              });
+            } else if (chunk.message?.reasoning) {
+              innerStream.push({
+                type: "thinking_delta",
+                contentIndex: 0,
+                delta: chunk.message.reasoning,
+                partial: {} as any,
+              });
+            }
           }
 
           if (chunk.done) {
@@ -502,20 +606,23 @@ export function createOllamaStreamFn(baseUrl: string): StreamFn {
           finalResponse.message.tool_calls = accumulatedToolCalls;
         }
 
-        const assistantMessage = buildAssistantMessage(finalResponse, {
-          api: model.api,
-          provider: model.provider,
-          id: model.id,
-        });
+        if (!shouldSimulateTools) {
+          const assistantMessage = buildAssistantMessage(finalResponse, {
+            api: model.api,
+            provider: model.provider,
+            id: model.id,
+          });
 
-        const reason: Extract<StopReason, "stop" | "length" | "toolUse"> =
-          assistantMessage.stopReason === "toolUse" ? "toolUse" : "stop";
+          const reason: Extract<StopReason, "stop" | "length" | "toolUse"> =
+            assistantMessage.stopReason === "toolUse" ? "toolUse" : "stop";
 
-        stream.push({
-          type: "done",
-          reason,
-          message: assistantMessage,
-        });
+          innerStream.push({
+            type: "done",
+            reason,
+            message: assistantMessage,
+          });
+        }
+        innerStream.end();
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         stream.push({

@@ -40,4 +40,21 @@ export type SubagentRunRecord = {
   originalRunId?: string;
   /** Multi-agent Cognitive Loop Fusion: shared state passed to subagent */
   sharedContext?: Record<string, unknown>;
+  /** Task planner linkage for closure writeback. */
+  planId?: string;
+  todoId?: string;
+  acceptance?: string[];
+  autoBackfillAt?: number;
+  autoBackfillStatus?: "ok" | "blocked" | "failed";
+  autoBackfillError?: string;
+  /** Spawn pipeline phase for durability/audit of startup failures. */
+  spawnPhase?:
+    | "registered"
+    | "depth-patched"
+    | "model-patched"
+    | "thinking-patched"
+    | "thread-bound"
+    | "dispatched"
+    | "running"
+    | "failed";
 };

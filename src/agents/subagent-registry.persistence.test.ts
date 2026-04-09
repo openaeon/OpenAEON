@@ -9,8 +9,13 @@ import {
   clearSubagentRunSteerRestart,
   initSubagentRegistry,
   listSubagentRunsForRequester,
+  loadSubagentRun,
+  markSubagentRunSetupFailed,
+  markSubagentRunSpawnPhase,
+  replaceSubagentRunId,
   registerSubagentRun,
   resetSubagentRegistryForTests,
+  setSubagentRunSharedContext,
 } from "./subagent-registry.js";
 import { loadSubagentRegistryFromDisk } from "./subagent-registry.store.js";
 
@@ -423,6 +428,65 @@ describe("subagent registry persistence", () => {
     vi.resetModules();
     const { resolveSubagentRegistryPath } = await import("./subagent-registry.store.js");
     const registryPath = resolveSubagentRegistryPath();
-    expect(registryPath).toContain(path.join(os.tmpdir(), "openclaw-test-state"));
+    expect(registryPath).toContain(path.join(os.tmpdir(), "openaeon-test-state"));
+  });
+
+  it("rekeys provisional run id without losing phase/state", async () => {
+    tempStateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-subagent-"));
+    process.env.OPENAEON_STATE_DIR = tempStateDir;
+
+    registerSubagentRun({
+      runId: "run-provisional",
+      childSessionKey: "agent:main:subagent:provisional",
+      requesterSessionKey: "agent:main:main",
+      requesterDisplayKey: "main",
+      task: "provisional run",
+      cleanup: "keep",
+      shouldWaitForCompletion: false,
+      spawnPhase: "registered",
+    });
+    markSubagentRunSpawnPhase({ runId: "run-provisional", phase: "dispatched" });
+    setSubagentRunSharedContext({
+      runId: "run-provisional",
+      sharedContext: { focus: "audit" },
+    });
+
+    expect(replaceSubagentRunId({ fromRunId: "run-provisional", toRunId: "run-final" })).toBe(true);
+    expect(loadSubagentRun("run-provisional")).toBeUndefined();
+    const rekeyed = loadSubagentRun("run-final");
+    expect(rekeyed?.spawnPhase).toBe("dispatched");
+    expect(rekeyed?.sharedContext).toEqual({ focus: "audit" });
+
+    const registryPath = path.join(tempStateDir, "subagents", "runs.json");
+    const raw = JSON.parse(await fs.readFile(registryPath, "utf8")) as {
+      runs?: Record<string, unknown>;
+    };
+    expect(raw.runs?.["run-provisional"]).toBeUndefined();
+    expect(raw.runs?.["run-final"]).toBeDefined();
+  });
+
+  it("marks failed setup runs as terminal error for auditability", async () => {
+    tempStateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-subagent-"));
+    process.env.OPENAEON_STATE_DIR = tempStateDir;
+
+    registerSubagentRun({
+      runId: "run-setup-failed",
+      childSessionKey: "agent:main:subagent:failed",
+      requesterSessionKey: "agent:main:main",
+      requesterDisplayKey: "main",
+      task: "failing setup",
+      cleanup: "keep",
+      shouldWaitForCompletion: false,
+      spawnPhase: "registered",
+    });
+    expect(markSubagentRunSetupFailed({ runId: "run-setup-failed", error: "patch rejected" })).toBe(
+      true,
+    );
+
+    const failed = loadSubagentRun("run-setup-failed");
+    expect(failed?.spawnPhase).toBe("failed");
+    expect(failed?.endedReason).toBe("subagent-error");
+    expect(failed?.outcome).toEqual({ status: "error", error: "patch rejected" });
+    expect(typeof failed?.cleanupCompletedAt).toBe("number");
   });
 });

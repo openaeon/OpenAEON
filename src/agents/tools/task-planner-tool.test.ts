@@ -21,7 +21,10 @@ test("task planner tool manages plan and todos", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const added = (addRes.details as any).added;
   expect(added.title).toBe("Build feature X");
-  expect(added.status).toBe("todo");
+  expect(added.status).toBe("planned");
+  expect(typeof added.createdAt).toBe("number");
+  expect(typeof added.updatedAt).toBe("number");
+  expect(added.attemptCount).toBe(0);
 
   // Update todo
   const updateRes = await tool!.execute("call3", {
@@ -31,6 +34,19 @@ test("task planner tool manages plan and todos", async () => {
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   expect((updateRes.details as any).updated.status).toBe("in_progress");
+  expect((updateRes.details as any).updated.attemptCount).toBe(1);
+  expect(typeof (updateRes.details as any).updated.startedAt).toBe("number");
+  expect(typeof (updateRes.details as any).updated.heartbeatAt).toBe("number");
+
+  // Touch todo heartbeat
+  const touchRes = await tool!.execute("call-touch", {
+    action: "touch_todo",
+    taskId: added.id,
+    note: "Still running integration steps",
+  });
+  expect((touchRes.details as any).status).toBe("ok");
+  expect((touchRes.details as any).touched.id).toBe(added.id);
+  expect(typeof (touchRes.details as any).touched.heartbeatAt).toBe("number");
 
   // Read plan
   const readRes = await tool!.execute("call4", { action: "read_plan" });
@@ -38,6 +54,8 @@ test("task planner tool manages plan and todos", async () => {
   expect((readRes.details as any).plan.todos).toHaveLength(1);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   expect((readRes.details as any).plan.todos[0].status).toBe("in_progress");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((readRes.details as any).plan.todos[0].lastProgressNote).toContain("Still running");
 });
 
 test("task planner tool ignores placeholder todos and prunes legacy placeholders", async () => {
@@ -125,12 +143,78 @@ test("task planner blocks done status without result when acceptance criteria ex
     tool!.execute("call3", { action: "update_todo", taskId, status: "done" }),
   ).rejects.toBeInstanceOf(ToolInputError);
 
+  await tool!.execute("call3.5", {
+    action: "update_todo",
+    taskId,
+    status: "in_progress",
+  });
+
   const doneRes = await tool!.execute("call4", {
     action: "update_todo",
     taskId,
     status: "done",
     result: "Completed with execution log ID exec_123",
+    evidenceRefs: ["exec:123"],
   });
   expect((doneRes.details as any).updated.status).toBe("done");
   expect((doneRes.details as any).updated.result).toContain("exec_123");
+});
+
+test("task planner blocks close_plan when todo is not verified", async () => {
+  const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-test-planner-"));
+  const tool = createTaskPlannerTool({ workspaceDir: tmpdir, agentSessionKey: "test:session" });
+  expect(tool).toBeDefined();
+
+  await tool!.execute("call1", { action: "create_plan", description: "Closure gate test" });
+  const addRes = await tool!.execute("call2", {
+    action: "add_todo",
+    title: "Execute closure pipeline",
+    acceptance: ["collect verifiable output"],
+  });
+  const taskId = (addRes.details as any).added.id as string;
+  await tool!.execute("call3", { action: "update_todo", taskId, status: "in_progress" });
+  await tool!.execute("call4", {
+    action: "update_todo",
+    taskId,
+    status: "done",
+    result: "run completed",
+    evidenceRefs: ["run:ok"],
+  });
+
+  const closeRes = await tool!.execute("call5", { action: "close_plan" });
+  expect((closeRes.details as any).status).toBe("closure_blocked");
+  expect((closeRes.details as any).gaps.failed.join(",")).toContain("not_verified");
+});
+
+test("task planner closes plan after verified todos", async () => {
+  const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-test-planner-"));
+  const tool = createTaskPlannerTool({ workspaceDir: tmpdir, agentSessionKey: "test:session" });
+  expect(tool).toBeDefined();
+
+  await tool!.execute("call1", { action: "create_plan", description: "Close flow test" });
+  const addRes = await tool!.execute("call2", {
+    action: "add_todo",
+    title: "Finalize plan",
+    acceptance: ["verify and close"],
+  });
+  const taskId = (addRes.details as any).added.id as string;
+  await tool!.execute("call3", { action: "update_todo", taskId, status: "in_progress" });
+  await tool!.execute("call4", {
+    action: "update_todo",
+    taskId,
+    status: "done",
+    result: "completed",
+    evidenceRefs: ["artifact:1"],
+  });
+  await tool!.execute("call5", {
+    action: "update_todo",
+    taskId,
+    status: "verified",
+    verifiedBy: "agent:qa",
+  });
+
+  const closeRes = await tool!.execute("call6", { action: "close_plan" });
+  expect((closeRes.details as any).status).toBe("ok");
+  expect((closeRes.details as any).plan.phase).toBe("complete");
+  expect((closeRes.details as any).plan.todos[0].status).toBe("closed");
 });

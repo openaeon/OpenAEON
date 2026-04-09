@@ -381,4 +381,40 @@ describe("createOllamaStreamFn", () => {
       },
     );
   });
+
+  it("pre-emptively uses tool simulation if requiresToolSimulation is set", async () => {
+    await withMockNdjsonFetch(
+      [
+        '{"model":"m","created_at":"t","message":{"role":"assistant","content":"{\\"thought\\":\\"thinking\\",\\"tool_calls\\":[]}"},"done":false}',
+        '{"model":"m","created_at":"t","message":{"role":"assistant","content":""},"done":true,"prompt_eval_count":1,"eval_count":1}',
+      ],
+      async (fetchMock) => {
+        const streamFn = createOllamaStreamFn("http://ollama-host:11434");
+        const model = {
+          id: "gemma3:4b",
+          api: "ollama",
+          provider: "ollama",
+          contextWindow: 131072,
+          compat: { requiresToolSimulation: true },
+        };
+        const context = {
+          messages: [{ role: "user", content: "hello" }],
+          tools: [{ name: "test", description: "test", parameters: {} }],
+        };
+        const stream = await streamFn(model as any, context as any, {} as any);
+
+        const events = await collectStreamEvents(stream);
+        expect(events.at(-1)?.type).toBe("done");
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [, requestInit] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+        const requestBody = JSON.parse(requestInit.body as string);
+
+        // Should have "format" (JSON schema) and NO "tools"
+        expect(requestBody.format).toBeDefined();
+        expect(requestBody.tools).toBeUndefined();
+        expect(requestBody.options.temperature).toBe(0);
+      },
+    );
+  });
 });

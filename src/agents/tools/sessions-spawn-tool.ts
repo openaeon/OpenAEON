@@ -3,6 +3,7 @@ import type { GatewayMessageChannel } from "../../utils/message-channel.js";
 import { ACP_SPAWN_MODES, spawnAcpDirect } from "../acp-spawn.js";
 import { optionalStringEnum } from "../schema/typebox.js";
 import { SUBAGENT_SPAWN_MODES, spawnSubagentDirect } from "../subagent-spawn.js";
+import { updateTaskPlannerTodo } from "./task-planner-tool.js";
 import type { AnyAgentTool } from "./common.js";
 import { jsonResult, readStringParam } from "./common.js";
 
@@ -59,6 +60,21 @@ const SessionsSpawnToolSchema = Type.Object({
         "Enable Dialectic Evolution: Spawns both Thesis & Antithesis agents and synthesizes a final result.",
     }),
   ),
+  planId: Type.Optional(
+    Type.String({
+      description: "Optional task plan session key used for auto closure backfill.",
+    }),
+  ),
+  todoId: Type.Optional(
+    Type.String({
+      description: "Optional todo id bound to this subagent run for automatic writeback.",
+    }),
+  ),
+  acceptance: Type.Optional(
+    Type.Array(Type.String(), {
+      description: "Optional acceptance criteria inherited by this run for closure checks.",
+    }),
+  ),
 });
 
 export function createSessionsSpawnTool(opts?: {
@@ -77,6 +93,7 @@ export function createSessionsSpawnTool(opts?: {
   iterationDepth?: number;
   /** Authorized Freedom Mode: bypass or scale standard limits */
   freedom?: boolean;
+  workspaceDir?: string;
 }): AnyAgentTool {
   return {
     label: "Sessions",
@@ -134,16 +151,49 @@ export function createSessionsSpawnTool(opts?: {
           : undefined;
 
       const subagentSpawnParams = {
-        sharedContext:
-          params.sharedContext && typeof params.sharedContext === "object"
-            ? (params.sharedContext as Record<string, unknown>)
-            : undefined,
+        sharedContext: undefined as Record<string, unknown> | undefined,
         role: (params.role === "manager" || params.role === "worker" ? params.role : undefined) as
           | "manager"
           | "worker"
           | undefined,
         dialecticMode: !!params.dialecticMode,
+        planId: readStringParam(params, "planId"),
+        todoId: readStringParam(params, "todoId"),
+        acceptance:
+          Array.isArray(params.acceptance) && params.acceptance.every((t) => typeof t === "string")
+            ? (params.acceptance as string[])
+            : undefined,
       };
+
+      const incomingSharedContext =
+        params.sharedContext && typeof params.sharedContext === "object"
+          ? (params.sharedContext as Record<string, unknown>)
+          : undefined;
+
+      const closureContext =
+        subagentSpawnParams.planId && subagentSpawnParams.todoId
+          ? {
+              planId: subagentSpawnParams.planId,
+              todoId: subagentSpawnParams.todoId,
+              acceptance: subagentSpawnParams.acceptance,
+            }
+          : undefined;
+
+      subagentSpawnParams.sharedContext = {
+        ...incomingSharedContext,
+        ...(closureContext ? { taskClosure: closureContext } : {}),
+      };
+
+      if (opts?.workspaceDir && subagentSpawnParams.planId && subagentSpawnParams.todoId) {
+        await updateTaskPlannerTodo({
+          workspaceDir: opts.workspaceDir,
+          targetSessionKey: subagentSpawnParams.planId,
+          taskId: subagentSpawnParams.todoId,
+          status: "in_progress",
+          acceptance: subagentSpawnParams.acceptance,
+          owner: opts.agentSessionKey,
+        });
+      }
 
       const result =
         runtime === "acp"

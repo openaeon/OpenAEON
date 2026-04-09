@@ -7,11 +7,17 @@ import type { GatewayRequestContext } from "./types.js";
 const mocks = vi.hoisted(() => ({
   loadConfig: vi.fn(),
   resolveStateDir: vi.fn(),
+  spawnSubagentDirect: vi.fn(),
 }));
 
 vi.mock("../../config/config.js", () => ({
   loadConfig: mocks.loadConfig,
   resolveStateDir: mocks.resolveStateDir,
+  STATE_DIR: "/tmp/openaeon-state",
+}));
+
+vi.mock("../../agents/subagent-spawn.js", () => ({
+  spawnSubagentDirect: mocks.spawnSubagentDirect,
 }));
 
 import { taskPlanHandlers } from "./task-plan.js";
@@ -37,6 +43,11 @@ describe("task_plan.approve", () => {
       },
     });
     mocks.resolveStateDir.mockReturnValue(path.join(workspaceDir, ".openaeon"));
+    mocks.spawnSubagentDirect.mockResolvedValue({
+      status: "accepted",
+      childSessionKey: "agent:main:subagent:test-child",
+      runId: "test-run",
+    });
   });
 
   afterEach(async () => {
@@ -80,9 +91,21 @@ describe("task_plan.approve", () => {
         plan: expect.objectContaining({ phase: "execution" }),
         executionGraph: expect.objectContaining({
           orderedTodoIds: ["t1"],
-          readyTodoIds: ["t1"],
+          inProgressTodoIds: ["t1"],
+          readyTodoIds: [],
           blockedTodoIds: [],
         }),
+        autopilot: expect.objectContaining({
+          enabled: true,
+          sessionKey,
+        }),
+        spawned: expect.arrayContaining([
+          expect.objectContaining({
+            sessionKey,
+            todoId: "t1",
+            ok: true,
+          }),
+        ]),
         approvedAt: expect.any(Number),
         phaseTransition: {
           from: "planning",
@@ -99,18 +122,32 @@ describe("task_plan.approve", () => {
     };
     expect(persisted.phase).toBe("execution");
     expect(typeof persisted.updatedAt).toBe("number");
-    expect((context.broadcast as unknown as ReturnType<typeof vi.fn>).mock.calls).toEqual([
-      [
-        "task_plan.execution.trigger",
-        expect.objectContaining({
-          sessionKey,
-          prompt: expect.any(String),
-          executionGraph: expect.objectContaining({
-            readyTodoIds: ["t1"],
+    expect((context.broadcast as unknown as ReturnType<typeof vi.fn>).mock.calls).toEqual(
+      expect.arrayContaining([
+        [
+          "task_plan.execution.trigger",
+          expect.objectContaining({
+            sessionKey,
+            prompt: expect.any(String),
           }),
-        }),
-      ],
-    ]);
+        ],
+        [
+          "task_plan.autopilot.status",
+          expect.objectContaining({
+            sessionKey,
+            enabled: true,
+          }),
+        ],
+        [
+          "task_plan.autopilot.spawned",
+          expect.objectContaining({
+            sessionKey,
+            todoId: "t1",
+            ok: true,
+          }),
+        ],
+      ]),
+    );
   });
 
   it("sanitizes placeholder todos on read and persists cleanup", async () => {
@@ -247,5 +284,90 @@ describe("task_plan.approve", () => {
       }),
       undefined,
     );
+  });
+
+  it("surfaces stale and long-running in-progress todos for long task coordination", async () => {
+    const sessionKey = "main";
+    const plannerPath = path.join(workspaceDir, ".openaeon", "planner", `${sessionKey}.json`);
+    await fs.mkdir(path.dirname(plannerPath), { recursive: true });
+    const now = 2_000_000;
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(now);
+    await fs.writeFile(
+      plannerPath,
+      JSON.stringify(
+        {
+          description: "long-running coordination",
+          phase: "execution",
+          todos: [
+            {
+              id: "r1",
+              title: "Active long run",
+              status: "in_progress",
+              startedAt: now - 21 * 60_000,
+              heartbeatAt: now - 9 * 60_000,
+              attemptCount: 2,
+            },
+            {
+              id: "t1",
+              title: "Fresh todo",
+              status: "todo",
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    const respond = vi.fn();
+    const context = makeContext(workspaceDir);
+    await taskPlanHandlers["task_plan.read"]({
+      params: { sessionKey },
+      respond,
+      context,
+      req: { type: "req", id: "task-plan-read-long-run", method: "task_plan.read" },
+    } as never);
+
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({
+        ok: true,
+        executionGraph: expect.objectContaining({
+          inProgressTodoIds: ["r1"],
+          readyTodoIds: ["t1"],
+          longRunningTodoIds: ["r1"],
+          staleTodoIds: ["r1"],
+          advisories: expect.arrayContaining(["stalled:r1", "long_running:r1"]),
+        }),
+      }),
+      undefined,
+    );
+    expect((context.broadcast as unknown as ReturnType<typeof vi.fn>).mock.calls).toEqual(
+      expect.arrayContaining([
+        [
+          "task_plan.execution.recover",
+          expect.objectContaining({
+            sessionKey,
+            staleTodoIds: ["r1"],
+            readyTodoIds: ["t1"],
+          }),
+        ],
+      ]),
+    );
+
+    const respond2 = vi.fn();
+    await taskPlanHandlers["task_plan.read"]({
+      params: { sessionKey },
+      respond: respond2,
+      context,
+      req: { type: "req", id: "task-plan-read-long-run-2", method: "task_plan.read" },
+    } as never);
+    // Cooldown should prevent duplicate recovery broadcasts on immediate reads
+    const recoverCalls = (
+      context.broadcast as unknown as ReturnType<typeof vi.fn>
+    ).mock.calls.filter(([event]) => event === "task_plan.execution.recover");
+    expect(recoverCalls).toHaveLength(1);
+    nowSpy.mockRestore();
   });
 });

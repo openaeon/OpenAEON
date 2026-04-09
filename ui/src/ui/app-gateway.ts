@@ -116,9 +116,93 @@ type TaskPlanExecutionTriggerPayload = {
     orderedTodoIds?: string[];
     readyTodoIds?: string[];
     blockedTodoIds?: string[];
+    inProgressTodoIds?: string[];
+    longRunningTodoIds?: string[];
+    staleTodoIds?: string[];
     blockedBy?: Record<string, string[]>;
+    todoTelemetry?: Record<
+      string,
+      {
+        status?: "todo" | "in_progress" | "done";
+        runtimeMs?: number;
+        idleMs?: number;
+        attemptCount?: number;
+        lastTouchedAt?: number;
+        spawn?: {
+          spawned?: boolean;
+          spawnAttempts?: number;
+          lastSpawnError?: string;
+          childSessionKey?: string;
+          lastSpawnAt?: number;
+        };
+      }
+    >;
+    autoDispatch?: {
+      enabled?: boolean;
+      queueDepth?: number;
+      runningCount?: number;
+      maxConcurrent?: number;
+      frozen?: boolean;
+      freezeReason?: string;
+      lastSpawnAt?: number;
+    };
+    advisories?: string[];
   };
 };
+
+type TaskPlanExecutionRecoverPayload = {
+  sessionKey?: string;
+  staleTodoIds?: string[];
+  longRunningTodoIds?: string[];
+  readyTodoIds?: string[];
+  blockedTodoIds?: string[];
+  advisories?: string[];
+  prompt?: string;
+  at?: number;
+};
+
+type TaskPlanAutopilotStatusPayload = {
+  sessionKey?: string;
+  enabled?: boolean;
+  queueDepth?: number;
+  runningCount?: number;
+  maxConcurrent?: number;
+  frozen?: boolean;
+  freezeReason?: string;
+  at?: number;
+};
+
+type TaskPlanAutopilotSpawnedPayload = {
+  sessionKey?: string;
+  todoId?: string;
+  agentId?: string;
+  ok?: boolean;
+  childSessionKey?: string;
+  error?: string;
+  attempt?: number;
+  at?: number;
+};
+
+function normalizeExecutionGraph(
+  graph: TaskPlanExecutionTriggerPayload["executionGraph"] | undefined,
+  fallback?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"],
+): import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"] | undefined {
+  if (!graph || Object.keys(graph).length === 0) {
+    return fallback;
+  }
+  return {
+    orderedTodoIds: graph.orderedTodoIds ?? fallback?.orderedTodoIds ?? [],
+    readyTodoIds: graph.readyTodoIds ?? fallback?.readyTodoIds ?? [],
+    blockedTodoIds: graph.blockedTodoIds ?? fallback?.blockedTodoIds ?? [],
+    inProgressTodoIds: graph.inProgressTodoIds ?? fallback?.inProgressTodoIds ?? [],
+    longRunningTodoIds: graph.longRunningTodoIds ?? fallback?.longRunningTodoIds ?? [],
+    staleTodoIds: graph.staleTodoIds ?? fallback?.staleTodoIds ?? [],
+    blockedBy: graph.blockedBy ?? fallback?.blockedBy ?? {},
+    todoTelemetry: graph.todoTelemetry ?? fallback?.todoTelemetry ?? {},
+    autoDispatch: graph.autoDispatch ?? fallback?.autoDispatch,
+    advisories: graph.advisories ?? fallback?.advisories ?? [],
+  };
+}
 
 function isSafetyPauseMessage(text: string): boolean {
   const normalized = text.toLowerCase();
@@ -467,15 +551,10 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
       host.sandboxTaskPlan = {
         ...host.sandboxTaskPlan,
         phase: payload.phaseTransition?.to ?? "execution",
-        executionGraph:
-          payload.executionGraph && Object.keys(payload.executionGraph).length > 0
-            ? {
-                orderedTodoIds: payload.executionGraph.orderedTodoIds ?? [],
-                readyTodoIds: payload.executionGraph.readyTodoIds ?? [],
-                blockedTodoIds: payload.executionGraph.blockedTodoIds ?? [],
-                blockedBy: payload.executionGraph.blockedBy ?? {},
-              }
-            : host.sandboxTaskPlan.executionGraph,
+        executionGraph: normalizeExecutionGraph(
+          payload.executionGraph,
+          host.sandboxTaskPlan.executionGraph,
+        ),
       };
     }
     const executionPrompt =
@@ -491,6 +570,120 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     host.executionAutoQueued = false;
     host.chatMessage = executionPrompt;
     void host.handleSendChat();
+    return;
+  }
+
+  if (evt.event === "task_plan.execution.recover") {
+    const payload = (evt.payload as TaskPlanExecutionRecoverPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey) {
+      return;
+    }
+    if (host.sandboxTaskPlan) {
+      const previousGraph = host.sandboxTaskPlan.executionGraph;
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        executionGraph: {
+          orderedTodoIds: previousGraph?.orderedTodoIds ?? [],
+          readyTodoIds: payload.readyTodoIds ?? previousGraph?.readyTodoIds ?? [],
+          blockedTodoIds: payload.blockedTodoIds ?? previousGraph?.blockedTodoIds ?? [],
+          inProgressTodoIds: previousGraph?.inProgressTodoIds ?? [],
+          longRunningTodoIds: payload.longRunningTodoIds ?? previousGraph?.longRunningTodoIds ?? [],
+          staleTodoIds: payload.staleTodoIds ?? previousGraph?.staleTodoIds ?? [],
+          blockedBy: previousGraph?.blockedBy ?? {},
+          todoTelemetry: previousGraph?.todoTelemetry ?? {},
+          advisories: payload.advisories ?? previousGraph?.advisories ?? [],
+        },
+      };
+    }
+    const advisory = Array.isArray(payload.advisories) ? payload.advisories[0] : null;
+    host.executionWatchdog = {
+      ...host.executionWatchdog,
+      active: true,
+      degraded: true,
+      reason: advisory ?? "execution_recovery_requested",
+      lastProgressAt: Date.now(),
+    };
+    const recoveryPrompt =
+      typeof payload.prompt === "string" && payload.prompt.trim().length > 0
+        ? payload.prompt
+        : "检测到 execution 存在停滞任务。继续在 execution 阶段推进，优先处理 stale/long-running TODO，并回填每步进展。";
+    if (host.chatSending || Boolean(host.chatStream?.trim())) {
+      host.chatMessage = recoveryPrompt;
+      host.executionAutoQueued = true;
+      return;
+    }
+    host.executionAutoQueued = false;
+    host.chatMessage = recoveryPrompt;
+    void host.handleSendChat();
+    return;
+  }
+
+  if (evt.event === "task_plan.autopilot.status") {
+    const payload = (evt.payload as TaskPlanAutopilotStatusPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey) {
+      return;
+    }
+    if (host.sandboxTaskPlan?.executionGraph) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        executionGraph: {
+          ...host.sandboxTaskPlan.executionGraph,
+          autoDispatch: {
+            enabled: payload.enabled ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.enabled,
+            queueDepth:
+              payload.queueDepth ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.queueDepth,
+            runningCount:
+              payload.runningCount ??
+              host.sandboxTaskPlan.executionGraph.autoDispatch?.runningCount,
+            maxConcurrent:
+              payload.maxConcurrent ??
+              host.sandboxTaskPlan.executionGraph.autoDispatch?.maxConcurrent,
+            frozen: payload.frozen ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.frozen,
+            freezeReason:
+              payload.freezeReason ??
+              host.sandboxTaskPlan.executionGraph.autoDispatch?.freezeReason,
+            lastSpawnAt:
+              payload.at ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.lastSpawnAt,
+          },
+        },
+      };
+    }
+    return;
+  }
+
+  if (evt.event === "task_plan.autopilot.spawned") {
+    const payload = (evt.payload as TaskPlanAutopilotSpawnedPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    const todoId = typeof payload.todoId === "string" ? payload.todoId.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey || !todoId) {
+      return;
+    }
+    const graph = host.sandboxTaskPlan?.executionGraph;
+    if (graph) {
+      const previous = graph.todoTelemetry ?? {};
+      const current = previous[todoId] ?? {};
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        executionGraph: {
+          ...graph,
+          todoTelemetry: {
+            ...previous,
+            [todoId]: {
+              ...current,
+              spawn: {
+                spawned: payload.ok === true,
+                spawnAttempts: payload.attempt ?? current.spawn?.spawnAttempts ?? 0,
+                lastSpawnError: payload.ok === true ? undefined : (payload.error ?? "spawn_failed"),
+                childSessionKey: payload.childSessionKey ?? current.spawn?.childSessionKey,
+                lastSpawnAt: payload.at ?? current.spawn?.lastSpawnAt,
+              },
+            },
+          },
+        },
+      };
+    }
     return;
   }
 

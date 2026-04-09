@@ -1,16 +1,25 @@
 import { Type } from "@sinclair/typebox";
 import type { GatewayMessageChannel } from "../../utils/message-channel.js";
 import { spawnSubagentDirect } from "../subagent-spawn.js";
+import { optionalStringEnum } from "../schema/typebox.js";
+import type { TodoItem } from "./task-planner-tool.js";
 import type { AnyAgentTool } from "./common.js";
 import { jsonResult, readStringParam } from "./common.js";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const SessionsEvaluateToolSchema = Type.Object({
-  originalTask: Type.String({
-    description: "The original task goal that was given to the worker agent.",
-  }),
-  workerResult: Type.String({
-    description: "The result output by the worker agent that needs evaluation.",
-  }),
+  mode: optionalStringEnum(["reflector", "closure"] as const),
+  originalTask: Type.Optional(
+    Type.String({
+      description: "The original task goal that was given to the worker agent.",
+    }),
+  ),
+  workerResult: Type.Optional(
+    Type.String({
+      description: "The result output by the worker agent that needs evaluation.",
+    }),
+  ),
   context: Type.Optional(
     Type.String({
       description:
@@ -27,7 +36,48 @@ const SessionsEvaluateToolSchema = Type.Object({
     Type.String({ description: "Model override, ideally a strong reasoning model (e.g. R1)." }),
   ),
   runTimeoutSeconds: Type.Optional(Type.Number({ minimum: 0 })),
+  planId: Type.Optional(Type.String({ description: "Planner session key for closure mode." })),
+  todos: Type.Optional(
+    Type.Array(Type.Any(), { description: "Optional todo list for closure mode." }),
+  ),
 });
+
+function evaluateClosureTodos(todos: TodoItem[]) {
+  const failed: string[] = [];
+  const missingEvidence: string[] = [];
+  const nextActions: string[] = [];
+  let passed = true;
+
+  for (const todo of todos) {
+    if (!Array.isArray(todo.acceptance) || todo.acceptance.length === 0) {
+      failed.push(`${todo.id}:missing_acceptance`);
+      nextActions.push(`补充 ${todo.id} 的 acceptance`);
+      passed = false;
+    }
+    if (!Array.isArray(todo.evidenceRefs) || todo.evidenceRefs.length === 0) {
+      missingEvidence.push(todo.id);
+      nextActions.push(`补充 ${todo.id} 的 evidenceRefs`);
+      passed = false;
+    }
+    if (!todo.result?.trim()) {
+      failed.push(`${todo.id}:missing_result`);
+      nextActions.push(`补充 ${todo.id} 的 result`);
+      passed = false;
+    }
+    if (todo.status !== "verified" && todo.status !== "closed") {
+      failed.push(`${todo.id}:not_verified`);
+      nextActions.push(`将 ${todo.id} 推进到 verified`);
+      passed = false;
+    }
+  }
+
+  return {
+    passed,
+    failed: Array.from(new Set(failed)),
+    missingEvidence: Array.from(new Set(missingEvidence)),
+    nextActions: Array.from(new Set(nextActions)),
+  };
+}
 
 export function createSessionsEvaluateTool(opts?: {
   agentSessionKey?: string;
@@ -35,6 +85,7 @@ export function createSessionsEvaluateTool(opts?: {
   agentAccountId?: string;
   agentTo?: string;
   agentThreadId?: string | number;
+  workspaceDir?: string;
 }): AnyAgentTool {
   return {
     label: "Evaluate",
@@ -44,6 +95,35 @@ export function createSessionsEvaluateTool(opts?: {
     parameters: SessionsEvaluateToolSchema,
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
+      const mode = readStringParam(params, "mode") || "reflector";
+
+      if (mode === "closure") {
+        const suppliedTodos = Array.isArray(params.todos)
+          ? (params.todos as TodoItem[])
+          : undefined;
+        let todos = suppliedTodos;
+        if (!todos) {
+          const planId = readStringParam(params, "planId") || opts?.agentSessionKey || "default";
+          const workspaceDir = opts?.workspaceDir ?? process.cwd();
+          const plannerFile = path.join(
+            workspaceDir,
+            ".openaeon",
+            "planner",
+            `${planId.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`,
+          );
+          const raw = JSON.parse(await fs.readFile(plannerFile, "utf-8")) as {
+            todos?: TodoItem[];
+          };
+          todos = Array.isArray(raw.todos) ? raw.todos : [];
+        }
+
+        const report = evaluateClosureTodos(todos);
+        return jsonResult({
+          status: "evaluated",
+          mode: "closure",
+          report,
+        });
+      }
 
       const originalTask = readStringParam(params, "originalTask", { required: true });
       const workerResult = readStringParam(params, "workerResult", { required: true });

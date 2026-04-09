@@ -505,6 +505,75 @@ export const chatLayoutStyles = css`
     color: var(--danger-color);
   }
 
+  .callout.info {
+    border-left-color: rgba(56, 189, 248, 0.7);
+    background: rgba(14, 116, 144, 0.16);
+    color: rgba(224, 242, 254, 0.95);
+  }
+
+  .callout.warning {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    color: #fef3c7;
+  }
+
+  .callout--recoverable {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .callout__content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .callout__title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .callout__message {
+    font-size: 12px;
+    color: rgba(254, 243, 199, 0.92);
+    overflow-wrap: anywhere;
+  }
+
+  .callout__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: rgba(254, 243, 199, 0.78);
+  }
+
+  .callout__action {
+    flex-shrink: 0;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    background: rgba(250, 204, 21, 0.12);
+    color: #fde68a;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .callout__action:hover:not(:disabled) {
+    background: rgba(250, 204, 21, 0.2);
+    border-color: rgba(250, 204, 21, 0.75);
+  }
+
+  .callout__action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .chat-focus-exit {
     position: absolute;
     top: 16px;
@@ -749,6 +818,134 @@ export const chatLayoutStyles = css`
     .chat-cosmos__lifelines,
     .chat-cosmos__formula-cloud {
       animation: none !important;
+    }
+  }
+
+  /* ---- Workbench Cleanup Overrides (reference layout) ---- */
+  .chat {
+    background: #0f1115;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 12px;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .chat::before,
+  .chat::after {
+    display: none;
+  }
+
+  .chat-split-container {
+    gap: 0;
+  }
+
+  .chat-main {
+    background: #101216;
+    border: none;
+    border-right: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .chat-main--with-formula::after {
+    display: none;
+  }
+
+  .chat-main--with-formula .chat-thread,
+  .chat-main--with-formula .chat-main-status,
+  .chat-main--with-formula .chat-input-wrapper {
+    padding-right: 24px;
+  }
+
+  .chat-main-status {
+    margin: 0;
+    padding: 16px 18px 14px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    background: #151821;
+    gap: 16px;
+  }
+
+  .chat-main-status__title {
+    font-size: 34px;
+    line-height: 1.05;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+  }
+
+  .chat-main-status__subline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .chat-main-status__badge {
+    color: #bfdbfe;
+    font-size: 11px;
+    border: 1px solid rgba(96, 165, 250, 0.34);
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 0.02em;
+    font-family: var(--font-sans, sans-serif);
+  }
+
+  .chat-main-status__item {
+    color: #9ca3af;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+
+  .chat-main-status__actions {
+    gap: 8px;
+  }
+
+  .chat-main-status__btn {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(15, 23, 42, 0.7);
+    color: #cbd5e1;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+
+  .chat-main-status__btn:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(148, 163, 184, 0.34);
+  }
+
+  .chat-thread {
+    background: #0d1016;
+    padding: 20px 20px 14px;
+    gap: 14px;
+  }
+
+  .chat-input-wrapper {
+    padding: 0 18px 14px;
+    background: #0f1117;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  .chat-tagline {
+    display: none;
+  }
+
+  .callout {
+    margin: 12px 16px;
+    border-radius: 10px;
+    border-left-width: 3px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 1180px) {
+    .chat-main-status__title {
+      font-size: 24px;
     }
   }
 `;

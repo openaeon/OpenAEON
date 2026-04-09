@@ -314,7 +314,8 @@ export async function handleToolExecutionEnd(
   ctx.state.toolSummaryById.delete(toolCallId);
   if (isToolError) {
     ctx.state.consecutiveToolErrors += 1;
-    ctx.state.chaosScore += 2; // Errors increase chaosScore more aggressively
+    // Keep chaos bounded so transient tool failures don't immediately collapse the run.
+    ctx.state.chaosScore = Math.min(24, ctx.state.chaosScore + 1);
     const errorMessage = extractToolErrorMessage(sanitizedResult);
     ctx.state.lastToolError = {
       toolName,
@@ -328,9 +329,9 @@ export async function handleToolExecutionEnd(
     // Repetition detection for chaosScore
     const currentFingerprint = callSummary?.actionFingerprint || `${toolName}:${meta || ""}`;
     if (ctx.state.lastActionFingerprint === currentFingerprint) {
-      ctx.state.chaosScore += 1;
+      ctx.state.chaosScore = Math.min(24, ctx.state.chaosScore + 0.5);
     } else {
-      ctx.state.chaosScore = Math.max(0, ctx.state.chaosScore - 0.5);
+      ctx.state.chaosScore = Math.max(0, ctx.state.chaosScore - 1);
     }
     ctx.state.lastActionFingerprint = currentFingerprint;
 

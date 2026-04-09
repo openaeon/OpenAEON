@@ -31,9 +31,11 @@ import {
   resolveModelFallbackOptions,
 } from "./agent-runner-utils.js";
 import {
+  resolveMemoryFlushBackoffMs,
   resolveMemoryFlushContextWindowTokens,
   resolveMemoryFlushPromptForRun,
   resolveMemoryFlushSettings,
+  shouldSkipMemoryFlushByBackoff,
   shouldRunMemoryFlush,
 } from "./memory-flush.js";
 import type { FollowupRun } from "./queue.js";
@@ -260,6 +262,7 @@ export async function runMemoryFlushIfNeeded(params: {
   storePath?: string;
   isHeartbeat: boolean;
 }): Promise<SessionEntry | undefined> {
+  const nowMs = Date.now();
   const memoryFlushSettings = resolveMemoryFlushSettings(params.cfg);
   if (!memoryFlushSettings) {
     return params.sessionEntry;
@@ -285,6 +288,12 @@ export async function runMemoryFlushIfNeeded(params: {
   let entry =
     params.sessionEntry ??
     (params.sessionKey ? params.sessionStore?.[params.sessionKey] : undefined);
+  if (shouldSkipMemoryFlushByBackoff({ entry, nowMs })) {
+    logVerbose(
+      `memoryFlush skipped by backoff: sessionKey=${params.sessionKey} skipUntil=${entry?.memoryFlushSkipUntil}`,
+    );
+    return entry ?? params.sessionEntry;
+  }
   const contextWindowTokens = resolveMemoryFlushContextWindowTokens({
     modelId: params.followupRun.run.model ?? params.defaultModel,
     agentCfgContextTokens: params.agentCfgContextTokens,
@@ -521,8 +530,11 @@ export async function runMemoryFlushIfNeeded(params: {
           storePath: params.storePath,
           sessionKey: params.sessionKey,
           update: async () => ({
-            memoryFlushAt: Date.now(),
+            memoryFlushAt: nowMs,
             memoryFlushCompactionCount,
+            memoryFlushErrorStreak: 0,
+            memoryFlushLastErrorAt: undefined,
+            memoryFlushSkipUntil: undefined,
           }),
         });
         if (updatedEntry) {
@@ -531,9 +543,49 @@ export async function runMemoryFlushIfNeeded(params: {
       } catch (err) {
         logVerbose(`failed to persist memory flush metadata: ${String(err)}`);
       }
+    } else if (activeSessionEntry) {
+      activeSessionEntry = {
+        ...activeSessionEntry,
+        memoryFlushAt: nowMs,
+        memoryFlushCompactionCount,
+        memoryFlushErrorStreak: 0,
+        memoryFlushLastErrorAt: undefined,
+        memoryFlushSkipUntil: undefined,
+      };
     }
   } catch (err) {
-    logVerbose(`memory flush run failed: ${String(err)}`);
+    const previousStreak = entry?.memoryFlushErrorStreak ?? 0;
+    const nextStreak = previousStreak + 1;
+    const backoffMs = resolveMemoryFlushBackoffMs(nextStreak);
+    const memoryFlushSkipUntil = backoffMs > 0 ? nowMs + backoffMs : undefined;
+    logVerbose(
+      `memory flush run failed: ${String(err)} streak=${nextStreak} backoffMs=${backoffMs}`,
+    );
+    if (params.storePath && params.sessionKey) {
+      try {
+        const updatedEntry = await updateSessionStoreEntry({
+          storePath: params.storePath,
+          sessionKey: params.sessionKey,
+          update: async () => ({
+            memoryFlushErrorStreak: nextStreak,
+            memoryFlushLastErrorAt: nowMs,
+            memoryFlushSkipUntil,
+          }),
+        });
+        if (updatedEntry) {
+          activeSessionEntry = updatedEntry;
+        }
+      } catch (persistErr) {
+        logVerbose(`failed to persist memory flush failure metadata: ${String(persistErr)}`);
+      }
+    } else if (activeSessionEntry) {
+      activeSessionEntry = {
+        ...activeSessionEntry,
+        memoryFlushErrorStreak: nextStreak,
+        memoryFlushLastErrorAt: nowMs,
+        memoryFlushSkipUntil,
+      };
+    }
   }
 
   return activeSessionEntry;

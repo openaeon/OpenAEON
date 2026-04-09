@@ -30,6 +30,10 @@ export type ChatEventPayload = {
 };
 
 const CHAT_RESET_MARKER_KEY = "openaeon.chat.reset.v1";
+const INTERNAL_STEERING_PREFIXES = [
+  "System Notice: Cognitive Shielding activated.",
+  "System Hook: Critical Divergence detected",
+];
 
 function readResetMarker(sessionKey: string): number {
   try {
@@ -67,6 +71,21 @@ function filterHistoryByResetMarker(messages: unknown[], resetAt: number): unkno
   return filtered.length > 0 ? filtered : messages;
 }
 
+function isInternalSteeringMessage(message: unknown): boolean {
+  if (!message || typeof message !== "object") {
+    return false;
+  }
+  const role = (message as { role?: unknown }).role;
+  if (role !== "user") {
+    return false;
+  }
+  const text = extractText(message).trim();
+  if (!text) {
+    return false;
+  }
+  return INTERNAL_STEERING_PREFIXES.some((prefix) => text.startsWith(prefix));
+}
+
 export async function loadChatHistory(state: ChatState) {
   if (!state.client || !state.connected) {
     return;
@@ -89,7 +108,9 @@ export async function loadChatHistory(state: ChatState) {
     }
     const rawMessages = Array.isArray(res.messages) ? res.messages : [];
     const resetAt = readResetMarker(requestedSessionKey);
-    state.chatMessages = filterHistoryByResetMarker(rawMessages, resetAt);
+    state.chatMessages = filterHistoryByResetMarker(rawMessages, resetAt).filter(
+      (message) => !isInternalSteeringMessage(message),
+    );
     state.chatThinkingLevel = res.thinkingLevel ?? null;
   } catch (err) {
     if (state.chatHistoryRequestSeq !== requestSeq || state.sessionKey !== requestedSessionKey) {
@@ -287,7 +308,7 @@ export function handleChatEvent(state: ChatState, payload?: ChatEventPayload) {
   if (payload.runId && state.chatRunId && payload.runId !== state.chatRunId) {
     if (payload.state === "final") {
       const finalMessage = normalizeFinalAssistantMessage(payload.message);
-      if (finalMessage) {
+      if (finalMessage && !isInternalSteeringMessage(finalMessage)) {
         state.chatMessages = [...state.chatMessages, finalMessage];
         return null;
       }
@@ -318,7 +339,7 @@ export function handleChatEvent(state: ChatState, payload?: ChatEventPayload) {
     }
   } else if (payload.state === "final") {
     const finalMessage = normalizeFinalAssistantMessage(payload.message);
-    if (finalMessage) {
+    if (finalMessage && !isInternalSteeringMessage(finalMessage)) {
       state.chatMessages = [...state.chatMessages, finalMessage];
     }
     state.chatStream = null;

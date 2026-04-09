@@ -7,13 +7,51 @@ export type TaskTodo = {
   ownerAgent?: string;
   acceptanceCriteria?: string[];
   riskLevel?: "low" | "medium" | "high";
+  createdAt?: number;
+  updatedAt?: number;
+  startedAt?: number;
+  completedAt?: number;
+  heartbeatAt?: number;
+  attemptCount?: number;
+  lastProgressNote?: string;
+  lastProgressAt?: number;
 };
 
 export type TaskPlanExecutionGraph = {
   orderedTodoIds: string[];
   readyTodoIds: string[];
   blockedTodoIds: string[];
+  inProgressTodoIds?: string[];
+  longRunningTodoIds?: string[];
+  staleTodoIds?: string[];
   blockedBy: Record<string, string[]>;
+  todoTelemetry?: Record<
+    string,
+    {
+      status?: "todo" | "in_progress" | "done";
+      runtimeMs?: number;
+      idleMs?: number;
+      attemptCount?: number;
+      lastTouchedAt?: number;
+      spawn?: {
+        spawned?: boolean;
+        spawnAttempts?: number;
+        lastSpawnError?: string;
+        childSessionKey?: string;
+        lastSpawnAt?: number;
+      };
+    }
+  >;
+  autoDispatch?: {
+    enabled?: boolean;
+    queueDepth?: number;
+    runningCount?: number;
+    maxConcurrent?: number;
+    frozen?: boolean;
+    freezeReason?: string;
+    lastSpawnAt?: number;
+  };
+  advisories?: string[];
 };
 
 export type TaskPlanSnapshot = {
@@ -21,6 +59,12 @@ export type TaskPlanSnapshot = {
   todos: TaskTodo[];
   phase?: "planning" | "execution" | "verification" | "complete";
   executionGraph?: TaskPlanExecutionGraph;
+  updatedAt?: number;
+  recoveryState?: {
+    lastBroadcastAt?: number;
+    lastStaleDigest?: string;
+    staleTodoNotifiedAt?: Record<string, number>;
+  };
 };
 
 export type SandboxProps = {

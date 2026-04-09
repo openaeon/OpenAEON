@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const hoisted = vi.hoisted(() => {
   const spawnSubagentDirectMock = vi.fn();
   const spawnAcpDirectMock = vi.fn();
+  const updateTaskPlannerTodoMock = vi.fn();
   return {
     spawnSubagentDirectMock,
     spawnAcpDirectMock,
+    updateTaskPlannerTodoMock,
   };
 });
 
@@ -17,6 +19,10 @@ vi.mock("../subagent-spawn.js", () => ({
 vi.mock("../acp-spawn.js", () => ({
   ACP_SPAWN_MODES: ["run", "session"],
   spawnAcpDirect: (...args: unknown[]) => hoisted.spawnAcpDirectMock(...args),
+}));
+
+vi.mock("./task-planner-tool.js", () => ({
+  updateTaskPlannerTodo: (...args: unknown[]) => hoisted.updateTaskPlannerTodoMock(...args),
 }));
 
 const { createSessionsSpawnTool } = await import("./sessions-spawn-tool.js");
@@ -32,6 +38,10 @@ describe("sessions_spawn tool", () => {
       status: "accepted",
       childSessionKey: "agent:codex:acp:1",
       runId: "run-acp",
+    });
+    hoisted.updateTaskPlannerTodoMock.mockReset().mockResolvedValue({
+      ok: true,
+      updated: { id: "todo123", status: "in_progress" },
     });
   });
 
@@ -54,6 +64,9 @@ describe("sessions_spawn tool", () => {
       mode: "session",
       cleanup: "keep",
       sandbox: "require",
+      planId: "agent_main_main",
+      todoId: "todo123",
+      acceptance: ["tests pass", "evidence attached"],
     });
 
     expect(result.details).toMatchObject({
@@ -72,12 +85,23 @@ describe("sessions_spawn tool", () => {
         mode: "session",
         cleanup: "keep",
         sandbox: "require",
+        planId: "agent_main_main",
+        todoId: "todo123",
+        acceptance: ["tests pass", "evidence attached"],
+        sharedContext: expect.objectContaining({
+          taskClosure: {
+            planId: "agent_main_main",
+            todoId: "todo123",
+            acceptance: ["tests pass", "evidence attached"],
+          },
+        }),
       }),
       expect.objectContaining({
         agentSessionKey: "agent:main:main",
       }),
     );
     expect(hoisted.spawnAcpDirectMock).not.toHaveBeenCalled();
+    expect(hoisted.updateTaskPlannerTodoMock).not.toHaveBeenCalled();
   });
 
   it('defaults sandbox to "inherit" for subagent runtime', async () => {
@@ -135,5 +159,29 @@ describe("sessions_spawn tool", () => {
       }),
     );
     expect(hoisted.spawnSubagentDirectMock).not.toHaveBeenCalled();
+  });
+
+  it("updates planner todo to in_progress when plan context is provided", async () => {
+    const tool = createSessionsSpawnTool({
+      agentSessionKey: "agent:main:main",
+      agentChannel: "discord",
+      workspaceDir: "/tmp/workspace",
+    });
+
+    await tool.execute("call-plan-link", {
+      task: "build feature",
+      planId: "agent_main_main",
+      todoId: "todo-1",
+      acceptance: ["ship output"],
+    });
+
+    expect(hoisted.updateTaskPlannerTodoMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceDir: "/tmp/workspace",
+        targetSessionKey: "agent_main_main",
+        taskId: "todo-1",
+        status: "in_progress",
+      }),
+    );
   });
 });

@@ -418,6 +418,8 @@ importers:
 
   extensions/open-prose: {}
 
+  extensions/qa-lab: {}
+
   extensions/signal: {}
 
   extensions/slack: {}

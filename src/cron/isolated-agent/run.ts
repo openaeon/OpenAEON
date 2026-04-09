@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import path from "node:path";
 import {
   resolveAgentConfig,
   resolveAgentDir,
@@ -85,8 +87,82 @@ export type RunCronAgentTurnResult = {
    * cannot guarantee a final delivery ack synchronously.
    */
   deliveryAttempted?: boolean;
+  closureReport?: {
+    passed: boolean;
+    failed: string[];
+    missingEvidence: string[];
+    nextActions: string[];
+  };
 } & CronRunOutcome &
   CronRunTelemetry;
+
+async function resolveClosureReport(params: { workspaceDir: string; sessionKey: string }): Promise<{
+  passed: boolean;
+  failed: string[];
+  missingEvidence: string[];
+  nextActions: string[];
+}> {
+  const plannerFile = path.join(
+    params.workspaceDir,
+    ".openaeon",
+    "planner",
+    `${params.sessionKey.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`,
+  );
+  try {
+    const raw = JSON.parse(await fs.readFile(plannerFile, "utf-8")) as {
+      todos?: Array<{
+        id?: string;
+        status?: string;
+        acceptance?: string[];
+        evidenceRefs?: string[];
+        verifiedBy?: string;
+      }>;
+    };
+    const todos = Array.isArray(raw.todos) ? raw.todos : [];
+    if (todos.length === 0) {
+      return {
+        passed: false,
+        failed: ["plan_empty"],
+        missingEvidence: [],
+        nextActions: ["为后台任务创建并关闭 write_todos 计划"],
+      };
+    }
+    const failed: string[] = [];
+    const missingEvidence: string[] = [];
+    const nextActions: string[] = [];
+    for (const todo of todos) {
+      const id = typeof todo.id === "string" ? todo.id : "unknown";
+      if (!Array.isArray(todo.acceptance) || todo.acceptance.length === 0) {
+        failed.push(`${id}:missing_acceptance`);
+      }
+      if (!Array.isArray(todo.evidenceRefs) || todo.evidenceRefs.length === 0) {
+        missingEvidence.push(id);
+      }
+      if (todo.status !== "closed") {
+        failed.push(`${id}:not_closed`);
+      }
+      if (!todo.verifiedBy) {
+        failed.push(`${id}:missing_verifiedBy`);
+      }
+    }
+    if (failed.length > 0 || missingEvidence.length > 0) {
+      nextActions.push("补齐证据与验收后执行 write_todos(close_plan)");
+    }
+    return {
+      passed: failed.length === 0 && missingEvidence.length === 0,
+      failed: Array.from(new Set(failed)),
+      missingEvidence: Array.from(new Set(missingEvidence)),
+      nextActions: Array.from(new Set(nextActions)),
+    };
+  } catch {
+    return {
+      passed: false,
+      failed: ["plan_not_found"],
+      missingEvidence: [],
+      nextActions: ["先创建计划并按闭环状态机推进到 closed"],
+    };
+  }
+}
 
 export async function runCronIsolatedAgentTurn(params: {
   cfg: OPENAEONConfig;
@@ -389,7 +465,18 @@ export async function runCronIsolatedAgentTurn(params: {
     `- Learning: If you discover new configurations, solve a problem, or reach a milestone, use 'write' to save those findings to the memory/ directory so your future scheduled runs can succeed.`,
   ].join("\n");
 
-  commandBody = `${memoryPreamble}\n\n${commandBody}`;
+  const closurePreamble = [
+    `[Task Closure Requirements]`,
+    `You MUST run write_todos with a full closure lifecycle for this cron task:`,
+    `1) create_plan`,
+    `2) add_todo (include owner + acceptance + expected evidenceRefs)`,
+    `3) execution updates (planned -> in_progress -> blocked|done)`,
+    `4) verification updates (done -> verified with verifiedBy + evidenceRefs)`,
+    `5) close_plan (all todos must be verified/closed before final summary)`,
+    `If closure cannot complete, return explicit gaps and mark remaining todos blocked.`,
+  ].join("\n");
+
+  commandBody = `${memoryPreamble}\n\n${commandBody}\n\n${closurePreamble}`;
 
   if (deliveryRequested) {
     commandBody =
@@ -642,6 +729,11 @@ export async function runCronIsolatedAgentTurn(params: {
   const embeddedRunError = hasFatalErrorPayload
     ? (lastErrorPayloadText ?? "cron isolated run returned an error payload")
     : undefined;
+  const closureReport = await resolveClosureReport({
+    workspaceDir,
+    sessionKey: agentSessionKey,
+  });
+
   const resolveRunOutcome = (params?: { delivered?: boolean; deliveryAttempted?: boolean }) =>
     withRunSession({
       status: hasFatalErrorPayload ? "error" : "ok",
@@ -652,6 +744,7 @@ export async function runCronIsolatedAgentTurn(params: {
       outputText,
       delivered: params?.delivered,
       deliveryAttempted: params?.deliveryAttempted,
+      closureReport,
       ...telemetry,
     });
 

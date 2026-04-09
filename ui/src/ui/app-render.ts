@@ -82,6 +82,7 @@ import { renderAeonLogic } from "./views/aeon-logic.ts";
 import { renderAgents } from "./views/agents.ts";
 import { renderChannels } from "./views/channels.ts";
 import { renderChat } from "./views/chat.ts";
+import { isPlaceholderPlanTodo } from "./views/chat/components/subagent-view-model.ts";
 import { renderConfig } from "./views/config.ts";
 import { renderCron } from "./views/cron.ts";
 import { renderDebug } from "./views/debug.ts";
@@ -134,6 +135,23 @@ function uniquePreserveOrder(values: string[]): string[] {
     output.push(normalized);
   }
   return output;
+}
+
+function normalizeSubagentId(value: string, fallback: string): string {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (normalized.length > 0) {
+    return normalized.slice(0, 48);
+  }
+  const fallbackNormalized = fallback
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return fallbackNormalized.length > 0 ? fallbackNormalized.slice(0, 48) : "worker";
 }
 
 function resolveChatPerformanceMode(state: AppViewState): "performance" | "balanced" | "visual" {
@@ -389,6 +407,47 @@ export function renderApp(state: AppViewState) {
     }
     if (name === "clear") {
       state.chatMessage = "";
+    }
+  };
+  const handleRecoverExecution = () => {
+    const staleCount = state.sandboxTaskPlan?.executionGraph?.staleTodoIds?.length ?? 0;
+    const longRunningCount = state.sandboxTaskPlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
+    const recoveryPrompt =
+      staleCount > 0 || longRunningCount > 0
+        ? `恢复 execution：优先处理 stale(${staleCount}) 与 long-running(${longRunningCount}) 任务，逐步回填进展，禁止回到 planning。`
+        : "恢复 execution：继续推进当前 TODO，逐步回填进展，禁止回到 planning。";
+    if (state.chatSending || Boolean(state.chatStream?.trim())) {
+      state.chatMessage = recoveryPrompt;
+      state.executionAutoQueued = true;
+      return;
+    }
+    state.executionAutoQueued = false;
+    state.chatMessage = recoveryPrompt;
+    void state.handleSendChat();
+  };
+  const handleSpawnAgentsFromPlan = () => {
+    const plan = state.sandboxTaskPlan;
+    const todos = Array.isArray(plan?.todos) ? plan.todos : [];
+    const queued = todos
+      .filter((todo) => todo.status !== "done")
+      .filter((todo) => !isPlaceholderPlanTodo(todo))
+      .slice(0, 5);
+    if (queued.length === 0) {
+      state.lastError = "No actionable TODOs found in the current task plan.";
+      return;
+    }
+    let spawned = 0;
+    for (const [index, todo] of queued.entries()) {
+      const fallbackId = `task-${todo.id || index + 1}`;
+      const ownerId = normalizeSubagentId(todo.ownerAgent ?? "", fallbackId);
+      const taskText = (todo.title || "").trim() || `Execute task ${index + 1}`;
+      const command = `/subagents spawn ${ownerId} ${taskText}`;
+      void state.handleSendChat(command, { restoreDraft: true });
+      spawned += 1;
+    }
+    state.lastError = null;
+    if (spawned > 0) {
+      state.setTab("agents");
     }
   };
 
@@ -1438,6 +1497,14 @@ export function renderApp(state: AppViewState) {
                 onNewSession: () => state.handleSendChat("/new", { restoreDraft: true }),
                 onOpenSandbox: () => state.setTab("sandbox"),
                 onOpenAeon: () => state.setTab("aeon"),
+                onOpenAgents: () => state.setTab("agents"),
+                onSpawnAgentsFromPlan: handleSpawnAgentsFromPlan,
+                autopilotEnabled: state.settings.chatAutopilotEnabled ?? true,
+                onToggleAutopilot: (enabled: boolean) =>
+                  state.applySettings({
+                    ...state.settings,
+                    chatAutopilotEnabled: enabled,
+                  }),
                 eternalMode: state.aeonEternalMode,
                 onToggleEternalMode: () =>
                   void state.handleToggleEternalMode(!state.aeonEternalMode, "local"),
@@ -1497,6 +1564,7 @@ export function renderApp(state: AppViewState) {
                   },
                 },
                 onQuickCommand: handleQuickCommand,
+                onRecoverExecution: handleRecoverExecution,
                 showNewMessages: state.chatNewMessagesBelow && !state.chatManualRefreshInFlight,
                 onScrollToBottom: () => state.scrollToBottom(),
                 // Sidebar props for tool output viewing

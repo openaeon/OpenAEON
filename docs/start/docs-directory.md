@@ -1,8 +1,8 @@
 ---
-summary: "Curated links to the most used OpenAEON docs."
+summary: "Curated entry points and structure map for OpenAEON docs."
 read_when:
   - You want quick access to key docs pages
-title: "Docs directory"
+title: "Docs Directory"
 ---
 
 <Note>
@@ -13,6 +13,7 @@ For a complete map of the docs, see [Docs hubs](/start/hubs).
 ## Start here
 
 - [Docs hubs (all pages linked)](/start/hubs)
+- [Docs maintenance workflow](/start/docs-maintenance)
 - [Help](/help)
 - [Configuration](/gateway/configuration)
 - [Configuration examples](/gateway/configuration-examples)
@@ -21,7 +22,7 @@ For a complete map of the docs, see [Docs hubs](/start/hubs).
 - [Updating and rollback](/install/updating)
 - [Pairing (DM and nodes)](/channels/pairing)
 - [Nix mode](/install/nix)
-- [OpenAEON assistant setup](/start/openaeon)
+- [OpenAEON assistant setup](/start/openclaw)
 - [Skills](/tools/skills)
 - [Skills config](/tools/skills-config)
 - [Workspace templates](/reference/templates/AGENTS)
@@ -31,6 +32,20 @@ For a complete map of the docs, see [Docs hubs](/start/hubs).
 - [Web surfaces (Control UI)](/web)
 - [Discovery and transports](/gateway/discovery)
 - [Remote access](/gateway/remote)
+
+## Docs structure by domain
+
+- [Start](/start/getting-started)
+- [Install](/install)
+- [Gateway](/gateway)
+- [Channels](/channels)
+- [Tools](/tools)
+- [Concepts](/concepts/features)
+- [Reference](/reference/rpc)
+- [Help](/help)
+- [Platforms](/platforms)
+- [Providers](/providers/models)
+- [Automation](/automation/cron-jobs)
 
 ## Providers and UX
 

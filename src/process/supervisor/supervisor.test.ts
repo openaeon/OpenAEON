@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 import { createProcessSupervisor } from "./supervisor.js";
+import { captureEnv } from "../../test-utils/env.js";
 
 type ProcessSupervisor = ReturnType<typeof createProcessSupervisor>;
 type SpawnOptions = Parameters<ProcessSupervisor["spawn"]>[0];
@@ -15,6 +19,11 @@ async function spawnChild(supervisor: ProcessSupervisor, options: ChildSpawnOpti
 }
 
 describe("process supervisor", () => {
+  const envSnapshot = captureEnv(["OPENAEON_SUPERVISOR_STORE_PATH"]);
+  afterEach(() => {
+    envSnapshot.restore();
+  });
+
   it("spawns child runs and captures output", async () => {
     const supervisor = createProcessSupervisor();
     const run = await spawnChild(supervisor, {
@@ -114,5 +123,52 @@ describe("process supervisor", () => {
     const exit = await run.wait();
     expect(streamed).toBe("streamed");
     expect(exit.stdout).toBe("");
+  });
+
+  it("reconciles persisted non-exited runs as orphaned after restart", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "openaeon-supervisor-"));
+    try {
+      const storePath = path.join(tempDir, "runs.json");
+      process.env.OPENAEON_SUPERVISOR_STORE_PATH = storePath;
+      const now = Date.now();
+      await fs.writeFile(
+        storePath,
+        JSON.stringify(
+          {
+            version: 1,
+            runs: [
+              {
+                runId: "orphan-run-1",
+                sessionId: "session-1",
+                backendId: "test",
+                state: "running",
+                startedAtMs: now - 1000,
+                lastOutputAtMs: now - 1000,
+                createdAtMs: now - 1000,
+                updatedAtMs: now - 1000,
+              },
+            ],
+          },
+          null,
+          2,
+        ) + "\n",
+        "utf8",
+      );
+
+      const supervisor = createProcessSupervisor();
+      await supervisor.reconcileOrphans();
+      const reconciled = supervisor.getRecord("orphan-run-1");
+      expect(reconciled?.state).toBe("exited");
+      expect(reconciled?.terminationReason).toBe("orphaned");
+
+      const persisted = JSON.parse(await fs.readFile(storePath, "utf8")) as {
+        runs?: Array<{ runId: string; state: string; terminationReason?: string }>;
+      };
+      const persistedRun = persisted.runs?.find((entry) => entry.runId === "orphan-run-1");
+      expect(persistedRun?.state).toBe("exited");
+      expect(persistedRun?.terminationReason).toBe("orphaned");
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
   });
 });

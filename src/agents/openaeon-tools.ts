@@ -177,6 +177,7 @@ export function createOPENAEONTools(options?: {
       requesterAgentIdOverride: options?.requesterAgentIdOverride,
       iterationDepth: options?.iterationDepth,
       freedom: options?.freedom,
+      workspaceDir,
     }),
     createSkillsDefineTool({
       agentSessionKey: options?.agentSessionKey,
@@ -189,6 +190,7 @@ export function createOPENAEONTools(options?: {
       agentAccountId: options?.agentAccountId,
       agentTo: options?.agentTo,
       agentThreadId: options?.agentThreadId,
+      workspaceDir,
     }),
     createSubagentsTool({
       agentSessionKey: options?.agentSessionKey,

@@ -30,9 +30,14 @@ import { resolveWorkspaceRoot } from "./workspace-dir.js";
 import { getSubagentDepthFromSessionStore } from "./subagent-depth.js";
 import {
   countActiveRunsForSession,
+  markSubagentRunSetupFailed,
+  markSubagentRunSpawnPhase,
   registerSubagentRun,
+  replaceSubagentRunId,
+  setSubagentRunSharedContext,
   waitForSubagentCompletion,
 } from "./subagent-registry.js";
+import { resolveAgentTimeoutMs } from "./timeout.js";
 import { readStringParam } from "./tools/common.js";
 import { runAgentStep, readLatestAssistantReply } from "./tools/agent-step.js";
 import {
@@ -64,6 +69,12 @@ export type SpawnSubagentParams = {
   role?: "manager" | "worker";
   /** Dialectic Evolution: Spawn positive/negative pair and synthesize. */
   dialecticMode?: boolean;
+  /** Optional task plan key for closure loop writeback. */
+  planId?: string;
+  /** Optional todo id bound to this subagent run. */
+  todoId?: string;
+  /** Optional acceptance checklist inherited from planner. */
+  acceptance?: string[];
 };
 
 export type SpawnSubagentContext = {
@@ -474,19 +485,44 @@ export async function spawnSubagentDirect(
     }
     thinkingOverride = normalized;
   }
+  const childIdem = crypto.randomUUID();
+  let childRunId: string = childIdem;
+  registerSubagentRun({
+    runId: childRunId,
+    childSessionKey,
+    requesterSessionKey: requesterInternalKey,
+    requesterOrigin,
+    requesterDisplayKey,
+    task,
+    cleanup,
+    label: label || undefined,
+    model: resolvedModel,
+    runTimeoutSeconds,
+    expectsCompletionMessage,
+    spawnMode,
+    planId: params.planId,
+    todoId: params.todoId,
+    acceptance: params.acceptance,
+    shouldWaitForCompletion: false,
+    spawnPhase: "registered",
+  });
+
   try {
     await callGateway({
       method: "sessions.patch",
       params: { key: childSessionKey, spawnDepth: childDepth },
       timeoutMs: 10_000,
     });
+    markSubagentRunSpawnPhase({ runId: childRunId, phase: "depth-patched" });
   } catch (err) {
     const messageText =
       err instanceof Error ? err.message : typeof err === "string" ? err : "error";
+    markSubagentRunSetupFailed({ runId: childRunId, error: messageText });
     return {
       status: "error",
       error: messageText,
       childSessionKey,
+      runId: childRunId,
     };
   }
 
@@ -498,13 +534,16 @@ export async function spawnSubagentDirect(
         timeoutMs: 10_000,
       });
       modelApplied = true;
+      markSubagentRunSpawnPhase({ runId: childRunId, phase: "model-patched" });
     } catch (err) {
       const messageText =
         err instanceof Error ? err.message : typeof err === "string" ? err : "error";
+      markSubagentRunSetupFailed({ runId: childRunId, error: messageText });
       return {
         status: "error",
         error: messageText,
         childSessionKey,
+        runId: childRunId,
       };
     }
   }
@@ -518,13 +557,16 @@ export async function spawnSubagentDirect(
         },
         timeoutMs: 10_000,
       });
+      markSubagentRunSpawnPhase({ runId: childRunId, phase: "thinking-patched" });
     } catch (err) {
       const messageText =
         err instanceof Error ? err.message : typeof err === "string" ? err : "error";
+      markSubagentRunSetupFailed({ runId: childRunId, error: messageText });
       return {
         status: "error",
         error: messageText,
         childSessionKey,
+        runId: childRunId,
       };
     }
   }
@@ -544,6 +586,7 @@ export async function spawnSubagentDirect(
       },
     });
     if (bindResult.status === "error") {
+      markSubagentRunSetupFailed({ runId: childRunId, error: bindResult.error });
       try {
         await callGateway({
           method: "sessions.delete",
@@ -557,9 +600,11 @@ export async function spawnSubagentDirect(
         status: "error",
         error: bindResult.error,
         childSessionKey,
+        runId: childRunId,
       };
     }
     threadBindingReady = true;
+    markSubagentRunSpawnPhase({ runId: childRunId, phase: "thread-bound" });
   }
 
   // Multi-agent Cognitive Loop Fusion: Increment iteration depth for sub-agent
@@ -616,8 +661,8 @@ export async function spawnSubagentDirect(
     .filter((line): line is string => Boolean(line))
     .join("\n\n");
 
-  const childIdem = crypto.randomUUID();
-  let childRunId: string = childIdem;
+  setSubagentRunSharedContext({ runId: childRunId, sharedContext });
+  markSubagentRunSpawnPhase({ runId: childRunId, phase: "dispatched" });
   try {
     const response = await callGateway<{ runId: string }>({
       method: "agent",
@@ -645,9 +690,19 @@ export async function spawnSubagentDirect(
       timeoutMs: 10_000,
     });
     if (typeof response?.runId === "string" && response.runId) {
-      childRunId = response.runId;
+      const nextRunId = response.runId;
+      if (nextRunId !== childRunId) {
+        if (replaceSubagentRunId({ fromRunId: childRunId, toRunId: nextRunId })) {
+          childRunId = nextRunId;
+        } else {
+          // Fallback: still track the actual run id returned by gateway.
+          childRunId = nextRunId;
+        }
+      }
     }
   } catch (err) {
+    const messageText = summarizeError(err);
+    markSubagentRunSetupFailed({ runId: childRunId, error: messageText });
     if (threadBindingReady) {
       const hasEndedHook = hookRunner?.hasHooks("subagent_ended") === true;
       let endedHookEmitted = false;
@@ -691,7 +746,6 @@ export async function spawnSubagentDirect(
         // Best-effort only.
       }
     }
-    const messageText = summarizeError(err);
     return {
       status: "error",
       error: messageText,
@@ -699,22 +753,12 @@ export async function spawnSubagentDirect(
       runId: childRunId,
     };
   }
-
-  registerSubagentRun({
-    runId: childRunId,
-    childSessionKey,
-    requesterSessionKey: requesterInternalKey,
-    requesterOrigin,
-    requesterDisplayKey,
-    task,
-    cleanup,
-    label: label || undefined,
-    model: resolvedModel,
-    runTimeoutSeconds,
-    expectsCompletionMessage,
-    spawnMode,
-    sharedContext,
+  markSubagentRunSpawnPhase({ runId: childRunId, phase: "running" });
+  const backgroundWaitTimeoutMs = resolveAgentTimeoutMs({
+    cfg,
+    overrideSeconds: runTimeoutSeconds,
   });
+  void waitForSubagentCompletion(childRunId, backgroundWaitTimeoutMs);
 
   if (hookRunner?.hasHooks("subagent_spawned")) {
     try {

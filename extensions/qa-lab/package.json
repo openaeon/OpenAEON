@@ -1,0 +1,12 @@
+{
+  "name": "@openaeon/qa-lab",
+  "version": "2026.3.23",
+  "private": true,
+  "description": "OpenAEON QA scenario catalog plugin",
+  "type": "module",
+  "openaeon": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

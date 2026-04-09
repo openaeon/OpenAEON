@@ -9,6 +9,8 @@ import { SILENT_REPLY_TOKEN } from "../tokens.js";
 
 export const DEFAULT_MEMORY_FLUSH_SOFT_TOKENS = 4000;
 export const DEFAULT_MEMORY_FLUSH_FORCE_TRANSCRIPT_BYTES = 2 * 1024 * 1024;
+export const MEMORY_FLUSH_BACKOFF_MIN_MS = 2 * 60 * 1000;
+export const MEMORY_FLUSH_BACKOFF_MAX_MS = 60 * 60 * 1000;
 
 export const DEFAULT_MEMORY_FLUSH_PROMPT = [
   "Pre-compaction memory flush.",
@@ -168,4 +170,22 @@ export function shouldRunMemoryFlush(params: {
   }
 
   return true;
+}
+
+export function resolveMemoryFlushBackoffMs(errorStreak: number): number {
+  const streak = Number.isFinite(errorStreak) ? Math.max(0, Math.floor(errorStreak)) : 0;
+  if (streak <= 0) {
+    return 0;
+  }
+  const exponential = MEMORY_FLUSH_BACKOFF_MIN_MS * 2 ** (streak - 1);
+  return Math.min(MEMORY_FLUSH_BACKOFF_MAX_MS, exponential);
+}
+
+export function shouldSkipMemoryFlushByBackoff(params: {
+  entry?: Pick<SessionEntry, "memoryFlushSkipUntil">;
+  nowMs?: number;
+}): boolean {
+  const now = Number.isFinite(params.nowMs) ? Math.floor(params.nowMs as number) : Date.now();
+  const skipUntil = params.entry?.memoryFlushSkipUntil;
+  return typeof skipUntil === "number" && Number.isFinite(skipUntil) && skipUntil > now;
 }

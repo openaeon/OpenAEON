@@ -76,4 +76,40 @@ describe("sessions_evaluate tool", () => {
       error: "Spawn failed due to capacity limit",
     });
   });
+
+  it("returns closure report in closure mode", async () => {
+    const tool = createSessionsEvaluateTool({
+      agentSessionKey: "agent:main:main",
+    });
+
+    const result = await tool.execute("call-closure", {
+      mode: "closure",
+      todos: [
+        {
+          id: "t1",
+          status: "closed",
+          acceptance: ["ok"],
+          evidenceRefs: ["artifact:1"],
+          result: "done",
+          verifiedBy: "qa",
+        },
+        {
+          id: "t2",
+          status: "done",
+          acceptance: ["must verify"],
+          evidenceRefs: [],
+          result: "done",
+        },
+      ],
+    });
+
+    expect(result.details).toMatchObject({
+      status: "evaluated",
+      mode: "closure",
+      report: {
+        passed: false,
+      },
+    });
+    expect((result.details as any).report.missingEvidence).toContain("t2");
+  });
 });

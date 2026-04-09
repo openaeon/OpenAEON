@@ -3,7 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OPENAEONConfig } from "../config/config.js";
-import { resolveSecretRefString, resolveSecretRefValue } from "./resolve.js";
+import {
+  isProviderScopedSecretResolutionError,
+  resolveSecretRefString,
+  resolveSecretRefValue,
+} from "./resolve.js";
 
 async function writeSecureFile(filePath: string, content: string, mode = 0o600): Promise<void> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -103,6 +107,7 @@ describe("secret ref resolver", () => {
                 source: "exec",
                 command: scriptPath,
                 passEnv: ["PATH"],
+                noOutputTimeoutMs: 10_000,
               },
             },
           },
@@ -110,6 +115,88 @@ describe("secret ref resolver", () => {
       },
     );
     expect(value).toBe("value:openai/api-key");
+  });
+
+  it("rejects invalid exec secret ids before provider execution", async () => {
+    if (process.platform === "win32") {
+      return;
+    }
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-secrets-resolve-exec-id-"));
+    cleanupRoots.push(root);
+    const scriptPath = path.join(root, "resolver.mjs");
+    await writeSecureFile(
+      scriptPath,
+      ["#!/usr/bin/env node", "process.stdout.write('should-not-run');"].join("\n"),
+      0o700,
+    );
+
+    await expect(
+      resolveSecretRefString(
+        { source: "exec", provider: "execmain", id: "../bad-id" },
+        {
+          config: {
+            secrets: {
+              providers: {
+                execmain: {
+                  source: "exec",
+                  command: scriptPath,
+                },
+              },
+            },
+          },
+        },
+      ),
+    ).rejects.toThrow("Exec secret reference id must match");
+  });
+
+  it("returns provider-scoped errors for missing providers", async () => {
+    const error = await resolveSecretRefValue(
+      { source: "env", provider: "missing-provider", id: "OPENAI_API_KEY" },
+      { config: {} },
+    ).catch((err) => err);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(isProviderScopedSecretResolutionError(error)).toBe(true);
+    expect((error as { scope?: string }).scope).toBe("provider");
+  });
+
+  it("returns structured errors when exec provider omits requested id", async () => {
+    if (process.platform === "win32") {
+      return;
+    }
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-secrets-resolve-ref-scope-"));
+    cleanupRoots.push(root);
+    const scriptPath = path.join(root, "resolver.mjs");
+    await writeSecureFile(
+      scriptPath,
+      [
+        "#!/usr/bin/env node",
+        "process.stdout.write(JSON.stringify({ protocolVersion: 1, values: { other: 'x' } }));",
+        "process.exit(0);",
+      ].join("\n"),
+      0o700,
+    );
+
+    const error = await resolveSecretRefString(
+      { source: "exec", provider: "execmain", id: "openai/api-key" },
+      {
+        config: {
+          secrets: {
+            providers: {
+              execmain: {
+                source: "exec",
+                command: scriptPath,
+                noOutputTimeoutMs: 10_000,
+              },
+            },
+          },
+        },
+      },
+    ).catch((err) => err);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(["ref", "provider"]).toContain((error as { scope?: string }).scope);
+    expect(String((error as { message?: string }).message ?? "")).toContain('provider "execmain"');
   });
 
   it("supports non-JSON single-value exec output when jsonOnly is false", async () => {
@@ -136,6 +223,7 @@ describe("secret ref resolver", () => {
                 command: scriptPath,
                 passEnv: ["PATH"],
                 jsonOnly: false,
+                noOutputTimeoutMs: 10_000,
               },
             },
           },
@@ -208,6 +296,7 @@ describe("secret ref resolver", () => {
                 command: symlinkPath,
                 passEnv: ["PATH"],
                 jsonOnly: false,
+                noOutputTimeoutMs: 10_000,
                 allowSymlinkCommand: true,
                 trustedDirs: [trustedRoot],
               },
@@ -280,6 +369,7 @@ describe("secret ref resolver", () => {
                 args: ["brew"],
                 allowSymlinkCommand: true,
                 trustedDirs: [trustedRoot],
+                noOutputTimeoutMs: 10_000,
               },
             },
           },
@@ -358,6 +448,7 @@ describe("secret ref resolver", () => {
                   source: "exec",
                   command: scriptPath,
                   passEnv: ["PATH"],
+                  noOutputTimeoutMs: 10_000,
                 },
               },
             },
@@ -379,6 +470,7 @@ describe("secret ref resolver", () => {
       [
         "#!/usr/bin/env node",
         "process.stdout.write(JSON.stringify({ protocolVersion: 1, values: {} }));",
+        "process.exit(0);",
       ].join("\n"),
       0o700,
     );
@@ -394,6 +486,7 @@ describe("secret ref resolver", () => {
                   source: "exec",
                   command: scriptPath,
                   passEnv: ["PATH"],
+                  noOutputTimeoutMs: 10_000,
                 },
               },
             },
@@ -428,6 +521,7 @@ describe("secret ref resolver", () => {
                   command: scriptPath,
                   passEnv: ["PATH"],
                   jsonOnly: true,
+                  noOutputTimeoutMs: 10_000,
                 },
               },
             },

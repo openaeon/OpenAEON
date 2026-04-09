@@ -18,6 +18,7 @@ export type UiSettings = {
   navGroupsCollapsed: Record<string, boolean>; // Which nav groups are collapsed
   locale?: string;
   chatWebSearchEnabled?: boolean;
+  chatAutopilotEnabled?: boolean;
   aeonEternalMode?: boolean;
   lastTab?: Tab;
 };
@@ -47,6 +48,7 @@ export function loadSettings(): UiSettings {
     navCollapsed: false,
     navGroupsCollapsed: {},
     chatWebSearchEnabled: true,
+    chatAutopilotEnabled: true,
     aeonEternalMode: false,
     lastTab: "chat",
   };
@@ -98,6 +100,10 @@ export function loadSettings(): UiSettings {
         typeof parsed.chatWebSearchEnabled === "boolean"
           ? parsed.chatWebSearchEnabled
           : defaults.chatWebSearchEnabled,
+      chatAutopilotEnabled:
+        typeof parsed.chatAutopilotEnabled === "boolean"
+          ? parsed.chatAutopilotEnabled
+          : defaults.chatAutopilotEnabled,
       aeonEternalMode:
         typeof parsed.aeonEternalMode === "boolean"
           ? parsed.aeonEternalMode

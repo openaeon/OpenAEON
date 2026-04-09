@@ -99,6 +99,10 @@ export type ChatProps = {
   onNewSession: () => void;
   onOpenSandbox?: () => void;
   onOpenAeon?: () => void;
+  onOpenAgents?: () => void;
+  onSpawnAgentsFromPlan?: () => void;
+  autopilotEnabled?: boolean;
+  onToggleAutopilot?: (enabled: boolean) => void;
   eternalMode?: boolean;
   onToggleEternalMode?: () => void;
   onOpenSidebar?: (content: string) => void;
@@ -109,6 +113,7 @@ export type ChatProps = {
   onToggleWebSearch?: (enabled: boolean) => void;
   // Plan approval
   onApprovePlan?: () => void;
+  onRecoverExecution?: () => void;
   onQuickCommand?: (command: ChatQuickCommand) => void;
   // Subagent details for sidebar
   sandboxChatEvents?: import("../types.ts").SandboxChatEvents;

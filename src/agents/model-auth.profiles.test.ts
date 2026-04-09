@@ -333,4 +333,25 @@ describe("getApiKeyForModel", () => {
       },
     );
   });
+  it("allows local providers to skip the API key requirement", async () => {
+    const localCfg = {
+      models: {
+        providers: {
+          "ollama-local": {
+            baseUrl: "http://127.0.0.1:11434/v1",
+            api: "openai-completions",
+            models: [],
+          },
+        },
+      },
+    };
+    const resolved = await resolveApiKeyForProvider({
+      provider: "ollama-local",
+      store: { version: 1, profiles: {} },
+      cfg: localCfg as any,
+    });
+    expect(resolved.apiKey).toBe("local");
+    expect(resolved.source).toBe("models.json:local");
+    expect(resolved.mode).toBe("api-key");
+  });
 });

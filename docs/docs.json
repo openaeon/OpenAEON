@@ -265,15 +265,23 @@
     },
     {
       "source": "/clawd",
-      "destination": "/start/openaeon"
+      "destination": "/start/openclaw"
     },
     {
       "source": "/start/clawd",
-      "destination": "/start/openaeon"
+      "destination": "/start/openclaw"
     },
     {
       "source": "/start/clawd/",
-      "destination": "/start/openaeon"
+      "destination": "/start/openclaw"
+    },
+    {
+      "source": "/start/openaeon",
+      "destination": "/start/openclaw"
+    },
+    {
+      "source": "/start/openaeon/",
+      "destination": "/start/openclaw"
     },
     {
       "source": "/start/pairing",
@@ -1405,7 +1413,7 @@
               },
               {
                 "group": "Docs meta",
-                "pages": ["start/hubs", "start/docs-directory"]
+                "pages": ["start/hubs", "start/docs-directory", "start/docs-maintenance"]
               }
             ]
           }

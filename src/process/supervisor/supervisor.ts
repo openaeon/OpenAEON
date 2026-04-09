@@ -4,6 +4,7 @@ import { createSubsystemLogger } from "../../logging/subsystem.js";
 import { createChildAdapter } from "./adapters/child.js";
 import { createPtyAdapter } from "./adapters/pty.js";
 import { createRunRegistry } from "./registry.js";
+import { loadProcessSupervisorRuns, saveProcessSupervisorRuns } from "./store.js";
 import type {
   ManagedRun,
   ProcessSupervisor,
@@ -34,6 +35,24 @@ function isTimeoutReason(reason: TerminationReason) {
 export function createProcessSupervisor(): ProcessSupervisor {
   const registry = createRunRegistry();
   const active = new Map<string, ActiveRun>();
+  const persistRegistry = () => {
+    try {
+      saveProcessSupervisorRuns(registry.list());
+    } catch (err) {
+      log.warn(`persist failed: reason=${String(err)}`);
+    }
+  };
+
+  const restoreRegistry = () => {
+    try {
+      const restored = loadProcessSupervisorRuns();
+      for (const record of restored) {
+        registry.add(record);
+      }
+    } catch (err) {
+      log.warn(`restore failed: reason=${String(err)}`);
+    }
+  };
 
   const cancel = (runId: string, reason: TerminationReason = "manual-cancel") => {
     const current = active.get(runId);
@@ -43,6 +62,7 @@ export function createProcessSupervisor(): ProcessSupervisor {
     registry.updateState(runId, "exiting", {
       terminationReason: reason,
     });
+    persistRegistry();
     current.run.cancel(reason);
   };
 
@@ -76,6 +96,7 @@ export function createProcessSupervisor(): ProcessSupervisor {
       updatedAtMs: startedAtMs,
     };
     registry.add(record);
+    persistRegistry();
 
     let forcedReason: TerminationReason | null = null;
     let settled = false;
@@ -145,6 +166,7 @@ export function createProcessSupervisor(): ProcessSupervisor {
             });
 
       registry.updateState(runId, "running", { pid: adapter.pid });
+      persistRegistry();
 
       const clearTimers = () => {
         if (timeoutTimer) {
@@ -226,6 +248,7 @@ export function createProcessSupervisor(): ProcessSupervisor {
           exitCode: exit.exitCode,
           exitSignal: exit.exitSignal,
         });
+        persistRegistry();
         return exit;
       })().catch((err) => {
         if (!settled) {
@@ -238,6 +261,7 @@ export function createProcessSupervisor(): ProcessSupervisor {
             exitCode: null,
             exitSignal: null,
           });
+          persistRegistry();
         }
         throw err;
       });
@@ -264,19 +288,39 @@ export function createProcessSupervisor(): ProcessSupervisor {
         exitCode: null,
         exitSignal: null,
       });
+      persistRegistry();
       log.warn(`spawn failed: runId=${runId} reason=${String(err)}`);
       throw err;
     }
   };
 
+  const reconcileOrphans = async () => {
+    let reconciled = 0;
+    for (const record of registry.list()) {
+      if (record.state === "exited" || active.has(record.runId)) {
+        continue;
+      }
+      registry.finalize(record.runId, {
+        reason: "orphaned",
+        exitCode: null,
+        exitSignal: null,
+      });
+      reconciled += 1;
+    }
+    if (reconciled > 0) {
+      persistRegistry();
+      log.warn(`reconciled orphan runs: count=${reconciled}`);
+    }
+  };
+
+  restoreRegistry();
+  void reconcileOrphans();
+
   return {
     spawn,
     cancel,
     cancelScope,
-    reconcileOrphans: async () => {
-      // Deliberate no-op: this supervisor uses in-memory ownership only.
-      // Active runs are not recovered after process restart in the current model.
-    },
+    reconcileOrphans,
     getRecord: (runId: string) => registry.get(runId),
   };
 }

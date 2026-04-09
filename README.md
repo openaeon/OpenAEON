@@ -632,6 +632,16 @@ Explore the mathematical and philosophical foundations of the project.
 - [Testing](https://docs.openaeon.ai/help/testing)
 - [Troubleshooting](https://docs.openaeon.ai/gateway/troubleshooting)
 
+## 🧭 Documentation Updates
+
+OpenAEON docs are not only product docs, they are also the operational playbook for install, gateway security, channels, and multi-agent runtime usage.
+
+- Documentation maintenance workflow: https://docs.openaeon.ai/start/docs-maintenance
+- Directory and discovery hub: https://docs.openaeon.ai/start/docs-directory
+- Complete docs hub map: https://docs.openaeon.ai/start/hubs
+
+If you change behavior that users rely on, update docs in the same PR so the docs site stays aligned with runtime behavior.
+
 ---
 
 <div align="center">

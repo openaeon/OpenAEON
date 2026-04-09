@@ -67,6 +67,7 @@ vi.mock("./gateway.ts", () => {
 });
 
 function createHost() {
+  const handleSendChat = vi.fn(async () => {});
   return {
     settings: {
       gatewayUrl: "ws://127.0.0.1:18789",
@@ -102,6 +103,24 @@ function createHost() {
     assistantAgentId: null,
     sessionKey: "main",
     chatRunId: null,
+    chatSending: false,
+    chatStream: null,
+    chatMessage: "",
+    executionWatchdog: {
+      active: false,
+      degraded: false,
+      reason: null,
+      retryCount: 0,
+      stagnantPolls: 0,
+      startedAt: null,
+      lastProgressAt: null,
+      lastDigest: null,
+      lastRetryAt: null,
+    },
+    executionAutoQueued: false,
+    sandboxTaskPlan: null,
+    sandboxChatEvents: {},
+    handleSendChat,
     refreshSessionsAfterChat: new Set<string>(),
     execApprovalQueue: [],
     execApprovalError: null,
@@ -225,5 +244,45 @@ describe("connectGateway", () => {
 
     expect(host.lastError).toContain("gateway token mismatch");
     expect(host.lastErrorCode).toBe("AUTH_TOKEN_MISMATCH");
+  });
+
+  it("handles task_plan.execution.recover for active session", () => {
+    const host = createHost();
+    host.sessionKey = "main";
+    host.sandboxTaskPlan = {
+      description: "plan",
+      phase: "execution",
+      todos: [{ id: "t1", title: "todo 1", status: "in_progress" }],
+      executionGraph: {
+        orderedTodoIds: ["t1"],
+        readyTodoIds: [],
+        blockedTodoIds: [],
+        blockedBy: {},
+      },
+    };
+
+    connectGateway(host);
+    const client = gatewayClientInstances[0];
+    expect(client).toBeDefined();
+
+    client.emitEvent({
+      event: "task_plan.execution.recover",
+      payload: {
+        sessionKey: "main",
+        staleTodoIds: ["t1"],
+        longRunningTodoIds: ["t1"],
+        readyTodoIds: [],
+        blockedTodoIds: [],
+        advisories: ["stalled:t1"],
+        prompt: "recover-now",
+      },
+    });
+
+    expect(host.executionWatchdog.degraded).toBe(true);
+    expect(host.executionWatchdog.reason).toBe("stalled:t1");
+    expect(host.chatMessage).toBe("recover-now");
+    expect(host.executionAutoQueued).toBe(false);
+    expect(host.sandboxTaskPlan?.executionGraph?.staleTodoIds).toEqual(["t1"]);
+    expect(host.handleSendChat as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1);
   });
 });

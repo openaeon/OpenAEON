@@ -100,15 +100,17 @@ function resolveTodoStatus(params: {
   readySet: ReadonlySet<string>;
   blockedSet: ReadonlySet<string>;
   lastEvent?: string;
+  hasSession?: boolean;
+  childSessionKey?: string;
 }): SubagentStatus {
-  const { todo, readySet, blockedSet, lastEvent } = params;
+  const { todo, readySet, blockedSet, lastEvent, hasSession, childSessionKey } = params;
   if (todo.status === "done") {
     return "done";
   }
   if (blockedSet.has(todo.id)) {
     return "blocked";
   }
-  if (todo.status === "in_progress") {
+  if (todo.status === "in_progress" && (hasSession || Boolean(childSessionKey))) {
     return "in_progress";
   }
   if (readySet.has(todo.id)) {
@@ -330,14 +332,30 @@ export function buildSubagentViewModel(params: {
     if (session) {
       usedSessionKeys.add(session.key);
     }
-    const lastEvent = session ? events[session.key] : undefined;
+    const lastEventRaw = session ? events[session.key] : undefined;
+    const telemetry = graph?.todoTelemetry?.[todo.id];
+    const childSessionKey = telemetry?.spawn?.childSessionKey;
+    const lastEvent =
+      lastEventRaw ??
+      (telemetry?.spawn?.lastSpawnError
+        ? `spawn failed: ${telemetry.spawn.lastSpawnError}`
+        : childSessionKey
+          ? `session: ${childSessionKey}`
+          : undefined);
     const depthRaw = calculateTodoDepth(todo.id, blockedBy, depthMemo, new Set());
     const depthLevel = Math.max(1, Math.min(4, depthRaw)) as 1 | 2 | 3 | 4;
     return {
       todoId: todo.id,
       ownerAgent: todo.ownerAgent,
       title: todo.title,
-      status: resolveTodoStatus({ todo, readySet, blockedSet, lastEvent }),
+      status: resolveTodoStatus({
+        todo,
+        readySet,
+        blockedSet,
+        lastEvent,
+        hasSession: Boolean(session),
+        childSessionKey,
+      }),
       blockedBy: blockedBy[todo.id] ?? [],
       lastEvent,
       updatedAt: session?.updatedAt ?? null,

@@ -9,8 +9,13 @@ import { callGateway } from "../gateway/call.js";
 import { onAgentEvent } from "../infra/agent-events.js";
 import { defaultRuntime } from "../runtime.js";
 import { type DeliveryContext, normalizeDeliveryContext } from "../utils/delivery-context.js";
+import { resolveWorkspaceRoot } from "./workspace-dir.js";
 import { resetAnnounceQueuesForTests } from "./subagent-announce-queue.js";
-import { runSubagentAnnounceFlow, type SubagentRunOutcome } from "./subagent-announce.js";
+import {
+  readLatestSubagentOutput,
+  runSubagentAnnounceFlow,
+  type SubagentRunOutcome,
+} from "./subagent-announce.js";
 import {
   SUBAGENT_ENDED_OUTCOME_KILLED,
   SUBAGENT_ENDED_REASON_COMPLETE,
@@ -36,12 +41,15 @@ import {
   resolveRequesterForChildSessionFromRuns,
 } from "./subagent-registry-queries.js";
 import {
+  flushSubagentRegistryPersistenceForTests as flushSubagentRegistryPersistenceStateForTests,
   getSubagentRunsSnapshotForRead,
   persistSubagentRunsToDisk,
+  resetSubagentRegistryPersistenceStateForTests,
   restoreSubagentRunsFromDisk,
 } from "./subagent-registry-state.js";
 import type { SubagentRunRecord } from "./subagent-registry.types.js";
 import { resolveAgentTimeoutMs } from "./timeout.js";
+import { updateTaskPlannerTodo, type TodoStatus } from "./tools/task-planner-tool.js";
 
 export type { SubagentRunRecord } from "./subagent-registry.types.js";
 
@@ -239,6 +247,123 @@ function clearAllPendingLifecycleErrors() {
   pendingLifecycleErrorByRunId.clear();
 }
 
+function extractEvidenceRefsFromText(text: string | undefined): string[] {
+  if (!text) {
+    return [];
+  }
+  const refs = new Set<string>();
+  const urlMatches = text.match(/https?:\/\/[^\s)]+/g) ?? [];
+  for (const url of urlMatches.slice(0, 8)) {
+    refs.add(url);
+  }
+  const codeBlockMatches = text.match(/`([^`]+)`/g) ?? [];
+  for (const block of codeBlockMatches.slice(0, 8)) {
+    refs.add(block.replace(/`/g, "").trim());
+  }
+  return Array.from(refs).filter(Boolean);
+}
+
+function resolveBackfillTarget(entry: SubagentRunRecord): {
+  planId: string;
+  todoId: string;
+  acceptance?: string[];
+} | null {
+  const planId = entry.planId?.trim();
+  const todoId = entry.todoId?.trim();
+  if (planId && todoId) {
+    return { planId, todoId, acceptance: entry.acceptance };
+  }
+  const shared = entry.sharedContext;
+  if (!shared || typeof shared !== "object") {
+    return null;
+  }
+  const closureRaw = (shared as Record<string, unknown>).taskClosure;
+  if (!closureRaw || typeof closureRaw !== "object") {
+    return null;
+  }
+  const closure = closureRaw as Record<string, unknown>;
+  const ctxPlanId = typeof closure.planId === "string" ? closure.planId.trim() : "";
+  const ctxTodoId = typeof closure.todoId === "string" ? closure.todoId.trim() : "";
+  if (!ctxPlanId || !ctxTodoId) {
+    return null;
+  }
+  const acceptance =
+    Array.isArray(closure.acceptance) &&
+    closure.acceptance.every((entry) => typeof entry === "string")
+      ? (closure.acceptance as string[])
+      : undefined;
+  return { planId: ctxPlanId, todoId: ctxTodoId, acceptance };
+}
+
+async function applySubagentTodoBackfill(params: {
+  entry: SubagentRunRecord;
+  outcome: SubagentRunOutcome;
+}) {
+  const target = resolveBackfillTarget(params.entry);
+  if (!target) {
+    return;
+  }
+  const cfg = loadConfig();
+  const workspaceDir = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
+  const outputText =
+    params.outcome.status === "ok"
+      ? await readLatestSubagentOutput(params.entry.childSessionKey).catch(() => undefined)
+      : undefined;
+  const evidenceRefs = [
+    `subagent:run:${params.entry.runId}`,
+    `subagent:session:${params.entry.childSessionKey}`,
+    ...extractEvidenceRefsFromText(outputText),
+  ];
+
+  const normalizedEvidenceRefs = Array.from(
+    new Set(evidenceRefs.map((entry) => entry.trim()).filter((entry) => entry.length > 0)),
+  );
+  const doneStatus: TodoStatus = params.outcome.status === "ok" ? "done" : "blocked";
+  const doneResult =
+    params.outcome.status === "ok"
+      ? outputText?.trim() || "Subagent completed without textual output."
+      : params.outcome.error || "Subagent ended without successful completion.";
+
+  const doneUpdate = await updateTaskPlannerTodo({
+    workspaceDir,
+    targetSessionKey: target.planId,
+    taskId: target.todoId,
+    status: doneStatus,
+    result: doneResult,
+    acceptance: target.acceptance,
+    evidenceRefs: normalizedEvidenceRefs,
+    owner: params.entry.requesterSessionKey,
+  });
+
+  if (!doneUpdate.ok) {
+    params.entry.autoBackfillAt = Date.now();
+    params.entry.autoBackfillStatus = "failed";
+    params.entry.autoBackfillError = doneUpdate.error;
+    persistSubagentRuns();
+    const blockedUpdate = await updateTaskPlannerTodo({
+      workspaceDir,
+      targetSessionKey: target.planId,
+      taskId: target.todoId,
+      status: "blocked",
+      result: `Auto writeback failed: ${doneUpdate.error}`,
+      acceptance: target.acceptance,
+      evidenceRefs:
+        normalizedEvidenceRefs.length > 0 ? normalizedEvidenceRefs : ["auto_backfill_failed"],
+      owner: params.entry.requesterSessionKey,
+    });
+    params.entry.autoBackfillAt = Date.now();
+    params.entry.autoBackfillStatus = blockedUpdate.ok ? "blocked" : "failed";
+    params.entry.autoBackfillError = blockedUpdate.ok ? doneUpdate.error : blockedUpdate.error;
+    persistSubagentRuns();
+    return;
+  }
+
+  params.entry.autoBackfillAt = Date.now();
+  params.entry.autoBackfillStatus = doneStatus === "done" ? "ok" : "blocked";
+  params.entry.autoBackfillError = undefined;
+  persistSubagentRuns();
+}
+
 function schedulePendingLifecycleError(params: { runId: string; endedAt: number; error?: string }) {
   clearPendingLifecycleError(params.runId);
   const timer = setTimeout(() => {
@@ -350,6 +475,11 @@ async function completeSubagentRun(params: {
   if (mutated) {
     persistSubagentRuns();
   }
+
+  await applySubagentTodoBackfill({
+    entry,
+    outcome: params.outcome,
+  });
 
   const suppressedForSteerRestart = suppressAnnounceForSteerRestart(entry);
   const shouldEmitEndedHook =
@@ -517,8 +647,8 @@ function restoreSubagentRunsOnce() {
     for (const runId of subagentRuns.keys()) {
       resumeSubagentRun(runId);
     }
-  } catch {
-    // ignore restore failures
+  } catch (err) {
+    defaultRuntime.log(`[warn] subagent registry restore failed: ${String(err)}`);
   }
 }
 
@@ -885,6 +1015,9 @@ export function replaceSubagentRunAfterSteer(params: {
     spawnMode,
     archiveAtMs,
     runTimeoutSeconds,
+    autoBackfillAt: undefined,
+    autoBackfillStatus: undefined,
+    autoBackfillError: undefined,
   };
 
   subagentRuns.set(nextRunId, next);
@@ -914,6 +1047,12 @@ export function registerSubagentRun(params: {
   maxRetries?: number;
   originalRunId?: string;
   sharedContext?: Record<string, unknown>;
+  planId?: string;
+  todoId?: string;
+  acceptance?: string[];
+  startedAt?: number;
+  shouldWaitForCompletion?: boolean;
+  spawnPhase?: SubagentRunRecord["spawnPhase"];
 }) {
   const now = Date.now();
   const cfg = loadConfig();
@@ -931,6 +1070,9 @@ export function registerSubagentRun(params: {
     requesterOrigin,
     requesterDisplayKey: params.requesterDisplayKey,
     sharedContext: params.sharedContext,
+    planId: params.planId,
+    todoId: params.todoId,
+    acceptance: params.acceptance,
     task: params.task,
     cleanup: params.cleanup,
     expectsCompletionMessage: params.expectsCompletionMessage,
@@ -939,12 +1081,13 @@ export function registerSubagentRun(params: {
     model: params.model,
     runTimeoutSeconds,
     createdAt: now,
-    startedAt: now,
+    startedAt: typeof params.startedAt === "number" ? params.startedAt : now,
     archiveAtMs,
     cleanupHandled: false,
     retryCount: params.retryCount,
     maxRetries: params.maxRetries,
     originalRunId: params.originalRunId,
+    spawnPhase: params.spawnPhase ?? "running",
   });
   ensureListener();
   persistSubagentRuns();
@@ -953,7 +1096,69 @@ export function registerSubagentRun(params: {
   }
   // Wait for subagent completion via gateway RPC (cross-process).
   // The in-process lifecycle listener is a fallback for embedded runs.
-  void waitForSubagentCompletion(params.runId, waitTimeoutMs);
+  if (params.shouldWaitForCompletion !== false) {
+    void waitForSubagentCompletion(params.runId, waitTimeoutMs);
+  }
+}
+
+export function markSubagentRunSpawnPhase(params: {
+  runId: string;
+  phase: NonNullable<SubagentRunRecord["spawnPhase"]>;
+}) {
+  const runId = params.runId.trim();
+  if (!runId) {
+    return false;
+  }
+  const entry = subagentRuns.get(runId);
+  if (!entry) {
+    return false;
+  }
+  if (entry.spawnPhase === params.phase) {
+    return true;
+  }
+  entry.spawnPhase = params.phase;
+  persistSubagentRuns();
+  return true;
+}
+
+export function replaceSubagentRunId(params: { fromRunId: string; toRunId: string }) {
+  const fromRunId = params.fromRunId.trim();
+  const toRunId = params.toRunId.trim();
+  if (!fromRunId || !toRunId) {
+    return false;
+  }
+  if (fromRunId === toRunId) {
+    return true;
+  }
+  const entry = subagentRuns.get(fromRunId);
+  if (!entry) {
+    return false;
+  }
+  subagentRuns.delete(fromRunId);
+  resumedRuns.delete(fromRunId);
+  clearPendingLifecycleError(fromRunId);
+  pendingWaits.delete(fromRunId);
+  entry.runId = toRunId;
+  subagentRuns.set(toRunId, entry);
+  persistSubagentRuns();
+  return true;
+}
+
+export function setSubagentRunSharedContext(params: {
+  runId: string;
+  sharedContext?: Record<string, unknown>;
+}) {
+  const runId = params.runId.trim();
+  if (!runId) {
+    return false;
+  }
+  const entry = subagentRuns.get(runId);
+  if (!entry) {
+    return false;
+  }
+  entry.sharedContext = params.sharedContext;
+  persistSubagentRuns();
+  return true;
 }
 
 const pendingWaits = new Map<string, Promise<void>>();
@@ -1043,6 +1248,7 @@ export function resetSubagentRegistryForTests(opts?: { persist?: boolean }) {
   resumedRuns.clear();
   endedHookInFlightRunIds.clear();
   clearAllPendingLifecycleErrors();
+  resetSubagentRegistryPersistenceStateForTests();
   resetAnnounceQueuesForTests();
   stopSweeper();
   restoreAttempted = false;
@@ -1054,6 +1260,10 @@ export function resetSubagentRegistryForTests(opts?: { persist?: boolean }) {
   if (opts?.persist !== false) {
     persistSubagentRuns();
   }
+}
+
+export async function flushSubagentRegistryPersistenceForTests() {
+  await flushSubagentRegistryPersistenceStateForTests();
 }
 
 export function addSubagentRunForTests(entry: SubagentRunRecord) {
@@ -1165,6 +1375,28 @@ export function markSubagentRunTerminated(params: {
     }
   }
   return updated;
+}
+
+export function markSubagentRunSetupFailed(params: { runId: string; error?: string }) {
+  const runId = params.runId.trim();
+  if (!runId) {
+    return false;
+  }
+  const entry = subagentRuns.get(runId);
+  if (!entry) {
+    return false;
+  }
+  const now = Date.now();
+  entry.spawnPhase = "failed";
+  if (typeof entry.endedAt !== "number") {
+    entry.endedAt = now;
+  }
+  entry.outcome = { status: "error", error: params.error ?? "spawn setup failed" };
+  entry.endedReason = SUBAGENT_ENDED_REASON_ERROR;
+  entry.cleanupHandled = true;
+  entry.cleanupCompletedAt = now;
+  persistSubagentRuns();
+  return true;
 }
 
 export function listSubagentRunsForRequester(requesterSessionKey: string): SubagentRunRecord[] {

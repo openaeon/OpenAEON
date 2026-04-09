@@ -1203,7 +1203,12 @@ export async function runEmbeddedAttempt(
           const consecutiveErrors = subscription?.getConsecutiveToolErrors() ?? 0;
           const chaosScore = subscription?.getChaosScore() ?? 0;
           if (evt.stream === "tool" && evt.data?.phase === "result") {
-            if (consecutiveErrors >= 6 || chaosScore >= 10) {
+            const severeChaosAbortThreshold = 30;
+            const criticalChaosThreshold = 12;
+            const auditChaosThreshold = 6;
+            const shouldAbortForChaos =
+              chaosScore >= severeChaosAbortThreshold && consecutiveErrors >= 3;
+            if (consecutiveErrors >= 6 || shouldAbortForChaos) {
               const reason =
                 consecutiveErrors >= 6
                   ? `${consecutiveErrors} consecutive tool errors (ignored Z² steering)`
@@ -1217,7 +1222,7 @@ export async function runEmbeddedAttempt(
               );
               return;
             }
-            if (consecutiveErrors >= 3 || chaosScore >= 5) {
+            if (consecutiveErrors >= 3 || chaosScore >= criticalChaosThreshold) {
               const reason =
                 consecutiveErrors >= 3
                   ? "3 consecutive tool errors"
@@ -1235,7 +1240,7 @@ export async function runEmbeddedAttempt(
                 .catch((err) => {
                   log.error(`failed to inject reflection steering: ${String(err)}`);
                 });
-            } else if (chaosScore >= 3) {
+            } else if (chaosScore >= auditChaosThreshold) {
               log.warn(
                 `run ${params.runId} entering audit phase (chaosScore=${chaosScore}) - providing guidance`,
               );
