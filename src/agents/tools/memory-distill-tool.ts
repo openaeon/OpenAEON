@@ -129,6 +129,36 @@ export async function distillMemory(
     const existingGatesRaw = await fs.readFile(logicGatesPath, "utf-8").catch(() => "");
     let gateLines = existingGatesRaw.split("\n").filter((line) => line.trim().length > 0);
 
+    // Dynamic Archive (High Entropy / Low Gravity Aging)
+    const ARCHIVE_ENTROPY_THRESHOLD = 85;
+    const MIN_GRAVITY_TO_STAY = 2;
+    const archivedLines: string[] = [];
+
+    gateLines = gateLines.filter((line) => {
+      const match = line.match(/<!-- (\{.*\}) -->/);
+      if (match) {
+        try {
+          const meta = JSON.parse(match[1]);
+          if (
+            meta.entropy > ARCHIVE_ENTROPY_THRESHOLD &&
+            (meta.weight || 1) < MIN_GRAVITY_TO_STAY
+          ) {
+            archivedLines.push(line);
+            return false;
+          }
+        } catch (e) {}
+      }
+      return true;
+    });
+
+    if (archivedLines.length > 0) {
+      const archivePath = path.join(workspaceRoot, "LOGIC_GATES.bak.md");
+      const archiveHeader =
+        archivedLines.length > 0 ? `\n## ARCHIVED ${new Date().toISOString()}\n` : "";
+      await fs.appendFile(archivePath, archiveHeader + archivedLines.join("\n") + "\n");
+      log.info(`Archived ${archivedLines.length} high-entropy axioms to LOGIC_GATES.bak.md`);
+    }
+
     // Apply retractions: remove lines that match retracted content
     if (retractions.length > 0) {
       gateLines = gateLines.filter((gate) => {
@@ -145,7 +175,22 @@ export async function distillMemory(
     const peanoCoord = calculatePeanoTraversedPoint(cognitiveEntropy);
 
     const newGatesWithMetadata = axioms
-      .filter((a) => !existingGatesRaw.includes(a))
+      .filter((a) => {
+        // Semantic Overlap Check (Basic Keyword/Content overlap)
+        const cleanA = a
+          .replace(/\[(AXIOM|VERIFIED|TRUTH)\]/i, "")
+          .trim()
+          .toLowerCase();
+        const isDuplicate = gateLines.some((existing) => {
+          const cleanExisting = existing
+            .split(" <!--")[0]
+            .replace(/\[(AXIOM|VERIFIED|TRUTH)\]/i, "")
+            .trim()
+            .toLowerCase();
+          return cleanExisting.includes(cleanA) || cleanA.includes(cleanExisting);
+        });
+        return !isDuplicate && !existingGatesRaw.includes(a);
+      })
       .map((a) => {
         const axiomId = crypto.randomBytes(4).toString("hex");
         // Detect references to other axioms (e.g., [REF: a1b2c3d4])

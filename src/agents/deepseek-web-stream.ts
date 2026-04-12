@@ -26,6 +26,61 @@ type MessageContentPart = {
   id?: string;
 };
 
+function asParentMessageId(value: unknown): string | number | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  return undefined;
+}
+
+function extractParentMessageId(data: unknown): string | number | undefined {
+  if (!data || typeof data !== "object") {
+    return undefined;
+  }
+  const d = data as Record<string, unknown>;
+  const candidates: unknown[] = [
+    d.response_message_id,
+    d.message_id,
+    d.msg_id,
+    (d.v as Record<string, unknown> | undefined)?.response_message_id,
+    (d.v as Record<string, unknown> | undefined)?.message_id,
+    (d.v as Record<string, unknown> | undefined)?.msg_id,
+    ((d.v as Record<string, unknown> | undefined)?.response as Record<string, unknown> | undefined)
+      ?.message_id,
+    ((d.v as Record<string, unknown> | undefined)?.response as Record<string, unknown> | undefined)
+      ?.msg_id,
+    ((d.v as Record<string, unknown> | undefined)?.response as Record<string, unknown> | undefined)
+      ?.response_message_id,
+    (d.response as Record<string, unknown> | undefined)?.message_id,
+    (d.response as Record<string, unknown> | undefined)?.msg_id,
+    (d.data as Record<string, unknown> | undefined)?.message_id,
+    (d.data as Record<string, unknown> | undefined)?.msg_id,
+    (d.data as Record<string, unknown> | undefined)?.response_message_id,
+    (
+      (d.data as Record<string, unknown> | undefined)?.response as
+        | Record<string, unknown>
+        | undefined
+    )?.message_id,
+    (
+      (d.data as Record<string, unknown> | undefined)?.response as
+        | Record<string, unknown>
+        | undefined
+    )?.msg_id,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = asParentMessageId(candidate);
+    if (parsed !== undefined) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
 export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
   let options: string | DeepSeekWebClientOptions;
   try {
@@ -47,15 +102,20 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
       try {
         await client.init();
 
-        const sessionKey = (context as unknown as { sessionId?: string }).sessionId || "default";
+        const sessionKey =
+          (context as unknown as { sessionId?: string; sessionKey?: string }).sessionId ||
+          (context as unknown as { sessionId?: string; sessionKey?: string }).sessionKey ||
+          "default";
         let dsSessionId = sessionMap.get(sessionKey);
         let parentId = parentMessageMap.get(sessionKey);
+        let isNewDsSession = false;
 
         if (!dsSessionId) {
           const session = await client.createChatSession();
           dsSessionId = session.chat_session_id || "";
           sessionMap.set(sessionKey, dsSessionId);
           parentId = undefined; // New session starts fresh
+          isNewDsSession = true;
         }
 
         const messages = context.messages || [];
@@ -65,7 +125,10 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
         );
         let prompt = "";
 
-        if (!parentId) {
+        // Full-history sync should only happen on a brand-new DeepSeek web session.
+        // If we already have a session but parent ID is unexpectedly missing, sending
+        // only the latest user/tool message avoids runaway prompt growth.
+        if (!parentId && isNewDsSession) {
           // First turn or new session: Aggregate all history including System Prompt
           const historyParts: string[] = [];
 
@@ -173,6 +236,11 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
 
           prompt = historyParts.join("\n\n");
         } else {
+          if (!parentId && !isNewDsSession) {
+            console.warn(
+              `[DeepseekWebStream] Missing parentId for existing session ${sessionKey}; falling back to incremental prompt to avoid full-history replay.`,
+            );
+          }
           // Continuing turn: Check if the last record is a ToolResult or User message
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === "toolResult") {
@@ -539,13 +607,10 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
               // console.log(`[DeepseekWebStream] SSE Data: ${dataStr}`);
 
               // Capture session/message continuity
-              if (data.response_message_id) {
-                if (data.response_message_id !== parentMessageMap.get(sessionKey)) {
-                  console.log(
-                    `[DeepseekWebStream] New parentMessageId: ${data.response_message_id}`,
-                  );
-                  parentMessageMap.set(sessionKey, data.response_message_id);
-                }
+              const nextParentId = extractParentMessageId(data);
+              if (nextParentId !== undefined && nextParentId !== parentMessageMap.get(sessionKey)) {
+                console.log(`[DeepseekWebStream] New parentMessageId: ${nextParentId}`);
+                parentMessageMap.set(sessionKey, nextParentId);
               }
 
               // 1. Path update or explicit type for reasoning

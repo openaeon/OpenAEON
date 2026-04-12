@@ -16,6 +16,7 @@ type TaskPlanReadResponse = {
   ok: boolean;
   plan: TaskPlanSnapshot | null;
   executionGraph?: TaskPlanSnapshot["executionGraph"];
+  taskRuntime?: TaskPlanSnapshot["taskRuntime"];
   error?: string;
 };
 
@@ -45,6 +46,7 @@ export async function loadSandboxTaskPlan(state: SandboxState): Promise<void> {
         state.sandboxTaskPlan = {
           ...res.plan,
           executionGraph: res.executionGraph ?? res.plan.executionGraph,
+          taskRuntime: res.taskRuntime ?? res.plan.taskRuntime,
         };
       } else {
         state.sandboxTaskPlan = null;

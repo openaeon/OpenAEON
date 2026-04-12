@@ -38,6 +38,7 @@ export const en: TranslationMap = {
     debug: "Debug",
     logs: "Logs",
     sandbox: "Sandbox",
+    cognitive: "Cognitive OS",
     files: "Files",
     tools: "Tools",
     knowledge: "Knowledge",
@@ -58,6 +59,7 @@ export const en: TranslationMap = {
     debug: "Gateway snapshots, events, and manual RPC calls.",
     logs: "Live tail of the gateway file logs.",
     sandbox: "Real-time orchestration and task delegation view.",
+    cognitive: "Manager, execution, cognition map, and artifact trace in one view.",
     aeon: "Real-time synced collective consciousness and logic gates.",
   },
   overview: {

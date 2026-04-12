@@ -1052,6 +1052,7 @@ export type AeonStatusResult = {
     intentLayer?: IntentLayer;
     impactScale?: ImpactScale;
     decisionConfidenceBand?: DecisionConfidenceBand;
+    task?: CognitiveTaskRecord;
   };
   consciousness?: ConsciousnessTelemetry;
   telemetry?: {
@@ -1333,4 +1334,69 @@ export type ManualRuntimeSnapshot = {
   chaosScore: number;
   epiphanyFactor: number;
   fractalState: FractalThemeState;
+};
+
+export type LegacyTaskPlanPhase = "planning" | "execution" | "verification" | "complete";
+
+export type CognitiveTaskPhase =
+  | "INIT"
+  | "PLAN"
+  | "EXECUTE"
+  | "VERIFY"
+  | "REFLECT"
+  | "DONE"
+  | "FAILED"
+  | "ROLLED_BACK";
+
+export type AgentRole = "DevAgent" | "QAAgent" | "OpsAgent" | "SalesAgent";
+
+export type ModelProvider = "gpt" | "claude" | "gemini";
+
+export type CognitiveTaskStatus = {
+  phase: CognitiveTaskPhase;
+  legacyPhase: LegacyTaskPlanPhase;
+  updatedAt: number;
+  reason?: string;
+};
+
+export type TaskNode = {
+  id: string;
+  title: string;
+  description?: string;
+  ownerRole?: AgentRole;
+  dependsOn: string[];
+  children: string[];
+  status: "todo" | "in_progress" | "done" | "blocked" | "failed";
+  priority: number;
+  acceptanceCriteria: string[];
+  artifacts: string[];
+};
+
+export type TaskTree = {
+  rootId: string;
+  nodes: Record<string, TaskNode>;
+};
+
+export type ReflectionRecord = {
+  id: string;
+  taskId: string;
+  nodeId?: string;
+  at: number;
+  verdict: "pass" | "warn" | "fail";
+  findings: string[];
+  optimizations: string[];
+};
+
+export type CognitiveTaskRecord = {
+  id: string;
+  sessionKey: string;
+  title: string;
+  input: string;
+  status: CognitiveTaskStatus;
+  tree: TaskTree;
+  reflections: ReflectionRecord[];
+  runIds: string[];
+  createdAt: number;
+  updatedAt: number;
+  version: number;
 };

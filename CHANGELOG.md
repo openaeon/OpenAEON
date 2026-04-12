@@ -2,6 +2,25 @@
 
 Docs: https://docs.openaeon.ai
 
+## 2026.4.12
+
+### Changes
+
+## [2026.4.12] - Cognitive Agent OS Phase 5: FCA Core
+
+- **Fractal Cognitive Architecture (FCA)**:
+  - **Memory Crystallization**: Enhanced distillation with semantic overlap detection and axiom aging.
+  - **Dynamic CouplingVector**: Implemented auto-tuning engine to replace static profiles.
+  - **Hilbert Context Ordering**: Real-time topological sorting of prompt context for semantic proximity.
+  - **Anomaly Recovery**: Integrated cognitive gap diagnosis into the orchestrator for emergency re-planning.
+
+## [2026.4.12] - Cognitive Agent OS Phase 4
+
+- **Cognitive Agent OS**: Transform Task OS into a high-performance cognitive execution layer with recursive, fractal task architectures.
+- **Fractal Decomposer**: Support incremental and autonomous task tree expansion, allowing agents to self-generate sub-tasks via `[ACTION: DECOMPOSE]` signals.
+- **Asynchronous Orchestrator**: Multi-agent parallel execution engine with dynamic dependency resolution and batch node dispatching.
+- **State Machine v3**: Reinforced lifecycle (`INIT → PLAN → EXECUTE → VERIFY → REFLECT → DONE`) with non-linear feedback loops and re-planning capabilities.
+
 ## 2026.4.10
 
 ### Changes

@@ -19,6 +19,9 @@ export type UiSettings = {
   locale?: string;
   chatWebSearchEnabled?: boolean;
   chatAutopilotEnabled?: boolean;
+  chatVisualDensity?: "comfortable" | "compact";
+  chatSidebarDefault?: "collapsed" | "last-state";
+  chatVisualMode?: "professional" | "legacy";
   aeonEternalMode?: boolean;
   lastTab?: Tab;
 };
@@ -49,6 +52,9 @@ export function loadSettings(): UiSettings {
     navGroupsCollapsed: {},
     chatWebSearchEnabled: true,
     chatAutopilotEnabled: true,
+    chatVisualDensity: "comfortable",
+    chatSidebarDefault: "collapsed",
+    chatVisualMode: "professional",
     aeonEternalMode: false,
     lastTab: "chat",
   };
@@ -104,6 +110,18 @@ export function loadSettings(): UiSettings {
         typeof parsed.chatAutopilotEnabled === "boolean"
           ? parsed.chatAutopilotEnabled
           : defaults.chatAutopilotEnabled,
+      chatVisualDensity:
+        parsed.chatVisualDensity === "comfortable" || parsed.chatVisualDensity === "compact"
+          ? parsed.chatVisualDensity
+          : defaults.chatVisualDensity,
+      chatSidebarDefault:
+        parsed.chatSidebarDefault === "collapsed" || parsed.chatSidebarDefault === "last-state"
+          ? parsed.chatSidebarDefault
+          : defaults.chatSidebarDefault,
+      chatVisualMode:
+        parsed.chatVisualMode === "professional" || parsed.chatVisualMode === "legacy"
+          ? parsed.chatVisualMode
+          : defaults.chatVisualMode,
       aeonEternalMode:
         typeof parsed.aeonEternalMode === "boolean"
           ? parsed.aeonEternalMode

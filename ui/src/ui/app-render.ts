@@ -83,6 +83,7 @@ import { renderAgents } from "./views/agents.ts";
 import { renderChannels } from "./views/channels.ts";
 import { renderChat } from "./views/chat.ts";
 import { isPlaceholderPlanTodo } from "./views/chat/components/subagent-view-model.ts";
+import { renderCognitiveView } from "./views/cognitive.ts";
 import { renderConfig } from "./views/config.ts";
 import { renderCron } from "./views/cron.ts";
 import { renderDebug } from "./views/debug.ts";
@@ -95,6 +96,7 @@ import { renderOverview } from "./views/overview.ts";
 import { renderSandbox } from "./views/sandbox.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
+import { renderTaskPlanConfirmation } from "./views/task-plan-confirmation.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -424,6 +426,454 @@ export function renderApp(state: AppViewState) {
     state.executionAutoQueued = false;
     state.chatMessage = recoveryPrompt;
     void state.handleSendChat();
+  };
+  const applyTaskPlanResponse = (res: {
+    plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+    executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+    taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+  }) => {
+    if (!res.plan) {
+      return;
+    }
+    state.sandboxTaskPlan = {
+      ...res.plan,
+      executionGraph: res.executionGraph ?? res.plan.executionGraph,
+      taskRuntime: res.taskRuntime ?? res.plan.taskRuntime,
+    };
+  };
+  const handleRetryPlanStage = () => {
+    void (async () => {
+      if (!state.client) {
+        return;
+      }
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "retry",
+        title: "Retry Current Stage",
+        message: "This will re-enter execution and append a new checkpoint.",
+        confirmLabel: "Retry Stage",
+        details: [
+          `session=${state.sessionKey}`,
+          `phase=${state.sandboxTaskPlan?.phase ?? "unknown"}`,
+          `branch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.transition.apply", {
+          sessionKey: state.sessionKey,
+          action: "retry",
+        });
+        applyTaskPlanResponse(res);
+        if (state.chatSending || Boolean(state.chatStream?.trim())) {
+          state.executionAutoQueued = true;
+          state.chatMessage = "已触发 retry。继续 execution，逐项推进并回填结果。";
+          return;
+        }
+        state.executionAutoQueued = false;
+        state.chatMessage = "已触发 retry。继续 execution，逐项推进并回填结果。";
+        await state.handleSendChat();
+      } catch (err) {
+        state.lastError = `Failed to retry stage: ${String(err)}`;
+      }
+    })();
+  };
+  const handleBranchFromCurrent = () => {
+    void (async () => {
+      if (!state.client) {
+        return;
+      }
+      const customBranch = window.prompt("Branch id (optional):", "")?.trim() ?? "";
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "branch",
+        title: customBranch ? "Create or Switch Branch" : "Create New Branch",
+        message: customBranch
+          ? `Branch target: ${customBranch}`
+          : "A new branch id will be generated from current state.",
+        confirmLabel: "Create Branch",
+        details: [
+          `session=${state.sessionKey}`,
+          `fromBranch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.transition.apply", {
+          sessionKey: state.sessionKey,
+          action: "branch",
+          branchId: customBranch || undefined,
+        });
+        applyTaskPlanResponse(res);
+      } catch (err) {
+        state.lastError = `Failed to create branch: ${String(err)}`;
+      }
+    })();
+  };
+  const handleRestoreCheckpoint = (checkpointId: string) => {
+    void (async () => {
+      if (!state.client || !checkpointId) {
+        return;
+      }
+      const checkpoint = state.sandboxTaskPlan?.checkpoints?.find(
+        (entry) => entry.checkpointId === checkpointId,
+      );
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "restore",
+        title: "Restore Checkpoint",
+        message: `Restore ${checkpointId.slice(0, 18)} and append restore checkpoint.`,
+        confirmLabel: "Restore",
+        details: [
+          `session=${state.sessionKey}`,
+          `phase=${checkpoint?.stageId ?? "unknown"}`,
+          `branch=${checkpoint?.branchId ?? state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `reason=${checkpoint?.reason ?? "unknown"}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.checkpoint.restore", {
+          sessionKey: state.sessionKey,
+          checkpointId,
+        });
+        applyTaskPlanResponse(res);
+      } catch (err) {
+        state.lastError = `Failed to restore checkpoint: ${String(err)}`;
+      }
+    })();
+  };
+  const handleRollbackToLatestCheckpoint = () => {
+    void (async () => {
+      if (!state.client) {
+        return;
+      }
+      const checkpointId = state.sandboxTaskPlan?.taskRuntime?.latestCheckpointId;
+      if (!checkpointId) {
+        state.lastError = "No checkpoint available for rollback.";
+        return;
+      }
+      const latest = state.sandboxTaskPlan?.checkpoints?.find(
+        (entry) => entry.checkpointId === checkpointId,
+      );
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "rollback-latest",
+        title: "Rollback to Latest Checkpoint",
+        message: `Rollback target: ${checkpointId.slice(0, 18)}`,
+        confirmLabel: "Rollback",
+        details: [
+          `session=${state.sessionKey}`,
+          `phase=${latest?.stageId ?? "unknown"}`,
+          `branch=${latest?.branchId ?? state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `reason=${latest?.reason ?? "unknown"}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.checkpoint.restore", {
+          sessionKey: state.sessionKey,
+          checkpointId,
+        });
+        applyTaskPlanResponse(res);
+      } catch (err) {
+        state.lastError = `Failed to rollback checkpoint: ${String(err)}`;
+      }
+    })();
+  };
+  const handleSwitchBranch = (branchId: string) => {
+    void (async () => {
+      if (!state.client || !branchId) {
+        return;
+      }
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "switch-branch",
+        title: "Switch Branch",
+        message: `Switch to branch "${branchId}" and append transition checkpoint.`,
+        confirmLabel: "Switch Branch",
+        details: [
+          `session=${state.sessionKey}`,
+          `fromBranch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `toBranch=${branchId}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.transition.apply", {
+          sessionKey: state.sessionKey,
+          action: "branch",
+          branchId,
+        });
+        applyTaskPlanResponse(res);
+      } catch (err) {
+        state.lastError = `Failed to switch branch: ${String(err)}`;
+      }
+    })();
+  };
+  const handleVerifierReport = (status: "passed" | "failed" | "blocked") => {
+    void (async () => {
+      if (!state.client) {
+        return;
+      }
+      const stageId = state.sandboxTaskPlan?.phase ?? "execution";
+      const summary =
+        status === "passed"
+          ? "Verifier checks passed"
+          : status === "failed"
+            ? "Verifier checks failed"
+            : "Verifier blocked pending evidence";
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "retry",
+        title: "Submit Verifier Result",
+        message: `Submit verifier status: ${status}`,
+        confirmLabel: "Submit",
+        details: [
+          `session=${state.sessionKey}`,
+          `stage=${stageId}`,
+          `branch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.verifier.report", {
+          sessionKey: state.sessionKey,
+          stageId,
+          status,
+          summary,
+        });
+        applyTaskPlanResponse(res);
+      } catch (err) {
+        state.lastError = `Failed to submit verifier result: ${String(err)}`;
+      }
+    })();
+  };
+  const handleDistillDream = () => {
+    void (async () => {
+      if (!state.client) {
+        return;
+      }
+      const phase = state.sandboxTaskPlan?.phase ?? "execution";
+      const branch = state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main";
+      const latestVerifier = state.sandboxTaskPlan?.verifierHistory?.slice(-1)[0];
+      const summary =
+        phase === "planning"
+          ? "Planning decisions distilled"
+          : phase === "execution"
+            ? "Execution progress distilled"
+            : phase === "verification"
+              ? "Verification outcomes distilled"
+              : "Task completion distilled";
+      const confirmed = await state.requestTaskPlanConfirmation({
+        action: "branch",
+        title: "Distill Dream",
+        message: "Create dream summary and graph anchors from current stage.",
+        confirmLabel: "Distill",
+        details: [
+          `session=${state.sessionKey}`,
+          `stage=${phase}`,
+          `branch=${branch}`,
+          `verifier=${latestVerifier?.status ?? "none"}`,
+        ],
+      });
+      if (!confirmed) {
+        return;
+      }
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.dream.distill", {
+          sessionKey: state.sessionKey,
+          stageId: phase,
+          branchId: branch,
+          summary,
+          keyDecisions: latestVerifier?.status
+            ? [`verifier:${latestVerifier.status}`]
+            : ["stage-progress"],
+          risks:
+            latestVerifier?.status === "failed"
+              ? ["verification-failed"]
+              : latestVerifier?.status === "blocked"
+                ? ["verification-blocked"]
+                : [],
+          nextAction: phase === "verification" ? "move-to-complete" : "continue-stage-flow",
+        });
+        applyTaskPlanResponse(res);
+      } catch (err) {
+        state.lastError = `Failed to distill dream: ${String(err)}`;
+      }
+    })();
+  };
+  const handleTaskGraphNodeIdChange = (nodeId: string) => {
+    state.taskPlanGraphNodeId = nodeId;
+  };
+  const handleTaskGraphRelationChange = (relation: string) => {
+    state.taskPlanGraphRelation = relation;
+  };
+  const handleTaskGraphAutoTrackChange = (enabled: boolean) => {
+    state.taskPlanGraphAutoTrack = enabled;
+  };
+  const resolveTodoFocusFromGraphNode = (nodeId: string): string | null => {
+    const normalized = nodeId.trim();
+    if (!normalized) {
+      return null;
+    }
+    const todos = Array.isArray(state.sandboxTaskPlan?.todos) ? state.sandboxTaskPlan!.todos : [];
+    const visibleTodos = todos.filter((todo) => !isPlaceholderPlanTodo(todo));
+    if (normalized.startsWith("todo:")) {
+      const todoId = normalized.slice("todo:".length).trim();
+      if (!todoId) {
+        return null;
+      }
+      return visibleTodos.some((todo) => todo.id === todoId) ? todoId : null;
+    }
+    if (normalized.startsWith("task:")) {
+      const taskId = normalized.slice("task:".length).trim();
+      if (taskId && visibleTodos.some((todo) => todo.id === taskId)) {
+        return taskId;
+      }
+    }
+    if (visibleTodos.some((todo) => todo.id === normalized)) {
+      return normalized;
+    }
+    if (normalized === "stage:planning") {
+      return visibleTodos.find((todo) => todo.status === "todo")?.id ?? null;
+    }
+    if (normalized === "stage:execution") {
+      return (
+        visibleTodos.find((todo) => todo.status === "in_progress")?.id ??
+        visibleTodos.find((todo) => todo.status === "todo")?.id ??
+        null
+      );
+    }
+    if (normalized === "stage:verification") {
+      return visibleTodos.find((todo) => todo.status === "done")?.id ?? null;
+    }
+    return null;
+  };
+  const handleTaskPlanFocusTodoChange = (todoId: string | null) => {
+    state.taskPlanFocusTodoId = todoId?.trim() ? todoId : null;
+  };
+  const pushTaskGraphTrail = (nodeId: string) => {
+    const normalized = nodeId.trim();
+    if (!normalized) {
+      return;
+    }
+    if (state.taskPlanGraphTrail[state.taskPlanGraphTrail.length - 1] === normalized) {
+      return;
+    }
+    const deduped = [
+      ...state.taskPlanGraphTrail.filter((entry) => entry !== normalized),
+      normalized,
+    ];
+    state.taskPlanGraphTrail = deduped.slice(-12);
+  };
+  const handleTaskGraphPageChange = (page: number) => {
+    state.taskPlanGraphPage = Math.max(1, Math.floor(page));
+  };
+  const handleTaskGraphExpandedRelationChange = (relation: string) => {
+    state.taskPlanGraphExpandedRelation = relation.trim();
+  };
+  const handleTaskGraphTrailJump = (nodeId: string, trailIndex: number) => {
+    const normalized = nodeId.trim();
+    if (!normalized) {
+      return;
+    }
+    const clampedIndex = Math.max(0, Math.min(trailIndex, state.taskPlanGraphTrail.length - 1));
+    state.taskPlanGraphTrail = state.taskPlanGraphTrail.slice(0, clampedIndex + 1);
+    handleQueryTaskGraph({ nodeId: normalized, relation: state.taskPlanGraphRelation }, false);
+  };
+  const handleClearTaskGraph = () => {
+    state.taskPlanGraphEdges = [];
+    state.taskPlanGraphError = null;
+    state.taskPlanGraphLoading = false;
+    state.taskPlanGraphNodeId = "";
+    state.taskPlanGraphRelation = "";
+    state.taskPlanGraphPage = 1;
+    state.taskPlanGraphTrail = [];
+    state.taskPlanGraphExpandedRelation = "";
+    state.taskPlanFocusTodoId = null;
+  };
+  const handleQueryTaskGraph = (
+    query: { nodeId?: string; relation?: string },
+    appendTrail = true,
+  ) => {
+    void (async () => {
+      if (!state.client) {
+        return;
+      }
+      const normalizedNodeId = (query.nodeId ?? "").trim();
+      const normalizedRelation = (query.relation ?? "").trim();
+      state.taskPlanGraphLoading = true;
+      state.taskPlanGraphError = null;
+      state.taskPlanGraphNodeId = normalizedNodeId;
+      state.taskPlanGraphRelation = normalizedRelation;
+      state.taskPlanGraphPage = 1;
+      if (appendTrail && normalizedNodeId) {
+        pushTaskGraphTrail(normalizedNodeId);
+      }
+      state.taskPlanFocusTodoId = resolveTodoFocusFromGraphNode(normalizedNodeId);
+      try {
+        const res = await state.client.request<{
+          ok?: boolean;
+          edges?: Array<{
+            edgeId: string;
+            from: string;
+            to: string;
+            relation: string;
+            at: number;
+          }>;
+        }>("task_plan.graph.query", {
+          sessionKey: state.sessionKey,
+          nodeId: normalizedNodeId || undefined,
+          relation: normalizedRelation || undefined,
+          limit: 80,
+        });
+        state.taskPlanGraphEdges = Array.isArray(res?.edges) ? res.edges : [];
+      } catch (err) {
+        state.taskPlanGraphError = `Failed to query graph memory: ${String(err)}`;
+      } finally {
+        state.taskPlanGraphLoading = false;
+      }
+    })();
   };
   const handleSpawnAgentsFromPlan = () => {
     const plan = state.sandboxTaskPlan;
@@ -782,6 +1232,61 @@ export function renderApp(state: AppViewState) {
                 onRecruitModalClose: () => state.handleRecruitModalClose(),
                 onAvatarSelect: (agentId, avatarId) =>
                   state.handleAgentAvatarChange(agentId, avatarId),
+              })
+            : nothing
+        }
+
+        ${
+          state.tab === "cognitive"
+            ? renderCognitiveView({
+                sessionKey: state.sessionKey,
+                taskPlan: state.sandboxTaskPlan ?? null,
+                cognitiveTask: state.cognitiveTaskRecord,
+                cognitiveTaskList: state.cognitiveTaskList,
+                cognitiveSelectedTaskId: state.cognitiveSelectedTaskId,
+                cognitiveRuntimeEvents: state.cognitiveRuntimeEvents,
+                cognitiveLegacyPlan: state.cognitiveLegacyPlan,
+                cognitiveSubmitTitle: state.cognitiveSubmitTitle,
+                cognitiveSubmitText: state.cognitiveSubmitText,
+                cognitiveMemoryQuery: state.cognitiveMemoryQuery,
+                cognitiveMemoryTags: state.cognitiveMemoryTags,
+                cognitiveMemoryResults: state.cognitiveMemoryResults,
+                cognitiveReplayRunId: state.cognitiveReplayRunId,
+                cognitiveReplayEvents: state.cognitiveReplayEvents,
+                cognitiveReplayLoading: state.cognitiveReplayLoading,
+                cognitiveLoading: state.cognitiveLoading,
+                cognitiveMemoryLoading: state.cognitiveMemoryLoading,
+                cognitiveSourceContext: state.cognitiveSourceContext,
+                cognitiveSourceSelectedLine: state.cognitiveSourceSelectedLine,
+                cognitiveSelectedMemoryResult: state.cognitiveSelectedMemoryResult,
+                sandboxChatEvents: state.sandboxChatEvents,
+                aeonStatus: state.aeonSystemStatus,
+                chatMessages: state.chatMessages,
+                chatToolMessages: state.chatToolMessages,
+                onRefresh: () => state.handleCognitiveRefresh(),
+                onSelectTask: (taskId) => void state.handleCognitiveSelectTask(taskId),
+                onSubmitTask: () => void state.handleCognitiveSubmitTask(),
+                onTransition: (to, reason) => void state.handleCognitiveTransition(to, reason),
+                onDispatch: () => void state.handleCognitiveDispatch(),
+                onDream: () => void state.handleCognitiveDream(),
+                onReflect: () => void state.handleCognitiveReflect(),
+                onMemoryQueryChange: (next) => {
+                  state.cognitiveMemoryQuery = next;
+                },
+                onMemoryTagsChange: (next) => {
+                  state.cognitiveMemoryTags = next;
+                },
+                onRunMemoryQuery: () => void state.handleCognitiveMemoryQuery(),
+                onSubmitTitleChange: (next) => {
+                  state.cognitiveSubmitTitle = next;
+                },
+                onSubmitTextChange: (next) => {
+                  state.cognitiveSubmitText = next;
+                },
+                onInspectMemoryResult: (result) => void state.handleInspectMemoryResult(result),
+                onTraceMemoryResult: (result) => void state.handleTraceMemoryResult(result),
+                onSourceLineSelect: (lineNo) => state.handleSourceLineSelect(lineNo),
+                onReplayRun: (runId) => void state.handleCognitiveReplay(runId),
               })
             : nothing
         }
@@ -1445,6 +1950,9 @@ export function renderApp(state: AppViewState) {
           state.tab === "chat"
             ? renderChat({
                 performanceMode: resolveChatPerformanceMode(state),
+                visualMode: state.settings.chatVisualMode ?? "professional",
+                visualDensity: state.settings.chatVisualDensity ?? "comfortable",
+                sidebarDefault: state.settings.chatSidebarDefault ?? "collapsed",
                 subagentMatchMode: resolveSubagentMatchMode(state),
                 sessionKey: state.sessionKey,
                 onSessionKeyChange: (next) => switchChatSession(next),
@@ -1588,6 +2096,7 @@ export function renderApp(state: AppViewState) {
                           ok?: boolean;
                           plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
                           executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
+                          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
                           approvedAt?: number;
                           phaseTransition?: {
                             from: "planning" | "execution" | "verification" | "complete";
@@ -1595,13 +2104,7 @@ export function renderApp(state: AppViewState) {
                             changed: boolean;
                           };
                         }>("task_plan.approve", { sessionKey: state.sessionKey });
-                        if (approveRes?.plan) {
-                          state.sandboxTaskPlan = {
-                            ...approveRes.plan,
-                            executionGraph:
-                              approveRes.executionGraph ?? approveRes.plan.executionGraph,
-                          };
-                        }
+                        applyTaskPlanResponse(approveRes);
                         changedToExecution =
                           approveRes?.phaseTransition?.changed === true &&
                           approveRes?.phaseTransition?.to === "execution";
@@ -1637,6 +2140,33 @@ export function renderApp(state: AppViewState) {
                     }
                   })();
                 },
+                onRetryPlanStage: handleRetryPlanStage,
+                onBranchFromCurrent: handleBranchFromCurrent,
+                onSwitchBranch: handleSwitchBranch,
+                onRollbackToLatestCheckpoint: handleRollbackToLatestCheckpoint,
+                onRestoreCheckpoint: handleRestoreCheckpoint,
+                onVerifierReport: handleVerifierReport,
+                onDistillDream: handleDistillDream,
+                onQueryTaskGraph: handleQueryTaskGraph,
+                onClearTaskGraph: handleClearTaskGraph,
+                onTaskGraphNodeIdChange: handleTaskGraphNodeIdChange,
+                onTaskGraphRelationChange: handleTaskGraphRelationChange,
+                onTaskGraphAutoTrackChange: handleTaskGraphAutoTrackChange,
+                onTaskGraphPageChange: handleTaskGraphPageChange,
+                onTaskGraphTrailJump: handleTaskGraphTrailJump,
+                onTaskGraphExpandedRelationChange: handleTaskGraphExpandedRelationChange,
+                taskPlanGraphEdges: state.taskPlanGraphEdges,
+                taskPlanGraphLoading: state.taskPlanGraphLoading,
+                taskPlanGraphError: state.taskPlanGraphError,
+                taskPlanGraphNodeId: state.taskPlanGraphNodeId,
+                taskPlanGraphRelation: state.taskPlanGraphRelation,
+                taskPlanGraphAutoTrack: state.taskPlanGraphAutoTrack,
+                taskPlanGraphPage: state.taskPlanGraphPage,
+                taskPlanGraphPageSize: state.taskPlanGraphPageSize,
+                taskPlanGraphTrail: state.taskPlanGraphTrail,
+                taskPlanGraphExpandedRelation: state.taskPlanGraphExpandedRelation,
+                taskPlanFocusTodoId: state.taskPlanFocusTodoId,
+                onTaskPlanFocusTodoChange: handleTaskPlanFocusTodoChange,
                 sandboxSessions: state.sessionsResult?.sessions?.filter(
                   (r) => r.kind !== "global" && !r.systemSent,
                 ),
@@ -1765,6 +2295,7 @@ export function renderApp(state: AppViewState) {
       </div>
       ${renderExecApprovalPrompt(state)}
       ${renderGatewayUrlConfirmation(state)}
+      ${renderTaskPlanConfirmation(state)}
     </div>
       </div>
     </div>

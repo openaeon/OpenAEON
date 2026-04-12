@@ -4,6 +4,7 @@ import {
 } from "../../../src/gateway/events.js";
 import { CHAT_SESSIONS_ACTIVE_MINUTES, flushChatQueueForEvent } from "./app-chat.ts";
 import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadCognitiveTask } from "./controllers/cognitive.ts";
 import type { EventLogEntry } from "./app-events.ts";
 import {
   applySettings,
@@ -76,6 +77,19 @@ type GatewayHost = {
   assistantAgentId: string | null;
   sessionKey: string;
   sandboxTaskPlan: import("./views/sandbox.ts").TaskPlanSnapshot | null;
+  taskPlanGraphEdges: Array<{
+    edgeId: string;
+    from: string;
+    to: string;
+    relation: string;
+    at: number;
+  }>;
+  taskPlanGraphLoading: boolean;
+  taskPlanGraphError: string | null;
+  taskPlanGraphNodeId: string;
+  taskPlanGraphRelation: string;
+  taskPlanGraphAutoTrack: boolean;
+  taskPlanFocusTodoId: string | null;
   chatRunId: string | null;
   chatSending: boolean;
   chatStream: string | null;
@@ -183,6 +197,43 @@ type TaskPlanAutopilotSpawnedPayload = {
   at?: number;
 };
 
+type TaskPlanStageChangedPayload = {
+  sessionKey?: string;
+  action?: "forward" | "rollback" | "retry" | "branch" | "restore";
+  changed?: boolean;
+  phaseTransition?: {
+    from?: "planning" | "execution" | "verification" | "complete";
+    to?: "planning" | "execution" | "verification" | "complete";
+    changed?: boolean;
+  };
+  currentBranchId?: string;
+  checkpointId?: string;
+  at?: number;
+};
+
+type TaskPlanCheckpointRestoredPayload = {
+  sessionKey?: string;
+  checkpointId?: string;
+  branchId?: string;
+  at?: number;
+};
+
+type TaskPlanVerifierResultPayload = {
+  sessionKey?: string;
+  verifier?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["verifierHistory"]>[number];
+  taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+  graphEdges?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]>;
+  at?: number;
+};
+
+type TaskPlanDreamCreatedPayload = {
+  sessionKey?: string;
+  dream?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["dreams"]>[number];
+  taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+  graphEdges?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]>;
+  at?: number;
+};
+
 function normalizeExecutionGraph(
   graph: TaskPlanExecutionTriggerPayload["executionGraph"] | undefined,
   fallback?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"],
@@ -202,6 +253,110 @@ function normalizeExecutionGraph(
     autoDispatch: graph.autoDispatch ?? fallback?.autoDispatch,
     advisories: graph.advisories ?? fallback?.advisories ?? [],
   };
+}
+
+function mergeGraphEdges(
+  current: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]> | undefined,
+  incoming: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]> | undefined,
+): NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]> {
+  const byId = new Map<
+    string,
+    { edgeId: string; from: string; to: string; relation: string; at: number }
+  >();
+  for (const edge of current ?? []) {
+    if (edge?.edgeId) {
+      byId.set(edge.edgeId, edge);
+    }
+  }
+  for (const edge of incoming ?? []) {
+    if (edge?.edgeId) {
+      byId.set(edge.edgeId, edge);
+    }
+  }
+  return Array.from(byId.values()).sort((a, b) => a.at - b.at);
+}
+
+function resolveTodoFocusFromGraphNode(
+  plan: import("./views/sandbox.ts").TaskPlanSnapshot | null,
+  nodeId: string,
+): string | null {
+  const isPlaceholderTodo = (todo: { title?: string; result?: string }) => {
+    const title = typeof todo.title === "string" ? todo.title.trim() : "";
+    const result = typeof todo.result === "string" ? todo.result.trim().toLowerCase() : "";
+    const titleIsPlaceholder =
+      /^agent\s*\d+\s*:\s*待定任务\d*$/i.test(title) ||
+      /^代理\s*\d+\s*:\s*待定任务\d*$/i.test(title) ||
+      /^待定任务\d*$/i.test(title);
+    const resultIsPlaceholder =
+      result.includes("占位任务") || result.includes("无需执行") || result.includes("placeholder");
+    return titleIsPlaceholder || resultIsPlaceholder;
+  };
+  const normalized = nodeId.trim();
+  if (!normalized) {
+    return null;
+  }
+  const todos = Array.isArray(plan?.todos) ? plan.todos : [];
+  const visibleTodos = todos.filter((todo) => !isPlaceholderTodo(todo));
+  if (normalized.startsWith("todo:")) {
+    const todoId = normalized.slice("todo:".length).trim();
+    if (!todoId) {
+      return null;
+    }
+    return visibleTodos.some((todo) => todo.id === todoId) ? todoId : null;
+  }
+  if (visibleTodos.some((todo) => todo.id === normalized)) {
+    return normalized;
+  }
+  if (normalized === "stage:planning") {
+    return visibleTodos.find((todo) => todo.status === "todo")?.id ?? null;
+  }
+  if (normalized === "stage:execution") {
+    return (
+      visibleTodos.find((todo) => todo.status === "in_progress")?.id ??
+      visibleTodos.find((todo) => todo.status === "todo")?.id ??
+      null
+    );
+  }
+  if (normalized === "stage:verification") {
+    return visibleTodos.find((todo) => todo.status === "done")?.id ?? null;
+  }
+  return null;
+}
+
+async function refreshTaskPlanGraph(host: GatewayHost, preferredNodeId?: string): Promise<void> {
+  if (!host.client || !host.taskPlanGraphAutoTrack) {
+    return;
+  }
+  const nodeId = (preferredNodeId ?? host.taskPlanGraphNodeId ?? "").trim();
+  const relation = (host.taskPlanGraphRelation ?? "").trim();
+  host.taskPlanGraphLoading = true;
+  host.taskPlanGraphError = null;
+  try {
+    const res = await host.client.request<{
+      ok?: boolean;
+      edges?: Array<{
+        edgeId: string;
+        from: string;
+        to: string;
+        relation: string;
+        at: number;
+      }>;
+    }>("task_plan.graph.query", {
+      sessionKey: host.sessionKey,
+      nodeId: nodeId || undefined,
+      relation: relation || undefined,
+      limit: 80,
+    });
+    host.taskPlanGraphEdges = Array.isArray(res?.edges) ? res.edges : [];
+    if (nodeId) {
+      host.taskPlanGraphNodeId = nodeId;
+      host.taskPlanFocusTodoId = resolveTodoFocusFromGraphNode(host.sandboxTaskPlan, nodeId);
+    }
+  } catch (err) {
+    host.taskPlanGraphError = `Failed to auto-refresh graph memory: ${String(err)}`;
+  } finally {
+    host.taskPlanGraphLoading = false;
+  }
 }
 
 function isSafetyPauseMessage(text: string): boolean {
@@ -502,6 +657,20 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     return;
   }
 
+  if (
+    evt.event === "cognitive.task.submitted" ||
+    evt.event === "cognitive.task.transitioned" ||
+    evt.event === "cognitive.runtime.dispatched" ||
+    evt.event === "cognitive.cognition.reflected" ||
+    evt.event === "cognitive.cognition.dreamed" ||
+    evt.event === "cognitive.memory.written"
+  ) {
+    if (host.tab === "cognitive") {
+      void loadCognitiveTask(host as unknown as OPENAEONApp);
+    }
+    return;
+  }
+
   if (evt.event === "presence") {
     const payload = evt.payload as { presence?: PresenceEntry[] } | undefined;
     if (payload?.presence && Array.isArray(payload.presence)) {
@@ -660,12 +829,13 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     if (!sessionKey || sessionKey !== host.sessionKey || !todoId) {
       return;
     }
-    const graph = host.sandboxTaskPlan?.executionGraph;
-    if (graph) {
+    const currentPlan = host.sandboxTaskPlan;
+    const graph = currentPlan?.executionGraph;
+    if (currentPlan && graph) {
       const previous = graph.todoTelemetry ?? {};
       const current = previous[todoId] ?? {};
       host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
+        ...currentPlan,
         executionGraph: {
           ...graph,
           todoTelemetry: {
@@ -684,6 +854,123 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
         },
       };
     }
+    return;
+  }
+
+  if (evt.event === "task_plan.stage.changed") {
+    const payload = (evt.payload as TaskPlanStageChangedPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey) {
+      return;
+    }
+    if (host.sandboxTaskPlan?.taskRuntime) {
+      const runtime = host.sandboxTaskPlan.taskRuntime;
+      const checkpointsCount =
+        payload.changed === true
+          ? Math.max(0, (runtime.checkpointsCount ?? 0) + 1)
+          : runtime.checkpointsCount;
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        phase: payload.phaseTransition?.to ?? host.sandboxTaskPlan.phase,
+        taskRuntime: {
+          ...runtime,
+          currentBranchId: payload.currentBranchId ?? runtime.currentBranchId,
+          checkpointsCount,
+          latestCheckpointId: payload.checkpointId ?? runtime.latestCheckpointId,
+          latestCheckpointAt: payload.at ?? runtime.latestCheckpointAt,
+        },
+      };
+    }
+    const preferredNodeId = payload.checkpointId ? `checkpoint:${payload.checkpointId}` : undefined;
+    void refreshTaskPlanGraph(host, preferredNodeId);
+    return;
+  }
+
+  if (evt.event === "task_plan.checkpoint.restored") {
+    const payload = (evt.payload as TaskPlanCheckpointRestoredPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey) {
+      return;
+    }
+    if (host.sandboxTaskPlan?.taskRuntime) {
+      const runtime = host.sandboxTaskPlan.taskRuntime;
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        taskRuntime: {
+          ...runtime,
+          currentBranchId: payload.branchId ?? runtime.currentBranchId,
+          checkpointsCount: Math.max(0, (runtime.checkpointsCount ?? 0) + 1),
+          latestCheckpointId: payload.checkpointId ?? runtime.latestCheckpointId,
+          latestCheckpointAt: payload.at ?? runtime.latestCheckpointAt,
+        },
+      };
+    }
+    const preferredNodeId = payload.checkpointId ? `checkpoint:${payload.checkpointId}` : undefined;
+    void refreshTaskPlanGraph(host, preferredNodeId);
+    return;
+  }
+
+  if (evt.event === "task_plan.verifier.result") {
+    const payload = (evt.payload as TaskPlanVerifierResultPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey || !host.sandboxTaskPlan) {
+      return;
+    }
+    const verifier = payload.verifier;
+    const mergedEdges = mergeGraphEdges(host.taskPlanGraphEdges, payload.graphEdges);
+    host.taskPlanGraphEdges = mergedEdges;
+    if (host.sandboxTaskPlan) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        graphEdges: mergeGraphEdges(host.sandboxTaskPlan.graphEdges, payload.graphEdges),
+      };
+    }
+    if (verifier) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        verifierHistory: [...(host.sandboxTaskPlan.verifierHistory ?? []), verifier],
+        taskRuntime: payload.taskRuntime ?? host.sandboxTaskPlan.taskRuntime,
+      };
+    } else if (payload.taskRuntime) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        taskRuntime: payload.taskRuntime,
+      };
+    }
+    const preferredNodeId = verifier ? `stage:${verifier.stageId}` : undefined;
+    void refreshTaskPlanGraph(host, preferredNodeId);
+    return;
+  }
+
+  if (evt.event === "task_plan.dream.created") {
+    const payload = (evt.payload as TaskPlanDreamCreatedPayload | undefined) ?? {};
+    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
+    if (!sessionKey || sessionKey !== host.sessionKey || !host.sandboxTaskPlan) {
+      return;
+    }
+    const dream = payload.dream;
+    const mergedEdges = mergeGraphEdges(host.taskPlanGraphEdges, payload.graphEdges);
+    host.taskPlanGraphEdges = mergedEdges;
+    if (host.sandboxTaskPlan) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        graphEdges: mergeGraphEdges(host.sandboxTaskPlan.graphEdges, payload.graphEdges),
+      };
+    }
+    if (dream) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        dreams: [...(host.sandboxTaskPlan.dreams ?? []), dream],
+        taskRuntime: payload.taskRuntime ?? host.sandboxTaskPlan.taskRuntime,
+      };
+    } else if (payload.taskRuntime) {
+      host.sandboxTaskPlan = {
+        ...host.sandboxTaskPlan,
+        taskRuntime: payload.taskRuntime,
+      };
+    }
+    const preferredNodeId = dream ? `dream:${dream.dreamId}` : undefined;
+    void refreshTaskPlanGraph(host, preferredNodeId);
     return;
   }
 

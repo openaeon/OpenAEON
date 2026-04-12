@@ -978,7 +978,12 @@
               },
               {
                 "group": "Multi-agent",
-                "pages": ["concepts/multi-agent", "concepts/presence"]
+                "pages": [
+                  "concepts/multi-agent",
+                  "concepts/cognitive-os",
+                  "concepts/cognitive-os-engineering-plan",
+                  "concepts/presence"
+                ]
               },
               {
                 "group": "Messages and delivery",

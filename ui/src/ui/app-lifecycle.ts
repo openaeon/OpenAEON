@@ -55,7 +55,7 @@ export function handleConnected(host: LifecycleHost) {
   connectGateway(host as unknown as Parameters<typeof connectGateway>[0]);
   startNodesPolling(host as unknown as Parameters<typeof startNodesPolling>[0]);
   startSandboxPolling(host as unknown as Parameters<typeof startSandboxPolling>[0]);
-  if (host.tab === "aeon" || host.tab === "chat") {
+  if (host.tab === "aeon" || host.tab === "chat" || host.tab === "cognitive") {
     startAeonPolling(host as unknown as Parameters<typeof startAeonPolling>[0]);
   }
 }
@@ -112,9 +112,9 @@ export function handleUpdated(host: LifecycleHost, changed: Map<PropertyKey, unk
   }
   if (changed.has("tab")) {
     const prevTab = changed.get("tab");
-    if (prevTab === "aeon" || prevTab === "chat")
+    if (prevTab === "aeon" || prevTab === "chat" || prevTab === "cognitive")
       stopAeonPolling(host as unknown as Parameters<typeof stopAeonPolling>[0]);
-    if (host.tab === "aeon" || host.tab === "chat")
+    if (host.tab === "aeon" || host.tab === "chat" || host.tab === "cognitive")
       startAeonPolling(host as unknown as Parameters<typeof startAeonPolling>[0]);
   }
 }

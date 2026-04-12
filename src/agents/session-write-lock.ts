@@ -268,6 +268,9 @@ function registerCleanupHandlers(): void {
 async function readLockPayload(lockPath: string): Promise<LockFilePayload | null> {
   try {
     const raw = await fs.readFile(lockPath, "utf8");
+    if (!raw.trim()) {
+      return {};
+    }
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const payload: LockFilePayload = {};
     if (typeof parsed.pid === "number") {
@@ -333,13 +336,22 @@ async function shouldReclaimContendedLockFile(
   if (!details.stale) {
     return false;
   }
+  // If the lock file is empty or corrupted (missing PID and createdAt),
+  // we reclaim it much faster (30s) as it likely indicates a process crashed
+  // during lock initialization.
+  const isEmptyOrCorrupted =
+    details.pid === null &&
+    details.createdAt === null &&
+    details.staleReasons.every((r) => r === "missing-pid" || r === "invalid-createdAt");
+
   if (!lockInspectionNeedsMtimeStaleFallback(details)) {
     return true;
   }
   try {
     const stat = await fs.stat(lockPath);
     const ageMs = Math.max(0, nowMs - stat.mtimeMs);
-    return ageMs > staleMs;
+    const effectiveStaleMs = isEmptyOrCorrupted ? Math.min(staleMs, 30_000) : staleMs;
+    return ageMs > effectiveStaleMs;
   } catch (error) {
     const code = (error as { code?: string } | null)?.code;
     return code !== "ENOENT";
@@ -492,7 +504,12 @@ export async function acquireSessionWriteLock(params: {
   }
 
   const payload = await readLockPayload(lockPath);
-  const owner = typeof payload?.pid === "number" ? `pid=${payload.pid}` : "unknown";
+  let owner = "unknown";
+  if (typeof payload?.pid === "number") {
+    owner = `pid=${payload.pid}`;
+  } else if (payload && Object.keys(payload).length === 0) {
+    owner = "empty_lock_file";
+  }
   throw new Error(`session file locked (timeout ${timeoutMs}ms): ${owner} ${lockPath}`);
 }
 

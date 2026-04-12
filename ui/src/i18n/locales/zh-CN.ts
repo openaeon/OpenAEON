@@ -39,6 +39,7 @@ export const zh_CN: TranslationMap = {
     debug: "调试",
     logs: "日志",
     sandbox: "沙盘",
+    cognitive: "认知操作系统",
     files: "文件",
     tools: "工具",
     knowledge: "知识库",
@@ -59,6 +60,7 @@ export const zh_CN: TranslationMap = {
     debug: "网关快照、事件和手动 RPC 调用。",
     logs: "网关文件日志的实时追踪。",
     sandbox: "实时编排与任务委派视图。",
+    cognitive: "在一个视图中查看管理、执行、认知路径与产物追踪。",
     aeon: "实时同步的集体潜意识与逻辑之门。",
   },
   overview: {

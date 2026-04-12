@@ -58,7 +58,67 @@ export type TaskPlanSnapshot = {
   description: string;
   todos: TaskTodo[];
   phase?: "planning" | "execution" | "verification" | "complete";
+  currentBranchId?: string;
+  branches?: Array<{
+    id: string;
+    status: "active" | "archived";
+    createdAt: number;
+    parentBranchId?: string;
+    derivedFromCheckpointId?: string;
+  }>;
+  checkpoints?: Array<{
+    checkpointId: string;
+    taskId?: string;
+    stageId: string;
+    branchId: string;
+    reason: string;
+    previousCheckpointId?: string;
+    sourceCheckpointId?: string;
+    createdAt: number;
+  }>;
+  dreams?: Array<{
+    dreamId: string;
+    taskId: string;
+    stageId: string;
+    branchId: string;
+    summary: string;
+    keyDecisions: string[];
+    risks: string[];
+    nextAction: string;
+    anchors: string[];
+    sourceCheckpointIds: string[];
+    createdAt: number;
+  }>;
+  verifierHistory?: Array<{
+    verifierId: string;
+    taskId: string;
+    stageId: string;
+    branchId: string;
+    status: "pending" | "passed" | "failed" | "blocked";
+    summary: string;
+    evidence: string[];
+    recommendedAction?: "forward" | "retry" | "rollback" | "branch" | "manual_review";
+    createdAt: number;
+  }>;
+  graphEdges?: Array<{
+    edgeId: string;
+    from: string;
+    to: string;
+    relation: string;
+    at: number;
+  }>;
   executionGraph?: TaskPlanExecutionGraph;
+  taskRuntime?: {
+    currentBranchId: string;
+    branchesCount: number;
+    checkpointsCount: number;
+    latestCheckpointId?: string;
+    latestCheckpointAt?: number;
+    latestDreamId?: string;
+    latestDreamSummary?: string;
+    latestVerifierStatus?: "pending" | "passed" | "failed" | "blocked";
+    currentBranchHistoryCount: number;
+  };
   updatedAt?: number;
   recoveryState?: {
     lastBroadcastAt?: number;

@@ -46,12 +46,24 @@ import type {
   ToolsCatalogResult,
   StatusSummary,
   AeonStatusResult,
+  CognitiveTaskRecord,
   ChatManualMode,
   ChatManualSection,
 } from "./types.ts";
+import type { CognitiveLongTermEntry } from "./controllers/cognitive.ts";
+import type { CognitiveSourceContext } from "./controllers/cognitive.ts";
 import type { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import type { SessionLogEntry } from "./views/usage.ts";
+
+export type TaskPlanConfirmDialog = {
+  action: "retry" | "branch" | "switch-branch" | "restore" | "rollback-latest";
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  details?: string[];
+};
 
 export type AppViewState = {
   settings: UiSettings;
@@ -112,6 +124,26 @@ export type AppViewState = {
   execApprovalBusy: boolean;
   execApprovalError: string | null;
   pendingGatewayUrl: string | null;
+  taskPlanConfirmDialog: TaskPlanConfirmDialog | null;
+  requestTaskPlanConfirmation: (dialog: TaskPlanConfirmDialog) => Promise<boolean>;
+  handleTaskPlanConfirmDecision: (confirmed: boolean) => void;
+  taskPlanGraphEdges: Array<{
+    edgeId: string;
+    from: string;
+    to: string;
+    relation: string;
+    at: number;
+  }>;
+  taskPlanGraphLoading: boolean;
+  taskPlanGraphError: string | null;
+  taskPlanGraphNodeId: string;
+  taskPlanGraphRelation: string;
+  taskPlanGraphAutoTrack: boolean;
+  taskPlanGraphPage: number;
+  taskPlanGraphPageSize: number;
+  taskPlanGraphTrail: string[];
+  taskPlanGraphExpandedRelation: string;
+  taskPlanFocusTodoId: string | null;
   configLoading: boolean;
   configRaw: string;
   configRawOriginal: string;
@@ -215,6 +247,27 @@ export type AppViewState = {
   executionAutoQueued: boolean;
   sandboxPollTimer: ReturnType<typeof setInterval> | null;
   sandboxChatEvents: import("./types.ts").SandboxChatEvents;
+  cognitiveTaskRecord: CognitiveTaskRecord | null;
+  cognitiveTaskList: CognitiveTaskRecord[];
+  cognitiveSelectedTaskId: string | null;
+  cognitiveRuntimeEvents: import("./controllers/cognitive.ts").CognitiveTaskEvent[];
+  cognitiveLegacyPlan: unknown | null;
+  cognitiveSubmitTitle: string;
+  cognitiveSubmitText: string;
+  cognitiveMemoryQuery: string;
+  cognitiveMemoryTags: string;
+  cognitiveMemoryResults: import("./controllers/cognitive.ts").CognitiveMemoryQueryResult | null;
+  cognitiveReplayRunId: string | null;
+  cognitiveReplayEvents: import("./controllers/cognitive.ts").CognitiveTaskEvent[];
+  cognitiveReplayLoading: boolean;
+  cognitiveLoading: boolean;
+  cognitiveMemoryLoading: boolean;
+  cognitiveSourceContext: CognitiveSourceContext | null;
+  cognitiveSourceSelectedLine: number | null;
+  cognitiveSelectedMemoryResult: CognitiveLongTermEntry | null;
+  handleInspectMemoryResult: (result: CognitiveLongTermEntry) => Promise<void>;
+  handleTraceMemoryResult: (result: CognitiveLongTermEntry) => Promise<void>;
+  handleSourceLineSelect: (lineNo: number) => void;
   sessionsLoading: boolean;
   sessionsResult: SessionsListResult | null;
   sessionsError: string | null;
@@ -403,4 +456,16 @@ export type AppViewState = {
     visible: boolean,
     options?: { mode?: ChatManualMode; section?: ChatManualSection },
   ) => void;
+  handleCognitiveRefresh: () => Promise<void>;
+  handleCognitiveSelectTask: (taskId: string | null) => Promise<void>;
+  handleCognitiveSubmitTask: () => Promise<void>;
+  handleCognitiveTransition: (
+    to: "INIT" | "PLAN" | "EXECUTE" | "VERIFY" | "REFLECT" | "DONE" | "FAILED" | "ROLLED_BACK",
+    reason?: string,
+  ) => Promise<void>;
+  handleCognitiveDispatch: () => Promise<void>;
+  handleCognitiveDream: () => Promise<void>;
+  handleCognitiveReflect: () => Promise<void>;
+  handleCognitiveMemoryQuery: () => Promise<void>;
+  handleCognitiveReplay: (runId: string) => Promise<void>;
 };

@@ -58,15 +58,15 @@ test("task planner tool manages plan and todos", async () => {
   expect((readRes.details as any).plan.todos[0].lastProgressNote).toContain("Still running");
 });
 
-test("task planner tool ignores placeholder todos and prunes legacy placeholders", async () => {
+test("task planner tool rejects placeholder todos and prunes legacy placeholders", async () => {
   const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-test-planner-"));
   const tool = createTaskPlannerTool({ workspaceDir: tmpdir, agentSessionKey: "test:session" });
   expect(tool).toBeDefined();
 
   await tool!.execute("call1", { action: "create_plan", description: "Plan with cleanup" });
-  const ignored = await tool!.execute("call2", { action: "add_todo", title: "Agent 1: 待定任务1" });
-  expect((ignored.details as any).status).toBe("ignored");
-  expect((ignored.details as any).reason).toBe("placeholder_todo_title");
+  await expect(
+    tool!.execute("call2", { action: "add_todo", title: "Agent 1: 待定任务1" }),
+  ).rejects.toBeInstanceOf(ToolInputError);
 
   await tool!.execute("call3", { action: "add_todo", title: "Research real objective" });
 
@@ -90,15 +90,36 @@ test("task planner tool ignores placeholder todos and prunes legacy placeholders
   expect(todos[0]?.title).toBe("Research real objective");
 });
 
-test("task planner set_phase forbids backward transitions", async () => {
+test("task planner tool rejects placeholder todo results on update", async () => {
+  const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-test-planner-"));
+  const tool = createTaskPlannerTool({ workspaceDir: tmpdir, agentSessionKey: "test:session" });
+  expect(tool).toBeDefined();
+
+  await tool!.execute("call1", { action: "create_plan", description: "Result quality gate" });
+  const addRes = await tool!.execute("call2", {
+    action: "add_todo",
+    title: "Implement concrete integration checks",
+  });
+  const taskId = (addRes.details as any).added.id as string;
+  await tool!.execute("call3", { action: "update_todo", taskId, status: "in_progress" });
+  await expect(
+    tool!.execute("call4", {
+      action: "update_todo",
+      taskId,
+      result: "占位任务，无需执行",
+    }),
+  ).rejects.toBeInstanceOf(ToolInputError);
+});
+
+test("task planner set_phase allows backward transitions for iterative cycles", async () => {
   const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-test-planner-"));
   const tool = createTaskPlannerTool({ workspaceDir: tmpdir, agentSessionKey: "test:session" });
   expect(tool).toBeDefined();
   await tool!.execute("call1", { action: "create_plan", description: "Phase transition test" });
   await tool!.execute("call2", { action: "set_phase", phase: "execution" });
-  await expect(
-    tool!.execute("call3", { action: "set_phase", phase: "planning" }),
-  ).rejects.toBeInstanceOf(ToolInputError);
+  const backward = await tool!.execute("call3", { action: "set_phase", phase: "planning" });
+  expect((backward.details as any).phase).toBe("planning");
+  expect((backward.details as any).status).toBe("ok");
 });
 
 test("task planner stores orchestration metadata", async () => {

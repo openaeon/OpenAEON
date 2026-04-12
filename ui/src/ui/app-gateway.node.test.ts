@@ -285,4 +285,177 @@ describe("connectGateway", () => {
     expect(host.sandboxTaskPlan?.executionGraph?.staleTodoIds).toEqual(["t1"]);
     expect(host.handleSendChat as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1);
   });
+
+  it("updates task runtime summary on task_plan.stage.changed", () => {
+    const host = createHost();
+    host.sessionKey = "main";
+    host.sandboxTaskPlan = {
+      description: "plan",
+      phase: "execution",
+      todos: [{ id: "t1", title: "todo 1", status: "in_progress" }],
+      taskRuntime: {
+        currentBranchId: "main",
+        branchesCount: 1,
+        checkpointsCount: 2,
+        latestCheckpointId: "ckpt_old",
+        latestCheckpointAt: 1,
+        currentBranchHistoryCount: 2,
+      },
+      executionGraph: {
+        orderedTodoIds: ["t1"],
+        readyTodoIds: [],
+        blockedTodoIds: [],
+        blockedBy: {},
+      },
+    };
+
+    connectGateway(host);
+    const client = gatewayClientInstances[0];
+    expect(client).toBeDefined();
+
+    client.emitEvent({
+      event: "task_plan.stage.changed",
+      payload: {
+        sessionKey: "main",
+        action: "branch",
+        changed: true,
+        phaseTransition: { from: "planning", to: "execution", changed: true },
+        currentBranchId: "exp-a",
+        checkpointId: "ckpt_new",
+        at: 123,
+      },
+    });
+
+    expect(host.sandboxTaskPlan?.phase).toBe("execution");
+    expect(host.sandboxTaskPlan?.taskRuntime).toEqual(
+      expect.objectContaining({
+        currentBranchId: "exp-a",
+        checkpointsCount: 3,
+        latestCheckpointId: "ckpt_new",
+        latestCheckpointAt: 123,
+      }),
+    );
+  });
+
+  it("updates task runtime summary on task_plan.checkpoint.restored", () => {
+    const host = createHost();
+    host.sessionKey = "main";
+    host.sandboxTaskPlan = {
+      description: "plan",
+      phase: "execution",
+      todos: [{ id: "t1", title: "todo 1", status: "in_progress" }],
+      taskRuntime: {
+        currentBranchId: "main",
+        branchesCount: 1,
+        checkpointsCount: 2,
+        latestCheckpointId: "ckpt_old",
+        latestCheckpointAt: 1,
+        currentBranchHistoryCount: 2,
+      },
+      executionGraph: {
+        orderedTodoIds: ["t1"],
+        readyTodoIds: [],
+        blockedTodoIds: [],
+        blockedBy: {},
+      },
+    };
+
+    connectGateway(host);
+    const client = gatewayClientInstances[0];
+    expect(client).toBeDefined();
+
+    client.emitEvent({
+      event: "task_plan.checkpoint.restored",
+      payload: {
+        sessionKey: "main",
+        checkpointId: "ckpt_restore",
+        branchId: "exp-a",
+        at: 456,
+      },
+    });
+
+    expect(host.sandboxTaskPlan?.taskRuntime).toEqual(
+      expect.objectContaining({
+        currentBranchId: "exp-a",
+        checkpointsCount: 3,
+        latestCheckpointId: "ckpt_restore",
+        latestCheckpointAt: 456,
+      }),
+    );
+  });
+
+  it("appends verifier and dream events into local task plan", () => {
+    const host = createHost();
+    host.sessionKey = "main";
+    host.sandboxTaskPlan = {
+      description: "plan",
+      phase: "execution",
+      todos: [{ id: "t1", title: "todo 1", status: "in_progress" }],
+      taskRuntime: {
+        currentBranchId: "main",
+        branchesCount: 1,
+        checkpointsCount: 2,
+        latestCheckpointId: "ckpt_old",
+        latestCheckpointAt: 1,
+        currentBranchHistoryCount: 2,
+      },
+      executionGraph: {
+        orderedTodoIds: ["t1"],
+        readyTodoIds: [],
+        blockedTodoIds: [],
+        blockedBy: {},
+      },
+      verifierHistory: [],
+      dreams: [],
+    };
+    connectGateway(host);
+    const client = gatewayClientInstances[0];
+    expect(client).toBeDefined();
+    client.emitEvent({
+      event: "task_plan.verifier.result",
+      payload: {
+        sessionKey: "main",
+        verifier: {
+          verifierId: "verify_1",
+          taskId: "main",
+          stageId: "execution",
+          branchId: "main",
+          status: "passed",
+          summary: "checks passed",
+          evidence: [],
+          createdAt: 111,
+        },
+      },
+    });
+    client.emitEvent({
+      event: "task_plan.dream.created",
+      payload: {
+        sessionKey: "main",
+        dream: {
+          dreamId: "dream_1",
+          taskId: "main",
+          stageId: "execution",
+          branchId: "main",
+          summary: "execution distilled",
+          keyDecisions: [],
+          risks: [],
+          nextAction: "continue",
+          anchors: [],
+          sourceCheckpointIds: [],
+          createdAt: 222,
+        },
+      },
+    });
+    expect(host.sandboxTaskPlan?.verifierHistory?.[0]).toEqual(
+      expect.objectContaining({
+        verifierId: "verify_1",
+        status: "passed",
+      }),
+    );
+    expect(host.sandboxTaskPlan?.dreams?.[0]).toEqual(
+      expect.objectContaining({
+        dreamId: "dream_1",
+      }),
+    );
+  });
 });

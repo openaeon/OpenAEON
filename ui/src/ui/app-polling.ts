@@ -4,6 +4,7 @@ import { loadAeonLogic } from "./controllers/aeon.ts";
 import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadCognitiveTask } from "./controllers/cognitive.ts";
 import type { TaskPlanSnapshot } from "./views/sandbox.ts";
 
 type PollingHost = {
@@ -51,6 +52,11 @@ function countExecutableTodos(plan: TaskPlanSnapshot): number {
   return (Array.isArray(plan.todos) ? plan.todos : []).filter(isPlanTodoExecutable).length;
 }
 
+function isUnknownTaskPlanApprove(err: unknown): boolean {
+  const text = String(err ?? "");
+  return text.includes("unknown method") && text.includes("task_plan.approve");
+}
+
 async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<void> {
   const plan = host.sandboxTaskPlan;
   if (!host.aeonEternalMode || !plan || plan.phase !== "planning") {
@@ -76,11 +82,15 @@ async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<v
     const approveRes = await host.client.request<{
       ok?: boolean;
       plan?: TaskPlanSnapshot | null;
+      taskRuntime?: TaskPlanSnapshot["taskRuntime"];
     }>("task_plan.approve", {
       sessionKey: host.sessionKey,
     });
     if (approveRes?.plan) {
-      host.sandboxTaskPlan = approveRes.plan;
+      host.sandboxTaskPlan = {
+        ...approveRes.plan,
+        taskRuntime: approveRes.taskRuntime ?? approveRes.plan.taskRuntime,
+      };
     }
     host.executionWatchdog = {
       ...host.executionWatchdog,
@@ -98,6 +108,32 @@ async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<v
     host.chatMessage = executionPrompt;
     await host.handleSendChat();
   } catch (err) {
+    if (isUnknownTaskPlanApprove(err)) {
+      try {
+        const fallbackRes = await host.client.request<{
+          ok?: boolean;
+          plan?: TaskPlanSnapshot | null;
+          taskRuntime?: TaskPlanSnapshot["taskRuntime"];
+        }>("task_plan.transition.apply", {
+          sessionKey: host.sessionKey,
+          action: "forward",
+        });
+        if (fallbackRes?.plan) {
+          host.sandboxTaskPlan = {
+            ...fallbackRes.plan,
+            taskRuntime: fallbackRes.taskRuntime ?? fallbackRes.plan.taskRuntime,
+          };
+        }
+        host.executionWatchdog = {
+          ...host.executionWatchdog,
+          lastRetryAt: now,
+          reason: "eternal_auto_forward_transition",
+        };
+        return;
+      } catch {
+        // fall through to original error handling
+      }
+    }
     host.lastError = `Eternal auto-drive failed: ${String(err)}`;
     host.executionWatchdog = {
       ...host.executionWatchdog,
@@ -140,6 +176,7 @@ async function runExecutionAutopilotTick(host: SandboxWatchdogHost): Promise<voi
       ok?: boolean;
       plan?: TaskPlanSnapshot | null;
       executionGraph?: TaskPlanSnapshot["executionGraph"];
+      taskRuntime?: TaskPlanSnapshot["taskRuntime"];
     }>("task_plan.autopilot.tick", {
       sessionKey: host.sessionKey,
       autopilot: true,
@@ -150,6 +187,7 @@ async function runExecutionAutopilotTick(host: SandboxWatchdogHost): Promise<voi
       host.sandboxTaskPlan = {
         ...res.plan,
         executionGraph: res.executionGraph ?? res.plan.executionGraph,
+        taskRuntime: res.taskRuntime ?? res.plan.taskRuntime,
       };
     }
   } catch {
@@ -330,22 +368,26 @@ export function startAeonPolling(host: PollingHost) {
     return;
   }
   host.aeonPollInterval = window.setInterval(() => {
-    if (host.tab !== "aeon" && host.tab !== "chat") {
+    if (host.tab !== "aeon" && host.tab !== "chat" && host.tab !== "cognitive") {
       return;
     }
     const sessionKey =
       typeof (host as { sessionKey?: unknown }).sessionKey === "string"
         ? ((host as unknown as { sessionKey: string }).sessionKey || "").trim()
         : "";
-    const shouldPollForChat =
-      host.tab !== "chat" ||
-      sessionKey === "" ||
-      sessionKey === "main" ||
-      sessionKey === "agent:main:main";
-    if (!shouldPollForChat) {
-      return;
+
+    if (host.tab === "cognitive") {
+      void loadCognitiveTask(host as unknown as any);
     }
-    void loadAeonLogic(host as unknown as OPENAEONApp);
+
+    const shouldPollForAeonLogic =
+      host.tab === "aeon" ||
+      (host.tab === "chat" &&
+        (sessionKey === "" || sessionKey === "main" || sessionKey === "agent:main:main"));
+
+    if (shouldPollForAeonLogic) {
+      void loadAeonLogic(host as unknown as any);
+    }
   }, 5000);
 }
 

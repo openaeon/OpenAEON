@@ -1,5 +1,5 @@
 /* oxlint-disable typescript-eslint/no-unnecessary-boolean-literal-compare */
-import { LitElement, html, nothing } from "lit";
+import { LitElement, html, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { t } from "../../i18n/index.ts";
 import { icons } from "../icons.ts";
@@ -33,6 +33,9 @@ export class ChatLayout extends LitElement {
   @state() private agentQuery = "";
   @state() private agentStatusFilter: "all" | "running" | "blocked" | "done" | "ready" = "all";
   @state() private selectedAgentTodoId: string | null = null;
+  @state() private statusDetailsOpen = false;
+  @state() private advancedPanelsOpen = false;
+  @state() private advancedPanelsInitialized = false;
 
   static styles = [
     chatLayoutStyles,
@@ -40,6 +43,14 @@ export class ChatLayout extends LitElement {
     chatEmptyStateStyles,
     chatManualPanelStyles,
   ];
+
+  protected willUpdate(changed: PropertyValues<this>) {
+    if (!changed.has("props") || this.advancedPanelsInitialized || !this.props) {
+      return;
+    }
+    this.advancedPanelsOpen = this.props.sidebarDefault === "last-state";
+    this.advancedPanelsInitialized = true;
+  }
 
   render() {
     if (!this.props) {
@@ -56,9 +67,11 @@ export class ChatLayout extends LitElement {
     const hasSubagentSidebar =
       (planPhase === "execution" || planPhase === "verification" || planPhase === "complete") &&
       hasPlanData;
+    const autoSidebarAvailable = hasPlanSidebar || hasSubagentSidebar;
+    const advancedPanelsVisible = autoSidebarAvailable && this.advancedPanelsOpen;
 
-    // Determine if sidebar should be open and what type
-    const sidebarOpen = toolSidebarOpen || hasPlanSidebar || hasSubagentSidebar;
+    // Tool output can force-open sidebar even when orchestration panels are collapsed.
+    const sidebarOpen = toolSidebarOpen || advancedPanelsVisible;
     const splitRatio = this.props.splitRatio ?? 0.6;
     const activeSession = this.props.sessions?.sessions?.find(
       (row) => row.key === this.props.sessionKey,
@@ -110,9 +123,19 @@ export class ChatLayout extends LitElement {
       (this.props.epiphanyFactor ?? 0) > 0 ||
       (this.props.chaosScore ?? 0) > 0 ||
       deliveryState !== null;
-    const showUtilityRail = false && !sidebarOpen && hasSignal;
+    const visualMode = this.props.visualMode ?? "professional";
+    const visualDensity = this.props.visualDensity ?? "comfortable";
     const performanceMode = this.props.performanceMode ?? "balanced";
-    const showVisualEffects = performanceMode === "visual";
+    const showUtilityRail =
+      visualMode === "legacy" && performanceMode !== "performance" && hasSignal && !sidebarOpen;
+    const showVisualEffects = visualMode === "legacy" && performanceMode === "visual";
+    const pageState = this.props.executionWatchdog?.degraded
+      ? "recovery"
+      : sessionWorking || Boolean(this.props.sending) || Boolean(this.props.stream?.trim())
+        ? "executing"
+        : (this.props.messages?.length ?? 0) > 0
+          ? "chatting"
+          : "empty";
     const staleCount = this.props.taskPlan?.executionGraph?.staleTodoIds?.length ?? 0;
     const longRunningCount = this.props.taskPlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
     const shouldShowExecutionHealth =
@@ -127,6 +150,9 @@ export class ChatLayout extends LitElement {
         data-formula-phase=${fractal.formulaPhase}
         data-delivery-band=${fractal.deliveryBand}
         data-performance-mode=${performanceMode}
+        data-visual-mode=${visualMode}
+        data-visual-density=${visualDensity}
+        data-page-state=${pageState}
         style=${`--fractal-noise-level:${fractal.noiseLevel};--fractal-resonance:${fractal.resonanceLevel};`}
       >
         ${
@@ -217,16 +243,45 @@ export class ChatLayout extends LitElement {
                 <div class="chat-main-status__title">
                   ${activeSession?.label?.trim() || (isMainSession ? "Main Session" : this.props.sessionKey)}
                 </div>
-                <div class="chat-main-status__subline">
+                <div class="chat-main-status__subline" data-collapsed=${String(!this.statusDetailsOpen)}>
                   <span class="chat-main-status__badge">${sessionModel}</span>
-                  <span class="chat-main-status__item">thinking: ${sessionThinking}</span>
                   <span class="chat-main-status__item">${deliveryLabel}: ${deliveryState ?? "pending"}</span>
-                  <span class="chat-main-status__item">${persistedLabel}: ${deliveryHint}</span>
-                  <span class="chat-main-status__item">${eternalLabel}</span>
                   <span class="chat-main-status__item">${sessionStatusLabel}</span>
                 </div>
+                ${
+                  this.statusDetailsOpen
+                    ? html`<div class="chat-main-status__details">
+                        <span class="chat-main-status__item">thinking: ${sessionThinking}</span>
+                        <span class="chat-main-status__item">${persistedLabel}: ${deliveryHint}</span>
+                        <span class="chat-main-status__item">${eternalLabel}</span>
+                        <span class="chat-main-status__item">session: ${this.props.sessionKey}</span>
+                      </div>`
+                    : nothing
+                }
               </div>
               <div class="chat-main-status__actions">
+                ${
+                  autoSidebarAvailable
+                    ? html`<button
+                        type="button"
+                        class="chat-main-status__btn"
+                        @click=${() => {
+                          this.advancedPanelsOpen = !this.advancedPanelsOpen;
+                        }}
+                      >
+                        ${this.advancedPanelsOpen ? "Hide workbench" : "Show workbench"}
+                      </button>`
+                    : nothing
+                }
+                <button
+                  type="button"
+                  class="chat-main-status__btn"
+                  @click=${() => {
+                    this.statusDetailsOpen = !this.statusDetailsOpen;
+                  }}
+                >
+                  ${this.statusDetailsOpen ? "Less details" : "More details"}
+                </button>
                 <button
                   type="button"
                   class="chat-main-status__btn"
@@ -250,7 +305,7 @@ export class ChatLayout extends LitElement {
                 </button>
               </div>
             </div>
-            ${renderStickyPlanBar(this.props)}
+            ${advancedPanelsVisible ? renderStickyPlanBar(this.props) : nothing}
             ${
               shouldShowExecutionHealth
                 ? html`
@@ -373,9 +428,10 @@ export class ChatLayout extends LitElement {
                         onStatusFilterChange: (next) => {
                           this.agentStatusFilter = next;
                         },
-                        selectedTodoId: this.selectedAgentTodoId,
+                        selectedTodoId: this.props.taskPlanFocusTodoId ?? this.selectedAgentTodoId,
                         onSelectTodoId: (todoId) => {
                           this.selectedAgentTodoId = todoId;
+                          this.props.onTaskPlanFocusTodoChange?.(todoId);
                         },
                         onCreateAgent: () => {
                           if (this.props.onSpawnAgentsFromPlan) {

@@ -359,6 +359,33 @@ describe("initSessionState thread forking", () => {
       `${result.sessionEntry.sessionId}-topic-456.jsonl`,
     );
   });
+
+  it("handles missing parent session in store safely without throwing", async () => {
+    const root = await makeCaseDir("openclaw-thread-session-missing-parent-");
+    const storePath = path.join(root, "sessions.json");
+    await saveSessionStore(storePath, {}); // Empty store
+
+    const cfg = {
+      session: { store: storePath },
+    } as OPENAEONConfig;
+
+    const threadSessionKey = "agent:main:slack:channel:c1:thread:missing";
+    // This should NOT throw even if ParentSessionKey is not in the store
+    const result = await initSessionState({
+      ctx: {
+        Body: "Thread reply",
+        SessionKey: threadSessionKey,
+        ParentSessionKey: "non-existent-parent",
+      },
+      cfg,
+      commandAuthorized: true,
+    });
+
+    expect(result.sessionKey).toBe(threadSessionKey);
+    expect(result.sessionEntry.sessionId).toBeTruthy();
+    // It should NOT be marked as forked from parent if parent wasn't found
+    expect(result.sessionEntry.forkedFromParent).toBeFalsy();
+  });
 });
 
 describe("initSessionState RawBody", () => {

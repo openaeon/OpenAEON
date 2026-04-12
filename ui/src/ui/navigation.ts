@@ -5,7 +5,17 @@ export const TAB_GROUPS = [
   { label: "chat", tabs: ["chat"] },
   {
     label: "control",
-    tabs: ["overview", "channels", "instances", "sessions", "sandbox", "aeon", "usage", "cron"],
+    tabs: [
+      "overview",
+      "channels",
+      "instances",
+      "sessions",
+      "sandbox",
+      "cognitive",
+      "aeon",
+      "usage",
+      "cron",
+    ],
   },
   { label: "agent", tabs: ["agents", "skills", "nodes"] },
   { label: "settings", tabs: ["config", "debug", "logs"] },
@@ -26,7 +36,8 @@ export type Tab =
   | "debug"
   | "sandbox"
   | "logs"
-  | "aeon";
+  | "aeon"
+  | "cognitive";
 
 const TAB_PATHS: Record<Tab, string> = {
   agents: "/agents",
@@ -44,6 +55,7 @@ const TAB_PATHS: Record<Tab, string> = {
   sandbox: "/sandbox",
   logs: "/logs",
   aeon: "/aeon",
+  cognitive: "/cognitive",
 };
 
 const PATH_TO_TAB = new Map(Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab as Tab]));
@@ -159,6 +171,8 @@ export function iconForTab(tab: Tab): IconName {
       return "scrollText";
     case "aeon":
       return "gitBranch";
+    case "cognitive":
+      return "brain";
     default:
       return "folder";
   }

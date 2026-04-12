@@ -7,6 +7,8 @@ import { normalizeAgentId, parseAgentSessionKey } from "../../routing/session-ke
 import type { GatewayRequestHandlers } from "./types.js";
 
 type TodoStatus = "todo" | "planned" | "in_progress" | "blocked" | "done" | "verified" | "closed";
+type TransitionAction = "forward" | "rollback" | "retry" | "branch" | "restore";
+type VerifierStatus = "pending" | "passed" | "failed" | "blocked";
 
 type TodoItem = {
   id: string;
@@ -41,6 +43,13 @@ type TaskPlan = {
   todos: TodoItem[];
   phase?: "planning" | "execution" | "verification" | "complete";
   updatedAt?: number;
+  currentBranchId?: string;
+  branches?: TaskPlanBranch[];
+  checkpoints?: TaskPlanCheckpoint[];
+  dreams?: TaskPlanDream[];
+  verifierHistory?: TaskPlanVerifierRecord[];
+  graphEdges?: TaskPlanGraphEdge[];
+  stageHistoryTree?: Record<string, string[]>;
   recoveryState?: {
     lastBroadcastAt?: number;
     lastStaleDigest?: string;
@@ -48,6 +57,74 @@ type TaskPlan = {
     autopilotLastDigest?: string;
     autopilotLastBroadcastAt?: number;
   };
+};
+
+type TaskPlanBranch = {
+  id: string;
+  status: "active" | "archived";
+  createdAt: number;
+  parentBranchId?: string;
+  derivedFromCheckpointId?: string;
+};
+
+type TaskPlanCheckpoint = {
+  checkpointId: string;
+  taskId: string;
+  stageId: string;
+  branchId: string;
+  reason: TransitionAction | "approve" | "verifier";
+  previousCheckpointId?: string;
+  sourceCheckpointId?: string;
+  createdAt: number;
+  snapshot: {
+    description: string;
+    phase: TaskPlanPhase;
+    todos: TodoItem[];
+  };
+};
+
+type TaskPlanDream = {
+  dreamId: string;
+  taskId: string;
+  stageId: string;
+  branchId: string;
+  summary: string;
+  keyDecisions: string[];
+  risks: string[];
+  nextAction: string;
+  anchors: string[];
+  sourceCheckpointIds: string[];
+  createdAt: number;
+};
+
+type TaskPlanVerifierRecord = {
+  verifierId: string;
+  taskId: string;
+  stageId: string;
+  branchId: string;
+  status: VerifierStatus;
+  summary: string;
+  evidence: string[];
+  recommendedAction?: "forward" | "retry" | "rollback" | "branch" | "manual_review";
+  createdAt: number;
+};
+
+type TaskPlanGraphEdge = {
+  edgeId: string;
+  from: string;
+  to: string;
+  relation:
+    | "TASK_HAS_STAGE"
+    | "STAGE_HAS_CHECKPOINT"
+    | "STAGE_HAS_TODO"
+    | "TODO_BLOCKS_TODO"
+    | "STAGE_GENERATES_DREAM"
+    | "DECISION_BASED_ON_EVIDENCE"
+    | "ERROR_TRIGGERS_ROLLBACK"
+    | "BRANCH_DERIVED_FROM_CHECKPOINT"
+    | "DREAM_SUMMARIZES_CHECKPOINT"
+    | "VERIFIER_EVALUATES_STAGE";
+  at: number;
 };
 
 type TaskPlanExecutionGraph = {
@@ -86,6 +163,17 @@ type TaskPlanExecutionGraph = {
   };
   advisories: string[];
 };
+type TaskPlanRuntimeSummary = {
+  currentBranchId: string;
+  branchesCount: number;
+  checkpointsCount: number;
+  latestCheckpointId?: string;
+  latestCheckpointAt?: number;
+  latestDreamId?: string;
+  latestDreamSummary?: string;
+  latestVerifierStatus?: VerifierStatus;
+  currentBranchHistoryCount: number;
+};
 
 type TaskPlanPhase = NonNullable<TaskPlan["phase"]>;
 
@@ -98,6 +186,13 @@ const AUTOPILOT_RETRY_LIMIT_DEFAULT = 3;
 const AUTOPILOT_WATCHDOG_HEARTBEAT_MS = 5_000;
 const AUTOPILOT_RETRY_BACKOFF_BASE_MS = 5_000;
 const AUTOPILOT_STATUS_BROADCAST_COOLDOWN_MS = 2_000;
+const TRANSITION_ACTIONS = new Set<TransitionAction>([
+  "forward",
+  "rollback",
+  "retry",
+  "branch",
+  "restore",
+]);
 
 function isTodoTerminal(status: TodoStatus): boolean {
   return status === "done" || status === "verified" || status === "closed";
@@ -139,26 +234,298 @@ function sanitizeTaskPlan(plan: TaskPlan): { plan: TaskPlan; removed: number } {
   const removed = before - nextTodos.length;
   if (removed <= 0) {
     const normalizedPhase = normalizePlanPhase(plan.phase);
-    if (normalizedPhase === plan.phase) {
+    const runtime = ensureTaskPlanRuntime(plan);
+    if (normalizedPhase === plan.phase && !runtime.changed) {
       return { plan, removed: 0 };
     }
     return {
       plan: {
-        ...plan,
+        ...runtime.plan,
         phase: normalizedPhase,
         updatedAt: Date.now(),
       },
       removed: 0,
     };
   }
+  const runtime = ensureTaskPlanRuntime(plan);
   return {
     plan: {
-      ...plan,
+      ...runtime.plan,
       todos: nextTodos,
       phase: normalizePlanPhase(plan.phase),
       updatedAt: Date.now(),
     },
     removed,
+  };
+}
+
+function cloneTodoList(todos: TodoItem[]): TodoItem[] {
+  return todos.map((todo) => ({ ...todo }));
+}
+
+function createCheckpointId(now: number): string {
+  return `ckpt_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createBranchId(now: number): string {
+  return `branch_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createDreamId(now: number): string {
+  return `dream_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createVerifierId(now: number): string {
+  return `verify_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createGraphEdgeId(now: number): string {
+  return `edge_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function ensureTaskPlanRuntime(plan: TaskPlan): { plan: TaskPlan; changed: boolean } {
+  const now = Date.now();
+  const branchBase: TaskPlanBranch[] = Array.isArray(plan.branches)
+    ? plan.branches.map((item) => ({ ...item }))
+    : [];
+  const branches: TaskPlanBranch[] =
+    branchBase.length > 0 ? branchBase : [{ id: "main", status: "active", createdAt: now }];
+  let changed = branchBase.length === 0;
+  const branchIds = new Set(branches.map((branch) => branch.id));
+  let currentBranchId = typeof plan.currentBranchId === "string" ? plan.currentBranchId.trim() : "";
+  if (!currentBranchId) {
+    currentBranchId = "main";
+    changed = true;
+  }
+  if (!branchIds.has(currentBranchId)) {
+    branches.push({
+      id: currentBranchId,
+      status: "active",
+      createdAt: now,
+    });
+    changed = true;
+  }
+  const checkpoints = Array.isArray(plan.checkpoints)
+    ? plan.checkpoints.map((item) => ({ ...item }))
+    : [];
+  if (!Array.isArray(plan.checkpoints)) {
+    changed = true;
+  }
+  const dreams = Array.isArray(plan.dreams) ? plan.dreams.map((item) => ({ ...item })) : [];
+  if (!Array.isArray(plan.dreams)) {
+    changed = true;
+  }
+  const verifierHistory = Array.isArray(plan.verifierHistory)
+    ? plan.verifierHistory.map((item) => ({ ...item }))
+    : [];
+  if (!Array.isArray(plan.verifierHistory)) {
+    changed = true;
+  }
+  const graphEdges = Array.isArray(plan.graphEdges)
+    ? plan.graphEdges.map((item) => ({ ...item }))
+    : [];
+  if (!Array.isArray(plan.graphEdges)) {
+    changed = true;
+  }
+  const stageHistoryTree =
+    plan.stageHistoryTree && typeof plan.stageHistoryTree === "object"
+      ? Object.fromEntries(
+          Object.entries(plan.stageHistoryTree).map(([branchId, history]) => [
+            branchId,
+            Array.isArray(history)
+              ? history.filter((item): item is string => typeof item === "string")
+              : [],
+          ]),
+        )
+      : {};
+  if (!plan.stageHistoryTree || typeof plan.stageHistoryTree !== "object") {
+    changed = true;
+  }
+  if (!Array.isArray(stageHistoryTree[currentBranchId])) {
+    stageHistoryTree[currentBranchId] = [];
+    changed = true;
+  }
+  return {
+    plan: {
+      ...plan,
+      currentBranchId,
+      branches,
+      checkpoints,
+      dreams,
+      verifierHistory,
+      graphEdges,
+      stageHistoryTree,
+    },
+    changed,
+  };
+}
+
+function pushGraphEdge(
+  plan: TaskPlan,
+  edge: Omit<TaskPlanGraphEdge, "edgeId"> & { edgeId?: string },
+): TaskPlan {
+  const runtime = ensureTaskPlanRuntime(plan).plan;
+  const edges = Array.isArray(runtime.graphEdges) ? [...runtime.graphEdges] : [];
+  edges.push({
+    edgeId: edge.edgeId ?? createGraphEdgeId(edge.at),
+    ...edge,
+  });
+  return {
+    ...runtime,
+    graphEdges: edges,
+    updatedAt: edge.at,
+  };
+}
+
+function appendCheckpoint(
+  plan: TaskPlan,
+  params: {
+    reason: TransitionAction | "approve" | "verifier";
+    stageId?: string;
+    sourceCheckpointId?: string;
+    taskId?: string;
+    now?: number;
+  },
+): TaskPlan {
+  const runtime = ensureTaskPlanRuntime(plan).plan;
+  const now = params.now ?? Date.now();
+  const checkpoints = Array.isArray(runtime.checkpoints) ? [...runtime.checkpoints] : [];
+  const checkpointId = createCheckpointId(now);
+  const currentBranchId = runtime.currentBranchId ?? "main";
+  const phase = normalizePlanPhase(runtime.phase);
+  const previousCheckpointId =
+    checkpoints.length > 0 ? checkpoints[checkpoints.length - 1]?.checkpointId : undefined;
+  const nextCheckpoint = {
+    checkpointId,
+    taskId: params.taskId ?? "task_plan",
+    stageId: params.stageId ?? phase,
+    branchId: currentBranchId,
+    reason: params.reason,
+    previousCheckpointId,
+    sourceCheckpointId: params.sourceCheckpointId,
+    createdAt: now,
+    snapshot: {
+      description: runtime.description,
+      phase,
+      todos: cloneTodoList(runtime.todos),
+    },
+  };
+  checkpoints.push(nextCheckpoint);
+  const stageHistoryTree = {
+    ...runtime.stageHistoryTree,
+  };
+  const history = Array.isArray(stageHistoryTree[currentBranchId])
+    ? [...stageHistoryTree[currentBranchId]]
+    : [];
+  history.push(`${phase}:${checkpointId}`);
+  stageHistoryTree[currentBranchId] = history;
+  let next: TaskPlan = {
+    ...runtime,
+    checkpoints,
+    stageHistoryTree,
+    updatedAt: now,
+  };
+  next = pushGraphEdge(next, {
+    from: `task:${nextCheckpoint.taskId}`,
+    to: `stage:${nextCheckpoint.stageId}`,
+    relation: "TASK_HAS_STAGE",
+    at: now,
+  });
+  next = pushGraphEdge(next, {
+    from: `stage:${nextCheckpoint.stageId}`,
+    to: `checkpoint:${nextCheckpoint.checkpointId}`,
+    relation: "STAGE_HAS_CHECKPOINT",
+    at: now,
+  });
+  const placeholderTodoIds = new Set(
+    nextCheckpoint.snapshot.todos
+      .filter((todo) => isPlaceholderTodoTitle(todo.title) || isPlaceholderTodoResult(todo.result))
+      .map((todo) => todo.id),
+  );
+  for (const todo of nextCheckpoint.snapshot.todos) {
+    if (!todo?.id || placeholderTodoIds.has(todo.id)) {
+      continue;
+    }
+    next = pushGraphEdge(next, {
+      from: `stage:${nextCheckpoint.stageId}`,
+      to: `todo:${todo.id}`,
+      relation: "STAGE_HAS_TODO",
+      at: now,
+    });
+    const deps = Array.isArray(todo.dependsOn) ? todo.dependsOn.filter(Boolean) : [];
+    for (const depId of deps) {
+      if (placeholderTodoIds.has(depId)) {
+        continue;
+      }
+      next = pushGraphEdge(next, {
+        from: `todo:${depId}`,
+        to: `todo:${todo.id}`,
+        relation: "TODO_BLOCKS_TODO",
+        at: now,
+      });
+    }
+  }
+  return next;
+}
+
+function buildTaskPlanRuntimeSummary(plan: TaskPlan): TaskPlanRuntimeSummary {
+  const runtime = ensureTaskPlanRuntime(plan).plan;
+  const currentBranchId = runtime.currentBranchId ?? "main";
+  const branches = Array.isArray(runtime.branches) ? runtime.branches : [];
+  const checkpoints = Array.isArray(runtime.checkpoints) ? runtime.checkpoints : [];
+  const dreams = Array.isArray(runtime.dreams) ? runtime.dreams : [];
+  const verifierHistory = Array.isArray(runtime.verifierHistory) ? runtime.verifierHistory : [];
+  const latestCheckpoint = checkpoints.length > 0 ? checkpoints[checkpoints.length - 1] : undefined;
+  const latestDream = dreams.length > 0 ? dreams[dreams.length - 1] : undefined;
+  const latestVerifier =
+    verifierHistory.length > 0 ? verifierHistory[verifierHistory.length - 1] : undefined;
+  const currentBranchHistory = runtime.stageHistoryTree?.[currentBranchId];
+  return {
+    currentBranchId,
+    branchesCount: branches.length,
+    checkpointsCount: checkpoints.length,
+    latestCheckpointId: latestCheckpoint?.checkpointId,
+    latestCheckpointAt: latestCheckpoint?.createdAt,
+    latestDreamId: latestDream?.dreamId,
+    latestDreamSummary: latestDream?.summary,
+    latestVerifierStatus: latestVerifier?.status,
+    currentBranchHistoryCount: Array.isArray(currentBranchHistory)
+      ? currentBranchHistory.length
+      : 0,
+  };
+}
+
+function restoreFromCheckpoint(
+  plan: TaskPlan,
+  checkpointId: string,
+  now = Date.now(),
+): TaskPlan | null {
+  const runtime = ensureTaskPlanRuntime(plan).plan;
+  const checkpoints = Array.isArray(runtime.checkpoints) ? runtime.checkpoints : [];
+  const checkpoint = checkpoints.find((item) => item.checkpointId === checkpointId);
+  if (!checkpoint) {
+    return null;
+  }
+  const branchId = checkpoint.branchId || runtime.currentBranchId || "main";
+  const branches = Array.isArray(runtime.branches) ? [...runtime.branches] : [];
+  if (!branches.some((branch) => branch.id === branchId)) {
+    branches.push({ id: branchId, status: "active", createdAt: now });
+  }
+  const stageHistoryTree = {
+    ...runtime.stageHistoryTree,
+  };
+  if (!Array.isArray(stageHistoryTree[branchId])) {
+    stageHistoryTree[branchId] = [];
+  }
+  return {
+    ...runtime,
+    description: checkpoint.snapshot.description,
+    phase: checkpoint.snapshot.phase,
+    todos: cloneTodoList(checkpoint.snapshot.todos),
+    currentBranchId: branchId,
+    branches,
+    stageHistoryTree,
+    updatedAt: now,
   };
 }
 
@@ -907,6 +1274,7 @@ export const taskPlanHandlers: GatewayRequestHandlers = {
           recovery: recovery.broadcastPayload ?? null,
           autopilot: autopilot.statusPayload,
           spawned: autopilot.spawnedPayloads,
+          taskRuntime: buildTaskPlanRuntimeSummary(recovery.nextPlan),
         },
         undefined,
       );
@@ -948,7 +1316,15 @@ export const taskPlanHandlers: GatewayRequestHandlers = {
         chaosScore: params && typeof params.chaosScore === "number" ? params.chaosScore : undefined,
         autopilotEnabled: true,
       });
-      const next = autopilot.nextPlan;
+      const next =
+        transition.changed && transition.to === "execution"
+          ? appendCheckpoint(autopilot.nextPlan, {
+              reason: "approve",
+              stageId: transition.to,
+              taskId: rawKey,
+              now,
+            })
+          : autopilot.nextPlan;
       await saveTaskPlanToDisk(workspaceDir, rawKey, next);
       respond(
         true,
@@ -958,6 +1334,7 @@ export const taskPlanHandlers: GatewayRequestHandlers = {
           executionGraph: autopilot.graph,
           autopilot: autopilot.statusPayload,
           spawned: autopilot.spawnedPayloads,
+          taskRuntime: buildTaskPlanRuntimeSummary(next),
           approvedAt: next.updatedAt,
           phaseTransition: {
             from: transition.from,
@@ -992,6 +1369,513 @@ export const taskPlanHandlers: GatewayRequestHandlers = {
       respond(false, undefined, {
         code: "TASK_PLAN_APPROVE_ERROR",
         message: `failed to approve task plan: ${String(err)}`,
+      });
+    }
+  },
+  "task_plan.transition.apply": async ({ params, respond, context }) => {
+    const rawKey = params && typeof params.sessionKey === "string" ? params.sessionKey.trim() : "";
+    const actionRaw = params && typeof params.action === "string" ? params.action.trim() : "";
+    const action = TRANSITION_ACTIONS.has(actionRaw as TransitionAction)
+      ? (actionRaw as TransitionAction)
+      : null;
+    const checkpointId =
+      params && typeof params.checkpointId === "string" ? params.checkpointId.trim() : "";
+    const requestedBranchId =
+      params && typeof params.branchId === "string" ? params.branchId.trim() : "";
+    if (!rawKey || !action) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_INVALID_REQUEST",
+        message: "sessionKey and valid action are required",
+      });
+      return;
+    }
+    try {
+      const workspaceDir = resolveWorkspaceDir();
+      const existing = await loadTaskPlanFromDisk(workspaceDir, rawKey);
+      if (!existing) {
+        respond(true, { ok: true, plan: null, warning: "PLAN_NOT_FOUND" }, undefined);
+        return;
+      }
+      const { plan: cleaned } = sanitizeTaskPlan(existing);
+      const runtime = ensureTaskPlanRuntime(cleaned).plan;
+      const now = Date.now();
+      let next = runtime;
+      let changed = false;
+      let fromPhase = normalizePlanPhase(runtime.phase);
+      let toPhase = fromPhase;
+      const sourceCheckpointId = checkpointId || undefined;
+
+      if (action === "forward") {
+        const transition = resolveExecutionTransition(runtime.phase);
+        fromPhase = transition.from;
+        toPhase = transition.to;
+        if (transition.changed) {
+          next = {
+            ...runtime,
+            phase: transition.to,
+            updatedAt: now,
+          };
+          changed = true;
+        }
+      } else if (action === "retry") {
+        fromPhase = normalizePlanPhase(runtime.phase);
+        toPhase = fromPhase === "complete" ? "complete" : "execution";
+        if (fromPhase !== "complete" && fromPhase !== "execution") {
+          next = {
+            ...runtime,
+            phase: "execution",
+            updatedAt: now,
+          };
+          changed = true;
+        }
+      } else if (action === "branch") {
+        const nextBranchId = requestedBranchId || createBranchId(now);
+        const branches = Array.isArray(runtime.branches) ? [...runtime.branches] : [];
+        if (!branches.some((branch) => branch.id === nextBranchId)) {
+          branches.push({
+            id: nextBranchId,
+            status: "active",
+            createdAt: now,
+            parentBranchId: runtime.currentBranchId,
+            derivedFromCheckpointId: sourceCheckpointId,
+          });
+        }
+        const stageHistoryTree = { ...runtime.stageHistoryTree };
+        if (!Array.isArray(stageHistoryTree[nextBranchId])) {
+          stageHistoryTree[nextBranchId] = Array.isArray(
+            stageHistoryTree[runtime.currentBranchId ?? "main"],
+          )
+            ? [...(stageHistoryTree[runtime.currentBranchId ?? "main"] as string[])]
+            : [];
+        }
+        next = {
+          ...runtime,
+          branches,
+          currentBranchId: nextBranchId,
+          stageHistoryTree,
+          updatedAt: now,
+        };
+        changed = true;
+      } else if (action === "rollback" || action === "restore") {
+        if (!checkpointId) {
+          respond(false, undefined, {
+            code: "TASK_PLAN_INVALID_REQUEST",
+            message: "checkpointId is required for rollback/restore",
+          });
+          return;
+        }
+        const restored = restoreFromCheckpoint(runtime, checkpointId, now);
+        if (!restored) {
+          respond(false, undefined, {
+            code: "TASK_PLAN_CHECKPOINT_NOT_FOUND",
+            message: `checkpoint not found: ${checkpointId}`,
+          });
+          return;
+        }
+        fromPhase = normalizePlanPhase(runtime.phase);
+        toPhase = normalizePlanPhase(restored.phase);
+        next = restored;
+        changed = true;
+      }
+
+      if (changed) {
+        next = appendCheckpoint(next, {
+          reason: action,
+          stageId: toPhase,
+          sourceCheckpointId,
+          taskId: rawKey,
+          now,
+        });
+        await saveTaskPlanToDisk(workspaceDir, rawKey, next);
+      }
+
+      const graph = buildExecutionGraph(next, now, {
+        enabled: false,
+      });
+      const checkpoints = Array.isArray(next.checkpoints) ? next.checkpoints : [];
+      const latestCheckpointId =
+        checkpoints.length > 0 ? checkpoints[checkpoints.length - 1]?.checkpointId : undefined;
+      const payload = {
+        sessionKey: rawKey,
+        action,
+        changed,
+        phaseTransition: {
+          from: fromPhase,
+          to: toPhase,
+          changed: fromPhase !== toPhase,
+        },
+        currentBranchId: next.currentBranchId,
+        checkpointId: changed ? latestCheckpointId : undefined,
+        at: now,
+      };
+      if (typeof context.broadcast === "function") {
+        context.broadcast("task_plan.stage.changed", payload);
+      }
+      respond(
+        true,
+        {
+          ok: true,
+          plan: next,
+          executionGraph: graph,
+          taskRuntime: buildTaskPlanRuntimeSummary(next),
+          transition: payload,
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_TRANSITION_ERROR",
+        message: `task plan transition failed: ${String(err)}`,
+      });
+    }
+  },
+  "task_plan.checkpoint.restore": async ({ params, respond, context }) => {
+    const rawKey = params && typeof params.sessionKey === "string" ? params.sessionKey.trim() : "";
+    const checkpointId =
+      params && typeof params.checkpointId === "string" ? params.checkpointId.trim() : "";
+    if (!rawKey || !checkpointId) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_INVALID_REQUEST",
+        message: "sessionKey and checkpointId are required",
+      });
+      return;
+    }
+    try {
+      const workspaceDir = resolveWorkspaceDir();
+      const existing = await loadTaskPlanFromDisk(workspaceDir, rawKey);
+      if (!existing) {
+        respond(true, { ok: true, plan: null, warning: "PLAN_NOT_FOUND" }, undefined);
+        return;
+      }
+      const { plan: cleaned } = sanitizeTaskPlan(existing);
+      const now = Date.now();
+      const restored = restoreFromCheckpoint(cleaned, checkpointId, now);
+      if (!restored) {
+        respond(false, undefined, {
+          code: "TASK_PLAN_CHECKPOINT_NOT_FOUND",
+          message: `checkpoint not found: ${checkpointId}`,
+        });
+        return;
+      }
+      const next = appendCheckpoint(restored, {
+        reason: "restore",
+        sourceCheckpointId: checkpointId,
+        stageId: normalizePlanPhase(restored.phase),
+        taskId: rawKey,
+        now,
+      });
+      await saveTaskPlanToDisk(workspaceDir, rawKey, next);
+      const graph = buildExecutionGraph(next, now, {
+        enabled: false,
+      });
+      if (typeof context.broadcast === "function") {
+        context.broadcast("task_plan.checkpoint.restored", {
+          sessionKey: rawKey,
+          checkpointId,
+          branchId: next.currentBranchId,
+          at: now,
+        });
+      }
+      respond(
+        true,
+        {
+          ok: true,
+          plan: next,
+          executionGraph: graph,
+          taskRuntime: buildTaskPlanRuntimeSummary(next),
+          restoredFrom: checkpointId,
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_RESTORE_ERROR",
+        message: `task plan checkpoint restore failed: ${String(err)}`,
+      });
+    }
+  },
+  "task_plan.verifier.report": async ({ params, respond, context }) => {
+    const rawKey = params && typeof params.sessionKey === "string" ? params.sessionKey.trim() : "";
+    const statusRaw = params && typeof params.status === "string" ? params.status.trim() : "";
+    const status: VerifierStatus =
+      statusRaw === "passed" || statusRaw === "failed" || statusRaw === "blocked"
+        ? statusRaw
+        : "pending";
+    if (!rawKey) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_INVALID_REQUEST",
+        message: "sessionKey is required",
+      });
+      return;
+    }
+    try {
+      const workspaceDir = resolveWorkspaceDir();
+      const existing = await loadTaskPlanFromDisk(workspaceDir, rawKey);
+      if (!existing) {
+        respond(true, { ok: true, plan: null, warning: "PLAN_NOT_FOUND" }, undefined);
+        return;
+      }
+      const { plan: cleaned } = sanitizeTaskPlan(existing);
+      const runtime = ensureTaskPlanRuntime(cleaned).plan;
+      const now = Date.now();
+      const stageId =
+        params && typeof params.stageId === "string" && params.stageId.trim().length > 0
+          ? params.stageId.trim()
+          : normalizePlanPhase(runtime.phase);
+      const summary =
+        params && typeof params.summary === "string" && params.summary.trim().length > 0
+          ? params.summary.trim()
+          : `verifier marked ${status}`;
+      const evidence =
+        params && Array.isArray(params.evidence)
+          ? params.evidence.filter(
+              (item): item is string => typeof item === "string" && item.trim().length > 0,
+            )
+          : [];
+      const recommendedAction =
+        params && typeof params.recommendedAction === "string"
+          ? (params.recommendedAction as TaskPlanVerifierRecord["recommendedAction"])
+          : undefined;
+      const verifierRecord: TaskPlanVerifierRecord = {
+        verifierId: createVerifierId(now),
+        taskId: rawKey,
+        stageId,
+        branchId: runtime.currentBranchId ?? "main",
+        status,
+        summary,
+        evidence,
+        recommendedAction,
+        createdAt: now,
+      };
+      let next: TaskPlan = {
+        ...runtime,
+        verifierHistory: [...(runtime.verifierHistory ?? []), verifierRecord],
+        updatedAt: now,
+      };
+      if (status === "passed" && normalizePlanPhase(next.phase) === "execution") {
+        next = {
+          ...next,
+          phase: "verification",
+          updatedAt: now,
+        };
+      }
+      next = pushGraphEdge(next, {
+        from: `verifier:${verifierRecord.verifierId}`,
+        to: `stage:${stageId}`,
+        relation: "VERIFIER_EVALUATES_STAGE",
+        at: now,
+      });
+      if (status === "failed" || status === "blocked") {
+        next = pushGraphEdge(next, {
+          from: `error:${verifierRecord.verifierId}`,
+          to: `stage:${stageId}`,
+          relation: "ERROR_TRIGGERS_ROLLBACK",
+          at: now,
+        });
+      }
+      next = appendCheckpoint(next, {
+        reason: "verifier",
+        stageId,
+        taskId: rawKey,
+        now,
+      });
+      await saveTaskPlanToDisk(workspaceDir, rawKey, next);
+      const payload = {
+        sessionKey: rawKey,
+        verifier: verifierRecord,
+        taskRuntime: buildTaskPlanRuntimeSummary(next),
+        graphEdges: (next.graphEdges ?? []).slice(-80),
+        at: now,
+      };
+      if (typeof context.broadcast === "function") {
+        context.broadcast("task_plan.verifier.result", payload);
+      }
+      respond(
+        true,
+        {
+          ok: true,
+          plan: next,
+          verifier: verifierRecord,
+          taskRuntime: buildTaskPlanRuntimeSummary(next),
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_VERIFIER_ERROR",
+        message: `task plan verifier report failed: ${String(err)}`,
+      });
+    }
+  },
+  "task_plan.dream.distill": async ({ params, respond, context }) => {
+    const rawKey = params && typeof params.sessionKey === "string" ? params.sessionKey.trim() : "";
+    if (!rawKey) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_INVALID_REQUEST",
+        message: "sessionKey is required",
+      });
+      return;
+    }
+    try {
+      const workspaceDir = resolveWorkspaceDir();
+      const existing = await loadTaskPlanFromDisk(workspaceDir, rawKey);
+      if (!existing) {
+        respond(true, { ok: true, plan: null, warning: "PLAN_NOT_FOUND" }, undefined);
+        return;
+      }
+      const { plan: cleaned } = sanitizeTaskPlan(existing);
+      const runtime = ensureTaskPlanRuntime(cleaned).plan;
+      const now = Date.now();
+      const stageId =
+        params && typeof params.stageId === "string" && params.stageId.trim().length > 0
+          ? params.stageId.trim()
+          : normalizePlanPhase(runtime.phase);
+      const branchId =
+        params && typeof params.branchId === "string" && params.branchId.trim().length > 0
+          ? params.branchId.trim()
+          : (runtime.currentBranchId ?? "main");
+      const summary =
+        params && typeof params.summary === "string" && params.summary.trim().length > 0
+          ? params.summary.trim()
+          : `distilled ${stageId} stage`;
+      const keyDecisions =
+        params && Array.isArray(params.keyDecisions)
+          ? params.keyDecisions.filter(
+              (item): item is string => typeof item === "string" && item.trim().length > 0,
+            )
+          : [];
+      const risks =
+        params && Array.isArray(params.risks)
+          ? params.risks.filter(
+              (item): item is string => typeof item === "string" && item.trim().length > 0,
+            )
+          : [];
+      const nextAction =
+        params && typeof params.nextAction === "string" && params.nextAction.trim().length > 0
+          ? params.nextAction.trim()
+          : "continue execution";
+      const anchors =
+        params && Array.isArray(params.anchors)
+          ? params.anchors.filter(
+              (item): item is string => typeof item === "string" && item.trim().length > 0,
+            )
+          : [`stage:${stageId}`, `branch:${branchId}`];
+      const sourceCheckpointIds = Array.isArray(runtime.checkpoints)
+        ? runtime.checkpoints
+            .filter((checkpoint) => checkpoint.branchId === branchId)
+            .slice(-3)
+            .map((checkpoint) => checkpoint.checkpointId)
+        : [];
+      const dream: TaskPlanDream = {
+        dreamId: createDreamId(now),
+        taskId: rawKey,
+        stageId,
+        branchId,
+        summary,
+        keyDecisions,
+        risks,
+        nextAction,
+        anchors,
+        sourceCheckpointIds,
+        createdAt: now,
+      };
+      let next: TaskPlan = {
+        ...runtime,
+        dreams: [...(runtime.dreams ?? []), dream],
+        updatedAt: now,
+      };
+      next = pushGraphEdge(next, {
+        from: `stage:${stageId}`,
+        to: `dream:${dream.dreamId}`,
+        relation: "STAGE_GENERATES_DREAM",
+        at: now,
+      });
+      for (const checkpointId of sourceCheckpointIds) {
+        next = pushGraphEdge(next, {
+          from: `dream:${dream.dreamId}`,
+          to: `checkpoint:${checkpointId}`,
+          relation: "DREAM_SUMMARIZES_CHECKPOINT",
+          at: now,
+        });
+      }
+      await saveTaskPlanToDisk(workspaceDir, rawKey, next);
+      if (typeof context.broadcast === "function") {
+        context.broadcast("task_plan.dream.created", {
+          sessionKey: rawKey,
+          dream,
+          taskRuntime: buildTaskPlanRuntimeSummary(next),
+          graphEdges: (next.graphEdges ?? []).slice(-80),
+          at: now,
+        });
+      }
+      respond(
+        true,
+        {
+          ok: true,
+          plan: next,
+          dream,
+          taskRuntime: buildTaskPlanRuntimeSummary(next),
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_DREAM_ERROR",
+        message: `task plan dream distill failed: ${String(err)}`,
+      });
+    }
+  },
+  "task_plan.graph.query": async ({ params, respond }) => {
+    const rawKey = params && typeof params.sessionKey === "string" ? params.sessionKey.trim() : "";
+    if (!rawKey) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_INVALID_REQUEST",
+        message: "sessionKey is required",
+      });
+      return;
+    }
+    try {
+      const workspaceDir = resolveWorkspaceDir();
+      const existing = await loadTaskPlanFromDisk(workspaceDir, rawKey);
+      if (!existing) {
+        respond(true, { ok: true, edges: [], warning: "PLAN_NOT_FOUND" }, undefined);
+        return;
+      }
+      const { plan } = sanitizeTaskPlan(existing);
+      const runtime = ensureTaskPlanRuntime(plan).plan;
+      const nodeId =
+        params && typeof params.nodeId === "string" && params.nodeId.trim().length > 0
+          ? params.nodeId.trim()
+          : "";
+      const relation =
+        params && typeof params.relation === "string" && params.relation.trim().length > 0
+          ? params.relation.trim()
+          : "";
+      const limit =
+        params && typeof params.limit === "number" && Number.isFinite(params.limit)
+          ? Math.max(1, Math.min(200, Math.floor(params.limit)))
+          : 50;
+      const edges = (runtime.graphEdges ?? []).filter((edge) => {
+        if (nodeId && !edge.from.includes(nodeId) && !edge.to.includes(nodeId)) {
+          return false;
+        }
+        if (relation && edge.relation !== relation) {
+          return false;
+        }
+        return true;
+      });
+      respond(
+        true,
+        {
+          ok: true,
+          edges: edges.slice(-limit),
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(false, undefined, {
+        code: "TASK_PLAN_GRAPH_QUERY_ERROR",
+        message: `task plan graph query failed: ${String(err)}`,
       });
     }
   },
@@ -1053,6 +1937,7 @@ export const taskPlanHandlers: GatewayRequestHandlers = {
           autopilot: autopilot.statusPayload,
           spawned: autopilot.spawnedPayloads,
           recovery: recovery.broadcastPayload ?? null,
+          taskRuntime: buildTaskPlanRuntimeSummary(recovery.nextPlan),
         },
         undefined,
       );

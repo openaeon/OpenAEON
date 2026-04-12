@@ -281,11 +281,16 @@ function isPlaceholderTodoResult(result: string | undefined): boolean {
   );
 }
 
+function isPlaceholderTodo(todo: { title?: string; result?: string }): boolean {
+  return (
+    isPlaceholderTodoTitle(typeof todo.title === "string" ? todo.title : "") ||
+    isPlaceholderTodoResult(typeof todo.result === "string" ? todo.result : undefined)
+  );
+}
+
 function prunePlaceholderTodos(plan: TaskPlan): number {
   const before = plan.todos.length;
-  plan.todos = plan.todos.filter(
-    (todo) => !isPlaceholderTodoTitle(todo.title) && !isPlaceholderTodoResult(todo.result),
-  );
+  plan.todos = plan.todos.filter((todo) => !isPlaceholderTodo(todo));
   return before - plan.todos.length;
 }
 
@@ -347,15 +352,29 @@ function assertValidStatusTransition(from: TodoStatus, to: TodoStatus): void {
   if (from === to) {
     return;
   }
+  const order: Record<TodoStatus, number> = {
+    planned: 0,
+    in_progress: 1,
+    blocked: 1, // blocked is treated like in_progress for ordering
+    done: 2,
+    verified: 3,
+    closed: 4,
+  };
+
   const allowed: Record<TodoStatus, TodoStatus[]> = {
-    planned: ["in_progress", "blocked"],
-    in_progress: ["blocked", "done"],
-    blocked: ["in_progress", "done"],
-    done: ["blocked", "verified"],
+    planned: ["in_progress", "blocked", "done", "verified"],
+    in_progress: ["blocked", "done", "verified"],
+    blocked: ["in_progress", "done", "verified"],
+    done: ["blocked", "verified", "closed"],
     verified: ["blocked", "closed"],
     closed: [],
   };
-  if (!allowed[from].includes(to)) {
+
+  // Allow any forward transition by default, or specific sideway transitions like blocked
+  const isForward = order[to] > order[from];
+  const isExplicitlyAllowed = allowed[from].includes(to);
+
+  if (!isForward && !isExplicitlyAllowed) {
     throw new ToolInputError(`Invalid todo transition: ${from} -> ${to}`);
   }
 }
@@ -372,6 +391,11 @@ function ensureClosureFields(item: TodoItem): void {
     if (!item.result || item.result.trim().length === 0) {
       throw new ToolInputError(`Todo '${label}' missing 'result' for status '${item.status}'`);
     }
+  }
+
+  // Evidence refs are mandatory for verified/closed status unless risk level is low.
+  // We allow 'done' status without evidence refs to enable autonomous progress.
+  if (item.status === "verified" || item.status === "closed") {
     const isLowRisk = item.riskLevel === "low";
     if (!isLowRisk) {
       if (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0) {
@@ -471,11 +495,11 @@ ${evidenceHints || "- (none)"}
   await fs.writeFile(path.join(skillsDir, "SKILL.md"), content, "utf-8");
 }
 
-function sanitizeSessionKey(raw: string): string {
+export function sanitizeSessionKey(raw: string): string {
   return raw.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
-async function loadTaskPlan(params: {
+export async function loadTaskPlan(params: {
   workspaceDir: string;
   targetSessionKey: string;
 }): Promise<TaskPlan> {
@@ -519,7 +543,7 @@ async function loadTaskPlan(params: {
   }
 }
 
-async function saveTaskPlan(params: {
+export async function saveTaskPlan(params: {
   workspaceDir: string;
   targetSessionKey: string;
   plan: TaskPlan;
@@ -550,6 +574,7 @@ export async function updateTaskPlannerTodo(params: {
   verifiedBy?: string;
   closedAt?: number;
   note?: string;
+  skipLock?: boolean;
 }): Promise<{ ok: true; updated: TodoItem } | { ok: false; error: string }> {
   const plannerFile = path.join(
     params.workspaceDir,
@@ -560,8 +585,10 @@ export async function updateTaskPlannerTodo(params: {
 
   let release: (() => Promise<void>) | undefined;
   try {
-    const lock = await acquireSessionWriteLock({ sessionFile: plannerFile, timeoutMs: 15_000 });
-    release = lock.release;
+    if (!params.skipLock) {
+      const lock = await acquireSessionWriteLock({ sessionFile: plannerFile, timeoutMs: 5_000 });
+      release = lock.release;
+    }
 
     const plan = await loadTaskPlan({
       workspaceDir: params.workspaceDir,
@@ -580,6 +607,13 @@ export async function updateTaskPlannerTodo(params: {
     }
 
     if (typeof params.result === "string" && params.result.trim().length > 0) {
+      if (isPlaceholderTodoResult(params.result)) {
+        return {
+          ok: false,
+          error:
+            "Placeholder todo result is not allowed. Provide concrete, verifiable execution output.",
+        };
+      }
       item.result = params.result;
       item.lastProgressAt = now;
     }
@@ -679,7 +713,7 @@ export function createTaskPlannerTool(options?: {
 
       let lockRelease: (() => Promise<void>) | undefined;
       try {
-        const lock = await acquireSessionWriteLock({ sessionFile: plannerFile, timeoutMs: 15000 });
+        const lock = await acquireSessionWriteLock({ sessionFile: plannerFile, timeoutMs: 5_000 });
         lockRelease = lock.release;
 
         const loadPlan = async (): Promise<TaskPlan> =>
@@ -731,11 +765,16 @@ export function createTaskPlannerTool(options?: {
             );
           }
           const plan = await loadPlan();
+          const removed = prunePlaceholderTodos(plan);
+          if (removed > 0) {
+            await savePlan(plan);
+          }
           const currentOrder = TASK_PLAN_PHASE_ORDER[plan.phase];
           const nextOrder = TASK_PLAN_PHASE_ORDER[phaseStr as TaskPlan["phase"]];
+
           if (nextOrder < currentOrder) {
-            throw new ToolInputError(
-              `Invalid phase transition: ${plan.phase} -> ${phaseStr}. Backward transitions are not allowed.`,
+            console.warn(
+              `[TaskPlanner] Allowing backward phase transition: ${plan.phase} -> ${phaseStr} for iterative cycle.`,
             );
           }
           plan.phase = phaseStr as TaskPlan["phase"];
@@ -749,11 +788,9 @@ export function createTaskPlannerTool(options?: {
         if (action === "add_todo") {
           const title = readStringParam(params, "title", { required: true });
           if (isPlaceholderTodoTitle(title)) {
-            return jsonResult({
-              status: "ignored",
-              reason: "placeholder_todo_title",
-              plan,
-            });
+            throw new ToolInputError(
+              "Placeholder todo title is not allowed. Use a concrete, actionable task title.",
+            );
           }
           const now = Date.now();
           const owner =
@@ -807,6 +844,7 @@ export function createTaskPlannerTool(options?: {
             evidenceRefs: readStringArrayParam(params, "evidenceRefs"),
             verifiedBy: readStringParam(params, "verifiedBy"),
             closedAt: readNumberParam(params, "closedAt", { min: 0 }),
+            skipLock: true,
           });
           if (!updateResult.ok) {
             throw new ToolInputError(updateResult.error);

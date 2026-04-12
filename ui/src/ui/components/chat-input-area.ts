@@ -307,6 +307,55 @@ export class ChatInputArea extends LitElement {
       color: var(--muted-color, #94a3b8);
       padding: 0 2px;
     }
+
+    :host-context(.chat[data-visual-mode="professional"]) .chat-compose {
+      background: #161d28;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      box-shadow: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      gap: 8px;
+    }
+
+    :host-context(.chat[data-visual-mode="professional"]) .chat-compose::before {
+      display: none;
+    }
+
+    :host-context(.chat[data-visual-mode="professional"]) textarea {
+      min-height: 36px;
+      color: #e2e8f0;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    :host-context(.chat[data-visual-mode="professional"]) .btn {
+      height: 34px;
+      border-radius: 8px;
+      border-color: rgba(148, 163, 184, 0.28);
+      background: rgba(15, 23, 42, 0.72);
+      color: #cbd5e1;
+      font-size: 12px;
+    }
+
+    :host-context(.chat[data-visual-mode="professional"]) .btn.primary {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.45);
+      color: #e0f2fe;
+    }
+
+    :host-context(.chat[data-visual-density="compact"]) .chat-compose {
+      padding: 8px 10px;
+      gap: 6px;
+    }
+
+    :host-context(.chat[data-visual-density="compact"]) .chat-compose__row {
+      gap: 8px;
+    }
+
+    :host-context(.chat[data-visual-density="compact"]) textarea {
+      font-size: 12px;
+      min-height: 32px;
+    }
   `;
 
   private generateAttachmentId(): string {

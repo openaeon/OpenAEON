@@ -400,56 +400,66 @@ function clampWeight(value: number, fallback: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function resolveCouplingProfile(): CouplingProfile {
+/**
+ * FCA Layer 8: Strategy Flux (Dynamic CouplingVector Engine)
+ * Interpolates between cognitive profiles based on real-time risk, epiphany, and homeostasis.
+ */
+function resolveCouplingProfile(scope?: AeonStateScope): CouplingProfile {
   const cfg = loadConfig();
-  const defaults: Record<CouplingProfile["name"], CouplingProfile> = {
-    conservative: {
-      name: "conservative",
-      cVector: { safety: 0.36, truth: 0.24, latency: 0.12, cost: 0.12, learning: 0.16 },
-      maxLlmCallsPerHour: 24,
-      maxConcurrentPipelines: 1,
-      maxPipelineLatencyMs: 30_000,
-    },
-    balanced: {
-      name: "balanced",
-      cVector: { safety: 0.28, truth: 0.24, latency: 0.17, cost: 0.12, learning: 0.19 },
-      maxLlmCallsPerHour: 48,
-      maxConcurrentPipelines: 2,
-      maxPipelineLatencyMs: 45_000,
-    },
-    aggressive: {
-      name: "aggressive",
-      cVector: { safety: 0.22, truth: 0.2, latency: 0.22, cost: 0.14, learning: 0.22 },
-      maxLlmCallsPerHour: 96,
-      maxConcurrentPipelines: 3,
-      maxPipelineLatencyMs: 60_000,
-    },
+  const state = getAeonEvolutionState(scope);
+
+  const risk = state.selfModification.redlineBreachRisk;
+  const epiphany = state.lastEpiphanyFactor ?? 0.5;
+  const integrity = state.consciousness.selfKernel.identityContinuityScore;
+
+  const anchors: Record<"conservative" | "balanced" | "aggressive", CouplingVector> = {
+    conservative: { safety: 0.36, truth: 0.24, latency: 0.12, cost: 0.12, learning: 0.16 },
+    balanced: { safety: 0.28, truth: 0.24, latency: 0.17, cost: 0.12, learning: 0.19 },
+    aggressive: { safety: 0.22, truth: 0.2, latency: 0.22, cost: 0.14, learning: 0.22 },
   };
-  const policy = cfg.aeon?.policy;
-  const selectedName = policy?.defaultProfile ?? "conservative";
-  const base = defaults[selectedName] ?? defaults.conservative;
-  const custom = policy?.profiles?.[selectedName];
+
+  // Dynamic Interpolation Logic
+  // 1. Safety bias based on risk
+  let safety = anchors.balanced.safety;
+  if (risk > 0.6) {
+    safety = anchors.conservative.safety + (risk - 0.6) * 0.4; // Aggressive safety spike
+  } else if (risk < 0.2) {
+    safety = anchors.aggressive.safety;
+  }
+
+  // 2. Learning bias based on epiphany
+  let learning = anchors.balanced.learning;
+  if (epiphany > 0.85) {
+    learning = anchors.aggressive.learning + (epiphany - 0.85) * 0.3;
+  }
+
+  // 3. Truth/Integrity bias
+  let truth = anchors.balanced.truth;
+  if (integrity < 0.3) {
+    truth = anchors.conservative.truth; // Prioritize truth when integrity is low
+  }
+
+  // Normalize weights
+  const total = safety + truth + learning + 0.25; // 0.25 for latency/cost base
+  const norm = (v: number) => Number((v / total).toFixed(3));
+
+  const finalVector: CouplingVector = {
+    safety: norm(safety),
+    truth: norm(truth),
+    learning: norm(learning),
+    latency: norm(0.15),
+    cost: norm(0.1),
+  };
+
+  const name: CouplingProfile["name"] =
+    risk > 0.5 ? "conservative" : epiphany > 0.8 ? "aggressive" : "balanced";
+
   return {
-    name: selectedName,
-    cVector: {
-      safety: clampWeight(custom?.cVector?.safety ?? base.cVector.safety, base.cVector.safety),
-      truth: clampWeight(custom?.cVector?.truth ?? base.cVector.truth, base.cVector.truth),
-      latency: clampWeight(custom?.cVector?.latency ?? base.cVector.latency, base.cVector.latency),
-      cost: clampWeight(custom?.cVector?.cost ?? base.cVector.cost, base.cVector.cost),
-      learning: clampWeight(
-        custom?.cVector?.learning ?? base.cVector.learning,
-        base.cVector.learning,
-      ),
-    },
-    maxLlmCallsPerHour: Math.max(1, custom?.maxLlmCallsPerHour ?? base.maxLlmCallsPerHour),
-    maxConcurrentPipelines: Math.max(
-      1,
-      custom?.maxConcurrentPipelines ?? base.maxConcurrentPipelines,
-    ),
-    maxPipelineLatencyMs: Math.max(
-      5_000,
-      custom?.maxPipelineLatencyMs ?? base.maxPipelineLatencyMs,
-    ),
+    name,
+    cVector: finalVector,
+    maxLlmCallsPerHour: name === "aggressive" ? 96 : name === "balanced" ? 48 : 24,
+    maxConcurrentPipelines: name === "aggressive" ? 3 : name === "balanced" ? 2 : 1,
+    maxPipelineLatencyMs: name === "aggressive" ? 60_000 : name === "balanced" ? 45_000 : 30_000,
   };
 }
 
@@ -629,7 +639,7 @@ async function runAeonMaintenance(
         (entry) => entry.confidence >= 0.78 && entry.impactScope >= 2,
       );
       const autospawn = resolveAutospawnPolicy();
-      const couplingProfile = resolveCouplingProfile();
+      const couplingProfile = resolveCouplingProfile(scope);
       const state = getAeonEvolutionState(scope);
       const nowTs = Date.now();
       updateAeonAutospawnTelemetry(

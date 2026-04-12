@@ -56,7 +56,23 @@ import {
   type FallbackStatus,
 } from "./app-tool-stream.ts";
 import type { AppViewState } from "./app-view-state.ts";
+import type { TaskPlanConfirmDialog } from "./app-view-state.ts";
 import { type AeonState, loadAeonLogic } from "./controllers/aeon.ts";
+import {
+  dispatchCognitiveTask,
+  loadCognitiveTask,
+  queryCognitiveMemory,
+  formatCognitiveSourceLineSidebar,
+  readCognitiveSourceContext,
+  reflectCognitiveTask,
+  replayCognitiveTask,
+  runCognitiveDream,
+  selectCognitiveTask,
+  submitCognitiveTask,
+  transitionCognitiveTask,
+  type CognitiveLongTermEntry,
+} from "./controllers/cognitive.ts";
+import { formatMemoryResultSidebar, formatMemorySourceSidebar } from "./views/cognitive.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
 import type { CronFieldErrors } from "./controllers/cron.ts";
@@ -199,6 +215,25 @@ export class OPENAEONApp extends LitElement {
   @state() execApprovalBusy = false;
   @state() execApprovalError: string | null = null;
   @state() pendingGatewayUrl: string | null = null;
+  @state() taskPlanConfirmDialog: TaskPlanConfirmDialog | null = null;
+  @state() taskPlanGraphEdges: Array<{
+    edgeId: string;
+    from: string;
+    to: string;
+    relation: string;
+    at: number;
+  }> = [];
+  @state() taskPlanGraphLoading = false;
+  @state() taskPlanGraphError: string | null = null;
+  @state() taskPlanGraphNodeId = "";
+  @state() taskPlanGraphRelation = "";
+  @state() taskPlanGraphAutoTrack = true;
+  @state() taskPlanGraphPage = 1;
+  @state() taskPlanGraphPageSize = 15;
+  @state() taskPlanGraphTrail: string[] = [];
+  @state() taskPlanGraphExpandedRelation = "";
+  @state() taskPlanFocusTodoId: string | null = null;
+  private taskPlanConfirmResolver: ((confirmed: boolean) => void) | null = null;
 
   @state() configLoading = false;
   @state() configRaw = "{\n}\n";
@@ -281,6 +316,30 @@ export class OPENAEONApp extends LitElement {
   @state() aeonSystemStatus: AeonStatusResult | null = null;
   @state() aeonThinkingCursor: string | null = null;
   @state() aeonThinkingEvents: import("./types.ts").AeonThinkingStreamEntry[] = [];
+  @state() cognitiveTaskRecord: import("./types.ts").CognitiveTaskRecord | null = null;
+  @state() cognitiveTaskList: import("./types.ts").CognitiveTaskRecord[] = [];
+  @state() cognitiveSelectedTaskId: string | null = null;
+  @state() cognitiveRuntimeEvents: import("./controllers/cognitive.ts").CognitiveTaskEvent[] = [];
+  @state() cognitiveLegacyPlan: unknown | null = null;
+  @state() cognitiveSubmitTitle = "";
+  @state() cognitiveSubmitText = "";
+  @state() cognitiveMemoryQuery = "";
+  @state() cognitiveMemoryTags = "";
+  @state() cognitiveMemoryResults:
+    | import("./controllers/cognitive.ts").CognitiveMemoryQueryResult
+    | null = null;
+  @state() cognitiveReplayRunId: string | null = null;
+  @state() cognitiveReplayEvents: import("./controllers/cognitive.ts").CognitiveTaskEvent[] = [];
+  @state() cognitiveReplayLoading = false;
+  @state() cognitiveLoading = false;
+  @state() cognitiveMemoryLoading = false;
+  @state() cognitiveSourceContext:
+    | import("./controllers/cognitive.ts").CognitiveSourceContext
+    | null = null;
+  @state() cognitiveSourceSelectedLine: number | null = null;
+  @state() cognitiveSelectedMemoryResult:
+    | import("./controllers/cognitive.ts").CognitiveLongTermEntry
+    | null = null;
   @state() aeonEternalMode = this.settings.aeonEternalMode ?? false;
   @state() aeonEternalModeSource: "url" | "session" | "local" | "default" = "default";
   aeonEternalHydratedSessionKey: string | null = null;
@@ -540,12 +599,18 @@ export class OPENAEONApp extends LitElement {
     if (next === "aeon") {
       void this.handleAeonLogicRefresh();
     }
+    if (next === "cognitive") {
+      void this.handleCognitiveRefresh();
+    }
     await setTabInternal(this as any, next);
   }
 
   async refreshActiveTab() {
     if (this.tab === "aeon") {
       void this.handleAeonLogicRefresh();
+    }
+    if (this.tab === "cognitive") {
+      void this.handleCognitiveRefresh();
     }
     await refreshActiveTabInternal(this as any);
   }
@@ -689,6 +754,24 @@ export class OPENAEONApp extends LitElement {
     this.pendingGatewayUrl = null;
   }
 
+  requestTaskPlanConfirmation(dialog: TaskPlanConfirmDialog): Promise<boolean> {
+    if (this.taskPlanConfirmResolver) {
+      this.taskPlanConfirmResolver(false);
+      this.taskPlanConfirmResolver = null;
+    }
+    this.taskPlanConfirmDialog = dialog;
+    return new Promise((resolve) => {
+      this.taskPlanConfirmResolver = resolve;
+    });
+  }
+
+  handleTaskPlanConfirmDecision(confirmed: boolean) {
+    const resolver = this.taskPlanConfirmResolver;
+    this.taskPlanConfirmResolver = null;
+    this.taskPlanConfirmDialog = null;
+    resolver?.(confirmed);
+  }
+
   // Sidebar handlers for tool output viewing
   handleOpenSidebar(content: string) {
     if (this.sidebarCloseTimer != null) {
@@ -752,6 +835,254 @@ export class OPENAEONApp extends LitElement {
 
   async handleAeonLogicRefresh() {
     await loadAeonLogic(this as unknown as AeonState);
+  }
+
+  async handleCognitiveRefresh() {
+    await loadCognitiveTask(this as any);
+  }
+
+  async handleCognitiveSelectTask(taskId: string | null) {
+    this.cognitiveReplayRunId = null;
+    this.cognitiveReplayEvents = [];
+    this.cognitiveSourceContext = null;
+    this.cognitiveSourceSelectedLine = null;
+    this.cognitiveSelectedMemoryResult = null;
+    await selectCognitiveTask(this as any, taskId);
+  }
+
+  async handleCognitiveSubmitTask() {
+    const text = this.cognitiveSubmitText.trim();
+    if (!text) {
+      return;
+    }
+    await submitCognitiveTask(this as any, {
+      title: this.cognitiveSubmitTitle,
+      text,
+    });
+    this.cognitiveSubmitTitle = "";
+    this.cognitiveSubmitText = "";
+  }
+
+  async handleCognitiveTransition(
+    to: "INIT" | "PLAN" | "EXECUTE" | "VERIFY" | "REFLECT" | "DONE" | "FAILED" | "ROLLED_BACK",
+    reason?: string,
+  ) {
+    await transitionCognitiveTask(this as any, to, reason);
+  }
+
+  async handleCognitiveDispatch() {
+    await dispatchCognitiveTask(this as any);
+  }
+
+  async handleCognitiveDream() {
+    await runCognitiveDream(this as any);
+  }
+
+  async handleCognitiveReflect() {
+    const latestEvent = [...this.cognitiveRuntimeEvents].at(-1);
+    const output = latestEvent
+      ? JSON.stringify(latestEvent.payload, null, 2)
+      : (this.cognitiveTaskRecord?.input ?? "");
+    const nodeId =
+      latestEvent && typeof latestEvent.payload["nodeId"] === "string"
+        ? String(latestEvent.payload["nodeId"])
+        : undefined;
+    await reflectCognitiveTask(this as any, {
+      nodeId,
+      output,
+      success: true,
+    });
+  }
+
+  async handleCognitiveMemoryQuery() {
+    const tags = this.cognitiveMemoryTags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    await queryCognitiveMemory(this as any, {
+      query: this.cognitiveMemoryQuery,
+      tags,
+      limit: 25,
+      maxResults: 6,
+    });
+  }
+
+  async handleCognitiveReplay(runId: string) {
+    this.cognitiveReplayLoading = true;
+    try {
+      const events = await replayCognitiveTask(this as any, runId);
+      if (!events) {
+        return;
+      }
+      this.cognitiveReplayRunId = runId;
+      this.cognitiveReplayEvents =
+        events as import("./controllers/cognitive.ts").CognitiveTaskEvent[];
+    } finally {
+      this.cognitiveReplayLoading = false;
+    }
+  }
+
+  private findTaskPlanTodoByMemoryResult(result: CognitiveLongTermEntry) {
+    const todos = Array.isArray(this.sandboxTaskPlan?.todos) ? this.sandboxTaskPlan.todos : [];
+    const needles = [
+      result.path,
+      result.citation ?? "",
+      result.text,
+      result.path.split(/[\\/]/).pop() ?? "",
+    ]
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    return todos.find((todo) => {
+      const haystack = [
+        todo.id,
+        todo.title,
+        todo.result ?? "",
+        todo.ownerAgent ?? "",
+        ...(Array.isArray(todo.acceptanceCriteria) ? todo.acceptanceCriteria : []),
+      ]
+        .map((value) => String(value).trim().toLowerCase())
+        .filter(Boolean);
+      return needles.some((needle) => haystack.some((field) => field.includes(needle)));
+    });
+  }
+
+  private resolveTodoFocusFromGraphNode(nodeId: string): string | null {
+    const normalized = nodeId.trim();
+    if (!normalized) {
+      return null;
+    }
+    const todos = Array.isArray(this.sandboxTaskPlan?.todos) ? this.sandboxTaskPlan.todos : [];
+    const visibleTodos = todos.filter(
+      (todo) => todo.status !== "done" || !String(todo.result ?? "").includes("placeholder"),
+    );
+    if (normalized.startsWith("todo:")) {
+      const todoId = normalized.slice("todo:".length).trim();
+      if (!todoId) {
+        return null;
+      }
+      return visibleTodos.some((todo) => todo.id === todoId) ? todoId : null;
+    }
+    if (normalized.startsWith("task:")) {
+      const taskId = normalized.slice("task:".length).trim();
+      if (taskId && visibleTodos.some((todo) => todo.id === taskId)) {
+        return taskId;
+      }
+    }
+    if (visibleTodos.some((todo) => todo.id === normalized)) {
+      return normalized;
+    }
+    if (normalized === "stage:planning") {
+      return visibleTodos.find((todo) => todo.status === "todo")?.id ?? null;
+    }
+    if (normalized === "stage:execution") {
+      return (
+        visibleTodos.find((todo) => todo.status === "in_progress")?.id ??
+        visibleTodos.find((todo) => todo.status === "todo")?.id ??
+        null
+      );
+    }
+    if (normalized === "stage:verification") {
+      return visibleTodos.find((todo) => todo.status === "done")?.id ?? null;
+    }
+    return null;
+  }
+
+  private async queryTaskGraph(query: { nodeId?: string; relation?: string }) {
+    if (!this.client || !this.connected || !this.sessionKey) {
+      return [];
+    }
+    const normalizedNodeId = (query.nodeId ?? "").trim();
+    const normalizedRelation = (query.relation ?? "").trim();
+    this.taskPlanGraphLoading = true;
+    this.taskPlanGraphError = null;
+    this.taskPlanGraphNodeId = normalizedNodeId;
+    this.taskPlanGraphRelation = normalizedRelation;
+    this.taskPlanGraphPage = 1;
+    if (normalizedNodeId) {
+      const trail = this.taskPlanGraphTrail.filter((entry) => entry !== normalizedNodeId);
+      this.taskPlanGraphTrail = [...trail, normalizedNodeId].slice(-12);
+    }
+    this.taskPlanFocusTodoId = this.resolveTodoFocusFromGraphNode(normalizedNodeId);
+    try {
+      const res = await this.client.request<{
+        ok?: boolean;
+        edges?: Array<{
+          edgeId: string;
+          from: string;
+          to: string;
+          relation: string;
+          at: number;
+        }>;
+      }>("task_plan.graph.query", {
+        sessionKey: this.sessionKey,
+        nodeId: normalizedNodeId || undefined,
+        relation: normalizedRelation || undefined,
+        limit: 80,
+      });
+      this.taskPlanGraphEdges = Array.isArray(res?.edges) ? res.edges : [];
+      return this.taskPlanGraphEdges;
+    } catch (err) {
+      this.taskPlanGraphError = `Failed to query graph memory: ${String(err)}`;
+      return [];
+    } finally {
+      this.taskPlanGraphLoading = false;
+    }
+  }
+
+  async handleInspectMemoryResult(result: CognitiveLongTermEntry) {
+    this.cognitiveSelectedMemoryResult = result;
+    this.handleOpenSidebar(formatMemoryResultSidebar(result));
+    this.cognitiveSourceContext = null;
+    this.cognitiveSourceSelectedLine = null;
+    try {
+      const source = await readCognitiveSourceContext(this as any, {
+        path: result.path,
+        startLine: result.startLine,
+        endLine: result.endLine,
+        contextLines: 5,
+      });
+      if (!source) {
+        return;
+      }
+      this.cognitiveSourceContext = source;
+      this.cognitiveSourceSelectedLine = result.startLine;
+      this.handleOpenSidebar(formatMemorySourceSidebar(result, source));
+    } catch (err) {
+      this.handleOpenSidebar(
+        `${formatMemoryResultSidebar(result)}\n\n---\n\nFailed to load source context: ${String(err)}`,
+      );
+    }
+  }
+
+  handleSourceLineSelect(lineNo: number) {
+    if (!this.cognitiveSourceContext) {
+      return;
+    }
+    const normalized = Math.max(
+      this.cognitiveSourceContext.contextStartLine,
+      Math.min(this.cognitiveSourceContext.contextEndLine, Math.floor(lineNo)),
+    );
+    this.cognitiveSourceSelectedLine = normalized;
+    if (this.cognitiveSelectedMemoryResult) {
+      this.handleOpenSidebar(
+        formatCognitiveSourceLineSidebar({
+          result: this.cognitiveSelectedMemoryResult,
+          source: this.cognitiveSourceContext,
+          lineNo: normalized,
+        }),
+      );
+    }
+  }
+
+  async handleTraceMemoryResult(result: CognitiveLongTermEntry) {
+    const matchedTodo = this.findTaskPlanTodoByMemoryResult(result);
+    void this.setTab("chat");
+    this.taskPlanGraphExpandedRelation = "";
+    if (matchedTodo) {
+      await this.queryTaskGraph({ nodeId: matchedTodo.id });
+      return;
+    }
+    await this.queryTaskGraph({ nodeId: result.path.trim() });
   }
 
   async handleToggleEternalMode(next: boolean, source: "local" | "url" = "local") {

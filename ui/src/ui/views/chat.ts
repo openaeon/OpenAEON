@@ -44,6 +44,9 @@ import type { TaskPlanSnapshot } from "../views/sandbox.ts";
 
 export type ChatProps = {
   performanceMode?: "performance" | "balanced" | "visual";
+  visualMode?: "professional" | "legacy";
+  visualDensity?: "comfortable" | "compact";
+  sidebarDefault?: "collapsed" | "last-state";
   sessionKey: string;
   onSessionKeyChange: (next: string) => void;
   thinkingLevel: string | null;
@@ -113,6 +116,39 @@ export type ChatProps = {
   onToggleWebSearch?: (enabled: boolean) => void;
   // Plan approval
   onApprovePlan?: () => void;
+  onRetryPlanStage?: () => void;
+  onBranchFromCurrent?: () => void;
+  onSwitchBranch?: (branchId: string) => void;
+  onRollbackToLatestCheckpoint?: () => void;
+  onRestoreCheckpoint?: (checkpointId: string) => void;
+  onVerifierReport?: (status: "passed" | "failed" | "blocked") => void;
+  onDistillDream?: () => void;
+  onQueryTaskGraph?: (query: { nodeId?: string; relation?: string }) => void;
+  onClearTaskGraph?: () => void;
+  onTaskGraphNodeIdChange?: (nodeId: string) => void;
+  onTaskGraphRelationChange?: (relation: string) => void;
+  onTaskGraphAutoTrackChange?: (enabled: boolean) => void;
+  onTaskGraphPageChange?: (page: number) => void;
+  onTaskGraphTrailJump?: (nodeId: string, trailIndex: number) => void;
+  onTaskGraphExpandedRelationChange?: (relation: string) => void;
+  taskPlanGraphEdges?: Array<{
+    edgeId: string;
+    from: string;
+    to: string;
+    relation: string;
+    at: number;
+  }>;
+  taskPlanGraphLoading?: boolean;
+  taskPlanGraphError?: string | null;
+  taskPlanGraphNodeId?: string;
+  taskPlanGraphRelation?: string;
+  taskPlanGraphAutoTrack?: boolean;
+  taskPlanGraphPage?: number;
+  taskPlanGraphPageSize?: number;
+  taskPlanGraphTrail?: string[];
+  taskPlanGraphExpandedRelation?: string;
+  taskPlanFocusTodoId?: string | null;
+  onTaskPlanFocusTodoChange?: (todoId: string | null) => void;
   onRecoverExecution?: () => void;
   onQuickCommand?: (command: ChatQuickCommand) => void;
   // Subagent details for sidebar
@@ -239,6 +275,8 @@ export function renderChat(props: ChatProps) {
     });
 
   return html`
+    ${renderCompactionIndicator(props.compactionStatus)}
+    ${renderFallbackIndicator(props.fallbackStatus)}
     <chat-layout .props=${{ ...props, fractalState, subagentViewModel }}>
       <div slot="messages" style="display: contents;">
         ${
