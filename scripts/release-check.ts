@@ -2,6 +2,7 @@
 
 import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { sparkleBuildFloorsFromShortVersion, type SparkleBuildFloors } from "./sparkle-build.ts";
@@ -38,6 +39,10 @@ function normalizePluginSyncVersion(version: string): string {
 function runPackDry(): PackResult[] {
   const raw = execSync("npm pack --dry-run --json --ignore-scripts", {
     encoding: "utf8",
+    env: {
+      ...process.env,
+      npm_config_cache: process.env.npm_config_cache ?? join(tmpdir(), "openaeon-npm-cache"),
+    },
     stdio: ["ignore", "pipe", "pipe"],
     maxBuffer: 1024 * 1024 * 100,
   });

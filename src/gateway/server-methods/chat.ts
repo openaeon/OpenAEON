@@ -146,6 +146,17 @@ function buildFractalMemoryContext(): string {
 }
 
 function isHighRiskCodeEditIntent(message: string): boolean {
+  // Programmatic subagent messages must never be blocked by the risk gate.
+  // They are dispatched internally and start with known structural markers.
+  const trimmed = message.trimStart();
+  if (
+    trimmed.startsWith("### YOUR TASK") ||
+    trimmed.startsWith("[Subagent Context]") ||
+    trimmed.startsWith("[Subagent Task]:") ||
+    trimmed.startsWith("<task_description>")
+  ) {
+    return false;
+  }
   const text = message.toLowerCase();
   const codeEditSignals = ["modify", "edit", "rewrite", "refactor", "change", "patch", "update"];
   const coreTargets = [

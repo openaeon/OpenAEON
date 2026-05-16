@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/twitch",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "OpenAEON Twitch channel plugin",
   "type": "module",
   "dependencies": {

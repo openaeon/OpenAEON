@@ -1,29 +1,43 @@
 import crypto from "node:crypto";
 import path from "node:path";
 import type {
+  CognitiveRuntimeSummary,
   CognitiveTaskPhase,
   CognitiveTaskStatus,
-  LegacyTaskPlanPhase,
 } from "../contracts/types.js";
 import { withFileLock } from "../../infra/file-lock.js";
 import { decomposeTaskFractally, expandNodeFractally } from "../cognition/fractal-decomposer.js";
 import { CognitionService } from "../cognition/service.js";
+import {
+  evaluateCognitiveInvariants,
+  projectCognitiveState,
+} from "../cognition/invariant-engine.js";
+import { projectCognitiveArchitecture } from "../cognition/system-projection.js";
 import { CognitiveMemoryService } from "../memory/service.js";
-import { publishCognitiveEvent } from "../observability/event-bus.js";
+import {
+  configureCognitiveEventStore,
+  publishCognitiveEvent,
+  queryCognitiveEvents,
+} from "../observability/event-bus.js";
 import { replayRun } from "../observability/replay.js";
 import { dispatchAgentTask } from "../runtime/dispatcher.js";
-import { mapCognitiveToLegacy } from "./phase-mapping.js";
+import { dispatchCognitiveNodeToSubagent } from "../runtime/subagent-runtime-adapter.js";
 import { applyTransition } from "./state-machine.js";
 import { listTaskRecords, readTaskRecord, taskLockFile, writeTaskRecord } from "./store.js";
 import type { CognitiveTaskRecord } from "./types.js";
-import { syncCognitiveToLegacy } from "./legacy-sync.js";
 import { COGNITIVE_POLICY } from "./policy.js";
 import { buildHilbertSortedContext } from "../cognition/context-builder.js";
+import {
+  claimTaskNodes,
+  completeTaskClaim,
+  heartbeatTaskClaim,
+  queueStats,
+  reconcileTaskQueue,
+} from "./queue.js";
 
 function statusFor(phase: CognitiveTaskPhase, reason?: string): CognitiveTaskStatus {
   return {
     phase,
-    legacyPhase: mapCognitiveToLegacy(phase),
     reason,
     updatedAt: Date.now(),
   };
@@ -33,16 +47,33 @@ function taskStoreDir(workspaceDir: string): string {
   return path.join(workspaceDir, ".openaeon", "cognitive", "tasks");
 }
 
+function queueStoreDir(workspaceDir: string): string {
+  return path.join(workspaceDir, ".openaeon", "cognitive", "queue");
+}
+
+const NODE_RETRY_BACKOFF_BASE_MS = 5_000;
+const SUBAGENT_DELEGATION_LEASE_MS = 15 * 60 * 1000;
+
+function metadataNumber(
+  value: Record<string, unknown> | undefined,
+  key: string,
+): number | undefined {
+  const raw = value?.[key];
+  return typeof raw === "number" ? raw : undefined;
+}
+
 export class TaskOrchestrator {
   private readonly cognition: CognitionService;
   private readonly memory: CognitiveMemoryService;
   private pollingTimer?: NodeJS.Timeout;
   private readonly activeTaskIds = new Set<string>();
+  private readonly dispatchOwner = `cognitive-orchestrator-${crypto.randomUUID()}`;
   private globalDispatchCount = 0;
 
   constructor(private readonly workspaceDir: string) {
     this.cognition = new CognitionService();
     this.memory = new CognitiveMemoryService(workspaceDir);
+    configureCognitiveEventStore(workspaceDir);
   }
 
   async bootstrap() {
@@ -54,11 +85,88 @@ export class TaskOrchestrator {
         record.status.phase !== "FAILED" &&
         record.status.phase !== "ROLLED_BACK"
       ) {
-        this.activeTaskIds.add(record.id);
+        // Reset nodes that were in_progress during the previous session
+        const updated = await this.recoverOrphanedNodes(record);
+        this.activeTaskIds.add(updated.id);
       }
     }
     console.info(`[TaskOrchestrator] Resuming ${this.activeTaskIds.size} active tasks.`);
     this.startPolling();
+  }
+
+  private async recoverOrphanedNodes(record: CognitiveTaskRecord): Promise<CognitiveTaskRecord> {
+    let changed = false;
+    const nodes = { ...record.tree.nodes };
+    for (const id of Object.keys(nodes)) {
+      const node = nodes[id];
+      if (node.status === "in_progress") {
+        const leaseExpiresAt = metadataNumber(node.metadata, "leaseExpiresAt");
+        if (
+          node.metadata?.dispatchMode === "subagent" &&
+          leaseExpiresAt &&
+          Date.now() < leaseExpiresAt
+        ) {
+          continue;
+        }
+        console.warn(
+          `[TaskOrchestrator] Task ${record.id}: Resetting orphaned node ${id} (${nodes[id].title}) from in_progress to todo.`,
+        );
+        nodes[id] = { ...nodes[id], status: "todo" as const };
+        changed = true;
+      }
+    }
+    if (!changed) return record;
+
+    const updated: CognitiveTaskRecord = {
+      ...record,
+      tree: { ...record.tree, nodes },
+      updatedAt: Date.now(),
+      version: record.version + 1,
+    };
+    return await this.persistRecord(updated);
+  }
+
+  private executableNodes(record: CognitiveTaskRecord) {
+    const nodes = Object.values(record.tree.nodes);
+    const nonRootNodes = nodes.filter((node) => node.id !== record.tree.rootId);
+    return nonRootNodes.length > 0 ? nonRootNodes : nodes;
+  }
+
+  private executionTerminalState(record: CognitiveTaskRecord): {
+    allTerminal: boolean;
+    hasFailed: boolean;
+  } {
+    const executableNodes = this.executableNodes(record);
+    const allTerminal =
+      executableNodes.length > 0 &&
+      executableNodes.every((node) => node.status === "done" || node.status === "failed");
+    const hasFailed = executableNodes.some((node) => node.status === "failed");
+    return { allTerminal, hasFailed };
+  }
+
+  private async enterExecute(taskId: string, reason: string): Promise<CognitiveTaskRecord> {
+    let current = await this.read(taskId);
+    if (!current) {
+      throw new Error(`task not found: ${taskId}`);
+    }
+    if (current.status.phase === "EXECUTE") {
+      return current;
+    }
+    if (current.status.phase === "INIT") {
+      current = await this.transition({ taskId, to: "PLAN", reason: `${reason}:plan` });
+    }
+    if (current.status.phase === "PLAN") {
+      return await this.transition({ taskId, to: "EXECUTE", reason });
+    }
+    if (
+      current.status.phase === "VERIFY" ||
+      current.status.phase === "REFLECT" ||
+      current.status.phase === "FAILED" ||
+      current.status.phase === "ROLLED_BACK"
+    ) {
+      return await this.transition({ taskId, to: "EXECUTE", reason });
+    }
+    return current;
   }
 
   startPolling() {
@@ -93,15 +201,66 @@ export class TaskOrchestrator {
           continue;
         }
 
+        // ── Phase: EXECUTE ──
+        // Active execution: reconcile stale nodes and dispatch ready ones.
         if (record.status.phase === "EXECUTE") {
-          const readyCount = this.countReadyNodes(record);
-          if (readyCount > 0) {
-            const batchSize = Math.min(readyCount, caps - this.globalDispatchCount, 3);
-            if (batchSize > 0) {
-              this.executeReadyNodes(taskId).catch((err) =>
-                console.error(`[TaskOrchestrator] execution error for ${taskId}: ${err}`),
-              );
-            }
+          await this.reconcileStaleNodes(record);
+          const slots = caps - this.globalDispatchCount;
+          if (slots > 0) {
+            this.executeReadyNodes(taskId).catch((err) =>
+              console.error(`[TaskOrchestrator] execution error for ${taskId}: ${err}`),
+            );
+          }
+          continue;
+        }
+
+        // ── Phase: REFLECT ──
+        // Dream loop: distill learnings and auto-complete.
+        if (record.status.phase === "REFLECT") {
+          this.runDream(taskId).catch((err) =>
+            console.error(`[TaskOrchestrator] dream loop error for ${taskId}: ${err}`),
+          );
+          continue;
+        }
+
+        // ── Phase: INIT / PLAN / VERIFY ──
+        // Aggressive Autopilot: auto-advance to EXECUTE without waiting for user confirmation.
+        // This is the critical fix: tasks previously stalled here waiting for a manual trigger.
+        if (COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.ENABLED) {
+          const phase = record.status.phase;
+          const age = Date.now() - record.updatedAt;
+
+          // First, try the state modeler's recommendation
+          const projection = record.stateProjection;
+          if (
+            projection?.zNext?.recommendedPhase === "EXECUTE" &&
+            projection?.zNext?.invariantReady
+          ) {
+            this.enterExecute(taskId, "autopilot_state_modeler_recommendation").catch((err) =>
+              console.error(`[TaskOrchestrator] Auto-transition error: ${err}`),
+            );
+            continue;
+          }
+
+          // Fallback: if task has been in INIT/PLAN for longer than the deadlock threshold,
+          // force it into EXECUTE regardless. This prevents indefinite stalling.
+          if (
+            (phase === "INIT" || phase === "PLAN" || phase === "VERIFY") &&
+            age > COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.MAX_BLOCK_DURATION_MS
+          ) {
+            const targetPhase = phase === "VERIFY" ? "REFLECT" : "EXECUTE";
+            console.log(
+              `[TaskOrchestrator] Autopilot: forcing ${taskId} from ${phase} → ${targetPhase} (stalled ${Math.round(age / 1000)}s)`,
+            );
+            const reason = `autopilot_force_advance_from_${phase.toLowerCase()}`;
+            const transition =
+              targetPhase === "EXECUTE"
+                ? this.enterExecute(taskId, reason)
+                : this.transition({ taskId, to: targetPhase, reason });
+            transition.catch((err) =>
+              console.error(`[TaskOrchestrator] Forced transition error: ${err}`),
+            );
+            continue;
           }
         }
       } catch (err) {
@@ -110,19 +269,36 @@ export class TaskOrchestrator {
     }
   }
 
-  private countReadyNodes(record: CognitiveTaskRecord): number {
-    let count = 0;
-    const allNodes = Object.values(record.tree.nodes);
-    const todoNodes = allNodes.filter((n) => n.status === "todo");
-    for (const node of todoNodes) {
-      const depsReady = node.dependsOn.every(
-        (depId) => record.tree.nodes[depId]?.status === "done",
-      );
-      if (depsReady) {
-        count += 1;
+  private async reconcileStaleNodes(record: CognitiveTaskRecord): Promise<void> {
+    const now = Date.now();
+    let changed = false;
+    const nodes = { ...record.tree.nodes };
+    for (const id of Object.keys(nodes)) {
+      const node = nodes[id];
+      if (node.status === "in_progress") {
+        const leaseExpiresAt = metadataNumber(node.metadata, "leaseExpiresAt");
+        if (leaseExpiresAt && now < leaseExpiresAt) {
+          continue;
+        }
+        const lastUpdate = metadataNumber(node.metadata, "updatedAt") ?? record.updatedAt;
+        if (now - lastUpdate > COGNITIVE_POLICY.STALE_NODE_THRESHOLD_MS) {
+          console.warn(
+            `[TaskOrchestrator] Task ${record.id}: Node ${id} (${node.title}) is stale. Resetting to todo.`,
+          );
+          nodes[id] = { ...node, status: "todo" as const };
+          changed = true;
+        }
       }
     }
-    return count;
+    if (changed) {
+      const updated: CognitiveTaskRecord = {
+        ...record,
+        tree: { ...record.tree, nodes },
+        updatedAt: Date.now(),
+        version: record.version + 1,
+      };
+      await this.persistRecord(updated);
+    }
   }
 
   private async withLockedRecord<T>(
@@ -136,18 +312,50 @@ export class TaskOrchestrator {
         throw new Error(`task not found: ${taskId}`);
       }
       const { record: updated, result } = await fn(current);
-      await this.persistAndSync(updated);
-      return result;
+      const persisted = await this.persistRecord(updated);
+      return result === updated ? (persisted as T) : result;
     });
   }
 
-  private async persistAndSync(record: CognitiveTaskRecord): Promise<void> {
-    await writeTaskRecord(taskStoreDir(this.workspaceDir), record);
-    try {
-      await syncCognitiveToLegacy(this.workspaceDir, record);
-    } catch (err) {
-      console.warn(`[TaskOrchestrator] Failed to sync to legacy planner: ${err}`);
-    }
+  private async enrichCognitiveRecord(record: CognitiveTaskRecord): Promise<CognitiveTaskRecord> {
+    const strategyHits = await this.memory.queryEvolution({
+      taskId: record.id,
+      tags: ["strategy"],
+      limit: 5,
+    });
+    const stateProjection = projectCognitiveState({
+      taskId: record.id,
+      sessionKey: record.sessionKey,
+      phase: record.status.phase,
+      tree: record.tree,
+      reflections: record.reflections,
+      strategyHits,
+    });
+    const invariantReport = evaluateCognitiveInvariants({
+      taskId: record.id,
+      sessionKey: record.sessionKey,
+      phase: record.status.phase,
+      input: record.input,
+      tree: record.tree,
+      reflections: record.reflections,
+      runIds: record.runIds,
+    });
+    return {
+      ...record,
+      stateProjection,
+      invariantReport,
+      memoryTrace: {
+        shortTermExpiresAt: Date.now() + 30 * 60 * 1000,
+        longTermSources: [],
+        evolutionStrategyHits: strategyHits,
+      },
+    };
+  }
+
+  private async persistRecord(record: CognitiveTaskRecord): Promise<CognitiveTaskRecord> {
+    const enriched = await this.enrichCognitiveRecord(record);
+    await writeTaskRecord(taskStoreDir(this.workspaceDir), enriched);
+    return enriched;
   }
 
   async submit(input: {
@@ -174,7 +382,7 @@ export class TaskOrchestrator {
 
     const lockPath = taskLockFile(taskStoreDir(this.workspaceDir), taskId);
     await withFileLock(lockPath, COGNITIVE_POLICY.LOCK_OPTIONS, async () => {
-      await this.persistAndSync(record);
+      await this.persistRecord(record);
     });
 
     publishCognitiveEvent({
@@ -189,6 +397,12 @@ export class TaskOrchestrator {
     });
 
     this.activeTaskIds.add(taskId);
+
+    // If aggressive autopilot is on, skip the manual PLAN review and go straight to EXECUTE
+    if (COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.ENABLED) {
+      return await this.enterExecute(taskId, "autopilot_immediate_execute_after_submit");
+    }
+
     return await this.transition({ taskId, to: "PLAN", reason: "auto_plan_after_submit" });
   }
 
@@ -204,18 +418,30 @@ export class TaskOrchestrator {
     taskId: string;
     to: CognitiveTaskPhase;
     reason?: string;
-    syncLegacyPhase?: LegacyTaskPlanPhase;
   }): Promise<CognitiveTaskRecord> {
     return await this.withLockedRecord(input.taskId, async (current) => {
-      const nextPhase = applyTransition(current.status.phase, input.to);
-      const legacyPhase = input.syncLegacyPhase ?? mapCognitiveToLegacy(nextPhase);
+      let nextPhase = applyTransition(current.status.phase, input.to);
+      const requestedDoneReport =
+        nextPhase === "DONE"
+          ? evaluateCognitiveInvariants({
+              taskId: current.id,
+              sessionKey: current.sessionKey,
+              phase: nextPhase,
+              input: current.input,
+              tree: current.tree,
+              reflections: current.reflections,
+              runIds: current.runIds,
+            })
+          : null;
+      if (requestedDoneReport?.blocked) {
+        nextPhase = applyTransition(current.status.phase, "FAILED");
+      }
 
       const next: CognitiveTaskRecord = {
         ...current,
         status: {
           phase: nextPhase,
-          legacyPhase,
-          reason: input.reason,
+          reason: requestedDoneReport?.blocked ? "invariant_failure_blocked_done" : input.reason,
           updatedAt: Date.now(),
         },
         version: current.version + 1,
@@ -229,7 +455,8 @@ export class TaskOrchestrator {
         payload: {
           from: current.status.phase,
           to: next.status.phase,
-          legacyPhase: next.status.legacyPhase,
+          requestedTo: input.to,
+          invariantBlocked: requestedDoneReport?.blocked ?? false,
           reason: input.reason,
         },
       });
@@ -239,62 +466,72 @@ export class TaskOrchestrator {
   }
 
   async executeReadyNodes(taskId: string): Promise<CognitiveTaskRecord[]> {
-    const readyNodeIds: string[] = [];
-
     const record = await this.read(taskId);
     if (!record || record.status.phase !== "EXECUTE") {
       return [];
     }
 
-    let gaps: string[] = [];
-    let severity = 0;
-    try {
-      const { diagnoseCognitiveGap } = await import("../../gateway/server-evolution.js");
-      ({ gaps, severity } = diagnoseCognitiveGap({ sessionKey: record.sessionKey }));
-    } catch (error) {
+    const invariantReport = evaluateCognitiveInvariants({
+      taskId: record.id,
+      sessionKey: record.sessionKey,
+      phase: record.status.phase,
+      input: record.input,
+      tree: record.tree,
+      reflections: record.reflections,
+      runIds: record.runIds,
+    });
+    if (invariantReport.blocked) {
       console.warn(
-        `[TaskOrchestrator] Cognitive gap diagnosis unavailable for ${record.sessionKey}: ${String(error)}`,
-      );
-    }
-    if (severity > 0.5) {
-      console.warn(
-        `[TaskOrchestrator] Cognitive Gap Detected: ${gaps.join(", ")} (severity: ${severity}). Triggering Emergency Re-plan.`,
+        `[TaskOrchestrator] Invariant failure detected for ${record.id}. Routing through reflection.`,
       );
       await this.transition({
         taskId,
-        to: "PLAN",
-        reason: `emergency_replan_due_to_gap:${gaps[0]}`,
-        syncLegacyPhase: "planning",
+        to: "REFLECT",
+        reason: "invariant_failure_requires_reflection",
       });
       return [record];
     }
 
-    const allNodes = Object.values(record.tree.nodes);
-    const todoNodes = allNodes.filter((n) => n.status === "todo");
-
-    for (const node of todoNodes) {
-      const depsReady = node.dependsOn.every(
-        (depId) => record.tree.nodes[depId]?.status === "done",
-      );
-      if (depsReady) {
-        readyNodeIds.push(node.id);
-      }
+    await reconcileTaskQueue(queueStoreDir(this.workspaceDir), {
+      taskId,
+      nodes: this.executableNodes(record),
+    });
+    const slots = Math.max(
+      0,
+      COGNITIVE_POLICY.MAX_GLOBAL_CONCURRENT_DISPATCH - this.globalDispatchCount,
+    );
+    if (slots <= 0) {
+      return [record];
     }
 
-    if (readyNodeIds.length === 0) {
-      const allDone = allNodes.every((n) => n.status === "done" || n.status === "failed");
-      if (allDone) {
+    const claims = await claimTaskNodes(queueStoreDir(this.workspaceDir), {
+      taskId,
+      owner: this.dispatchOwner,
+      maxCount: Math.max(1, slots),
+    });
+
+    if (claims.length === 0) {
+      const stats = await queueStats(queueStoreDir(this.workspaceDir), taskId);
+      const terminal = this.executionTerminalState(record);
+      if (stats.pending === 0 && stats.claimed === 0 && terminal.allTerminal) {
         await this.handleExecutionCompletion(taskId);
       }
       return [record];
     }
 
-    const batch = readyNodeIds.slice(0, 3);
-    return await Promise.all(batch.map((nodeId) => this.dispatchNode(taskId, nodeId)));
+    return await Promise.all(
+      claims.map((claim) => this.dispatchNode(taskId, claim.nodeId, claim.key, claim.attempts)),
+    );
   }
 
-  private async dispatchNode(taskId: string, nodeId: string): Promise<CognitiveTaskRecord> {
+  private async dispatchNode(
+    taskId: string,
+    nodeId: string,
+    claimKey: string,
+    claimAttempts: number,
+  ): Promise<CognitiveTaskRecord> {
     const runId = crypto.randomUUID();
+    let heartbeatTimer: NodeJS.Timeout | undefined;
 
     const workingRecord = await this.withLockedRecord(taskId, async (record) => {
       const node = record.tree.nodes[nodeId];
@@ -302,7 +539,16 @@ export class TaskOrchestrator {
         return { record, result: record };
       }
 
-      const updatedNode = { ...node, status: "in_progress" as const };
+      const updatedNode = {
+        ...node,
+        status: "in_progress" as const,
+        metadata: {
+          ...node.metadata,
+          claimKey,
+          claimAttempts,
+          updatedAt: Date.now(),
+        },
+      };
       const updated: CognitiveTaskRecord = {
         ...record,
         tree: {
@@ -322,7 +568,72 @@ export class TaskOrchestrator {
     }
 
     try {
+      heartbeatTimer = setInterval(() => {
+        void heartbeatTaskClaim(queueStoreDir(this.workspaceDir), {
+          key: claimKey,
+          owner: this.dispatchOwner,
+        });
+      }, COGNITIVE_POLICY.NODE_HEARTBEAT_INTERVAL_MS);
+
       const node = workingRecord.tree.nodes[nodeId];
+      const subagentResult = await dispatchCognitiveNodeToSubagent({
+        taskId,
+        nodeId,
+        runId,
+        sessionKey: workingRecord.sessionKey,
+        role: node.ownerRole ?? "DevAgent",
+        title: node.title,
+        prompt: `${node.title}\nAcceptance: ${node.acceptanceCriteria.join("; ")}`,
+        acceptanceCriteria: node.acceptanceCriteria,
+        timeoutMs: Math.max(COGNITIVE_POLICY.DEFAULT_AGENT_TIMEOUT, 600_000),
+      });
+
+      if (subagentResult.accepted) {
+        return await this.withLockedRecord(taskId, async (record) => {
+          const currentNode = record.tree.nodes[nodeId];
+          if (!currentNode) {
+            return { record, result: record };
+          }
+          const nextRecord: CognitiveTaskRecord = {
+            ...record,
+            tree: {
+              ...record.tree,
+              nodes: {
+                ...record.tree.nodes,
+                [nodeId]: {
+                  ...currentNode,
+                  status: "in_progress",
+                  metadata: {
+                    ...currentNode.metadata,
+                    dispatchMode: "subagent",
+                    delegatedAt: Date.now(),
+                    leaseExpiresAt: Date.now() + SUBAGENT_DELEGATION_LEASE_MS,
+                    subagentRunId: subagentResult.runId,
+                    childSessionKey: subagentResult.childSessionKey,
+                    ownerRole: node.ownerRole ?? "DevAgent",
+                  },
+                },
+              },
+            },
+            updatedAt: Date.now(),
+          };
+
+          publishCognitiveEvent({
+            stream: "runtime_delegate",
+            taskId,
+            runId,
+            payload: {
+              nodeId,
+              role: node.ownerRole ?? "DevAgent",
+              subagentRunId: subagentResult.runId,
+              childSessionKey: subagentResult.childSessionKey,
+            },
+          });
+
+          return { record: nextRecord, result: nextRecord };
+        });
+      }
+
       const dispatchResult = await dispatchAgentTask({
         taskId,
         nodeId,
@@ -341,6 +652,16 @@ export class TaskOrchestrator {
       return await this.withLockedRecord(taskId, async (record) => {
         const currentNode = record.tree.nodes[nodeId];
         const updatedNodes = { ...record.tree.nodes };
+        const previousRetryCount =
+          currentNode.metadata && typeof currentNode.metadata.retryCount === "number"
+            ? currentNode.metadata.retryCount
+            : 0;
+        const attemptCount = Math.max(previousRetryCount + 1, claimAttempts);
+        const canRetry = !success && attemptCount < COGNITIVE_POLICY.MAX_RETRIES;
+        const retryDelayMs = Math.min(
+          90_000,
+          NODE_RETRY_BACKOFF_BASE_MS * 2 ** Math.max(0, attemptCount - 1),
+        );
 
         if (shouldDecompose) {
           const subTasks = expandNodeFractally(currentNode, output);
@@ -352,15 +673,29 @@ export class TaskOrchestrator {
             ...currentNode,
             status: "todo",
             children: [...currentNode.children, ...subTaskIds],
-            metadata: { ...currentNode.metadata, decomposed: true },
+            metadata: {
+              ...currentNode.metadata,
+              decomposed: true,
+              retryCount: attemptCount,
+              nextRetryAt: undefined,
+              lastError: undefined,
+              updatedAt: Date.now(),
+            },
           };
         } else {
           updatedNodes[nodeId] = {
             ...currentNode,
-            status: success ? "done" : "failed",
+            status: success ? "done" : canRetry ? "todo" : "failed",
             artifacts: success
               ? [...currentNode.artifacts, `run:${runId}`, `model:${dispatchResult.winner.model}`]
               : currentNode.artifacts,
+            metadata: {
+              ...currentNode.metadata,
+              retryCount: attemptCount,
+              nextRetryAt: canRetry ? Date.now() + retryDelayMs : undefined,
+              lastError: success ? undefined : output || "empty_output",
+              updatedAt: Date.now(),
+            },
           };
         }
 
@@ -389,7 +724,14 @@ export class TaskOrchestrator {
           stream: "runtime_dispatch",
           taskId,
           runId,
-          payload: { nodeId, success, shouldDecompose, winner: dispatchResult.winner },
+          payload: {
+            nodeId,
+            success,
+            shouldDecompose,
+            attemptCount,
+            canRetry,
+            winner: dispatchResult.winner,
+          },
         });
 
         return { record: nextRecord, result: nextRecord };
@@ -400,6 +742,16 @@ export class TaskOrchestrator {
         if (!currentNode) {
           return { record, result: record };
         }
+        const previousRetryCount =
+          currentNode.metadata && typeof currentNode.metadata.retryCount === "number"
+            ? currentNode.metadata.retryCount
+            : 0;
+        const attemptCount = Math.max(previousRetryCount + 1, claimAttempts);
+        const canRetry = attemptCount < COGNITIVE_POLICY.MAX_RETRIES;
+        const retryDelayMs = Math.min(
+          90_000,
+          NODE_RETRY_BACKOFF_BASE_MS * 2 ** Math.max(0, attemptCount - 1),
+        );
 
         const reflected = this.cognition.reflect({
           taskId,
@@ -415,7 +767,17 @@ export class TaskOrchestrator {
             ...record.tree,
             nodes: {
               ...record.tree.nodes,
-              [nodeId]: { ...currentNode, status: "failed" },
+              [nodeId]: {
+                ...currentNode,
+                status: canRetry ? "todo" : "failed",
+                metadata: {
+                  ...currentNode.metadata,
+                  retryCount: attemptCount,
+                  nextRetryAt: canRetry ? Date.now() + retryDelayMs : undefined,
+                  lastError: String(error),
+                  updatedAt: Date.now(),
+                },
+              },
             },
           },
           updatedAt: Date.now(),
@@ -425,12 +787,19 @@ export class TaskOrchestrator {
           stream: "runtime_dispatch_error",
           taskId,
           runId,
-          payload: { nodeId, error: String(error) },
+          payload: { nodeId, error: String(error), attemptCount, canRetry },
         });
 
         return { record: nextRecord, result: nextRecord };
       });
     } finally {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+      }
+      await completeTaskClaim(queueStoreDir(this.workspaceDir), {
+        key: claimKey,
+        owner: this.dispatchOwner,
+      });
       this.globalDispatchCount = Math.max(0, this.globalDispatchCount - 1);
     }
   }
@@ -441,8 +810,8 @@ export class TaskOrchestrator {
       throw new Error(`task not found: ${taskId}`);
     }
 
-    if (record.status.phase === "PLAN") {
-      return await this.transition({ taskId, to: "EXECUTE", reason: "manual_dispatch_from_plan" });
+    if (record.status.phase === "INIT" || record.status.phase === "PLAN") {
+      return await this.enterExecute(taskId, "manual_dispatch_enter_execute");
     }
     if (record.status.phase === "VERIFY") {
       return await this.transition({
@@ -465,6 +834,54 @@ export class TaskOrchestrator {
     }
     return latest;
   }
+  async forceStartNode(taskId: string, nodeId: string): Promise<CognitiveTaskRecord> {
+    const record = await this.read(taskId);
+    if (!record) {
+      throw new Error(`task not found: ${taskId}`);
+    }
+
+    await this.enterExecute(taskId, "force_start_node_requires_execute");
+
+    await this.withLockedRecord(taskId, async (current) => {
+      const node = current.tree.nodes[nodeId];
+      if (!node) {
+        throw new Error(`node not found: ${nodeId}`);
+      }
+      if (node.status === "done") {
+        return { record: current, result: current };
+      }
+      const next: CognitiveTaskRecord = {
+        ...current,
+        tree: {
+          ...current.tree,
+          nodes: {
+            ...current.tree.nodes,
+            [nodeId]: {
+              ...node,
+              status: "todo",
+              metadata: {
+                ...node.metadata,
+                forceStartedAt: Date.now(),
+                nextRetryAt: undefined,
+                leaseExpiresAt: undefined,
+                updatedAt: Date.now(),
+              },
+            },
+          },
+        },
+        updatedAt: Date.now(),
+      };
+      return { record: next, result: next };
+    });
+
+    await this.dispatchNode(taskId, nodeId, `force:${taskId}:${nodeId}:${crypto.randomUUID()}`, 1);
+
+    const latest = await this.read(taskId);
+    if (!latest) {
+      throw new Error(`task not found after force start: ${taskId}`);
+    }
+    return latest;
+  }
 
   async runDream(taskId: string): Promise<CognitiveTaskRecord> {
     const initial = await this.read(taskId);
@@ -478,6 +895,43 @@ export class TaskOrchestrator {
     const ready = await this.read(taskId);
     if (!ready || ready.status.phase !== "REFLECT") {
       throw new Error(`task ${taskId} must be in REFLECT before dream loop`);
+    }
+
+    const terminal = this.executionTerminalState(ready);
+    if (terminal.hasFailed) {
+      const failedNodes = this.executableNodes(ready).filter((node) => node.status === "failed");
+      const exhausted = failedNodes.every(
+        (node) =>
+          (metadataNumber(node.metadata, "retryCount") ?? 0) >= COGNITIVE_POLICY.MAX_RETRIES,
+      );
+      if (!exhausted) {
+        await this.withLockedRecord(taskId, async (record) => {
+          const nodes = { ...record.tree.nodes };
+          for (const node of this.executableNodes(record)) {
+            if (node.status !== "failed") continue;
+            nodes[node.id] = {
+              ...node,
+              status: "todo",
+              metadata: {
+                ...node.metadata,
+                reflectedForRetryAt: Date.now(),
+                nextRetryAt: undefined,
+                updatedAt: Date.now(),
+              },
+            };
+          }
+          return {
+            record: {
+              ...record,
+              tree: { ...record.tree, nodes },
+              updatedAt: Date.now(),
+              version: record.version + 1,
+            },
+            result: record,
+          };
+        });
+        return await this.enterExecute(taskId, "dream_recovered_failed_nodes");
+      }
     }
 
     await this.withLockedRecord(taskId, async (record) => {
@@ -513,6 +967,18 @@ export class TaskOrchestrator {
       return { record: updated, result: updated };
     });
 
+    const afterDream = await this.read(taskId);
+    if (!afterDream) {
+      throw new Error(`task not found after dream loop: ${taskId}`);
+    }
+    if (this.executionTerminalState(afterDream).hasFailed) {
+      return await this.transition({
+        taskId,
+        to: "FAILED",
+        reason: "dream_distillation_failed_nodes_exhausted",
+      });
+    }
+
     return await this.transition({ taskId, to: "DONE", reason: "dream_distillation_completed" });
   }
 
@@ -523,11 +989,7 @@ export class TaskOrchestrator {
     maxDispatchCycles?: number;
   }): Promise<{ task: CognitiveTaskRecord; cycles: number }> {
     const created = await this.submit(input);
-    await this.transition({
-      taskId: created.id,
-      to: "EXECUTE",
-      reason: "demo_enter_execute",
-    });
+    await this.enterExecute(created.id, "demo_enter_execute");
 
     const maxCycles = Math.max(1, Math.min(100, input.maxDispatchCycles ?? 30));
     let cycles = 0;
@@ -569,6 +1031,110 @@ export class TaskOrchestrator {
       to: "REFLECT",
       reason: "enter_reflection_after_verify",
     });
+  }
+
+  async runtimeSummary(taskId: string): Promise<CognitiveRuntimeSummary | null> {
+    const record = await this.read(taskId);
+    if (!record) return null;
+
+    const queue = await queueStats(queueStoreDir(this.workspaceDir), taskId);
+    let totalRetries = 0;
+    let pendingBackoff = 0;
+    let exhausted = 0;
+    let activeDelegations = 0;
+    let overdueDelegations = 0;
+    const now = Date.now();
+
+    for (const node of Object.values(record.tree.nodes)) {
+      const retryCount =
+        node.metadata && typeof node.metadata.retryCount === "number"
+          ? node.metadata.retryCount
+          : 0;
+      if (retryCount > 0) {
+        totalRetries += retryCount;
+      }
+      const nextRetryAt =
+        node.metadata && typeof node.metadata.nextRetryAt === "number"
+          ? node.metadata.nextRetryAt
+          : undefined;
+      if (typeof nextRetryAt === "number" && nextRetryAt > now) {
+        pendingBackoff += 1;
+      }
+      if (node.status === "failed" && retryCount >= COGNITIVE_POLICY.MAX_RETRIES) {
+        exhausted += 1;
+      }
+      if (node.status === "in_progress" && node.metadata?.dispatchMode === "subagent") {
+        activeDelegations += 1;
+        const leaseExpiresAt = metadataNumber(node.metadata, "leaseExpiresAt");
+        if (leaseExpiresAt && leaseExpiresAt <= now) {
+          overdueDelegations += 1;
+        }
+      }
+    }
+
+    const providerState = new Map<
+      string,
+      { lastModel?: string; success: number; failed: number }
+    >();
+    for (const event of queryCognitiveEvents({ taskId, stream: "runtime_dispatch", limit: 100 })) {
+      const winner =
+        event.payload && typeof event.payload === "object"
+          ? (event.payload.winner as { provider?: string; model?: string } | undefined)
+          : undefined;
+      const provider = winner?.provider;
+      if (!provider) continue;
+      const slot = providerState.get(provider) ?? { success: 0, failed: 0 };
+      if (typeof winner.model === "string") {
+        slot.lastModel = winner.model;
+      }
+      if (event.payload.success === true) slot.success += 1;
+      else slot.failed += 1;
+      providerState.set(provider, slot);
+    }
+
+    const dreamEvents = queryCognitiveEvents({ taskId, stream: "dream_loop", limit: 1 });
+    const providers = Array.from(providerState.entries()).map(([provider, state]) => ({
+      provider,
+      ...state,
+    }));
+    const architecture = projectCognitiveArchitecture({
+      phase: record.status.phase,
+      tree: record.tree,
+      stateProjection: record.stateProjection,
+      invariantReport: record.invariantReport,
+      runCount: record.runIds.length,
+      reflectionCount: record.reflections.length,
+      memoryStrategyHits: record.memoryTrace?.evolutionStrategyHits.length ?? 0,
+      providerCount: providers.length,
+    });
+
+    return {
+      phase: record.status.phase,
+      queue,
+      retries: {
+        total: totalRetries,
+        pendingBackoff,
+        exhausted,
+      },
+      delegations: {
+        active: activeDelegations,
+        overdue: overdueDelegations,
+      },
+      checkpoint: {
+        lastRunId: record.runIds[record.runIds.length - 1],
+        runCount: record.runIds.length,
+      },
+      dream: {
+        ready: record.status.phase === "REFLECT",
+        lastDreamAt: dreamEvents.at(-1)?.at,
+      },
+      replayCursor: record.runIds[record.runIds.length - 1] ?? null,
+      providers,
+      invariants: record.invariantReport,
+      stateProjection: record.stateProjection,
+      memoryTrace: record.memoryTrace,
+      architecture,
+    };
   }
 
   replay(taskId: string, runId: string, limit?: number) {

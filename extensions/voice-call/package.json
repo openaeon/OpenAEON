@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/voice-call",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "OpenAEON voice-call plugin",
   "type": "module",
   "dependencies": {

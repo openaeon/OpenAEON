@@ -1,6 +1,34 @@
 import fs from "node:fs";
 import path from "node:path";
 
+function normalizeHeaderVersion(header: string): string | null {
+  const match = /^##\s+\[?([^\]\s]+)\]?/.exec(header);
+  return match?.[1] ?? null;
+}
+
+function extractReleaseNotes(changelog: string, version: string): string {
+  const headers = [...changelog.matchAll(/^##\s+.*$/gm)];
+  const sections: string[] = [];
+
+  for (let index = 0; index < headers.length; index += 1) {
+    const header = headers[index];
+    const headerText = header[0];
+    const headerVersion = normalizeHeaderVersion(headerText);
+    if (headerVersion !== version) {
+      continue;
+    }
+
+    const start = (header.index ?? 0) + headerText.length;
+    const end = headers[index + 1]?.index ?? changelog.length;
+    const section = changelog.slice(start, end).trim();
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  return sections.join("\n\n").trim();
+}
+
 function run() {
   const changelogPath = path.resolve(process.cwd(), "CHANGELOG.md");
   const packageJsonPath = path.resolve(process.cwd(), "package.json");
@@ -14,29 +42,13 @@ function run() {
   const version = packageJson.version;
   const changelog = fs.readFileSync(changelogPath, "utf8");
 
-  // Look for the version header (## 2026.4.10)
-  const escapedVersion = version.replace(/\./g, "\\.");
-  const headerRegex = new RegExp(`^##\\s+${escapedVersion}`, "m");
-  const match = changelog.match(headerRegex);
-
-  if (!match) {
+  const notes = extractReleaseNotes(changelog, version);
+  if (!notes) {
     console.warn(`Version ${version} not found in CHANGELOG.md`);
-    // Output nothing or fallback
     return;
   }
 
-  const startIndex = match.index! + match[0].length;
-  // Look for the next version header (## ) or end of file
-  const nextHeaderRegex = /^##\s+/m;
-  const remaining = changelog.slice(startIndex);
-  const nextMatch = remaining.match(nextHeaderRegex);
-
-  let notes = nextMatch ? remaining.slice(0, nextMatch.index) : remaining;
-  notes = notes.trim();
-
-  if (notes) {
-    process.stdout.write(notes);
-  }
+  process.stdout.write(notes);
 }
 
 run();

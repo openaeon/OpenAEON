@@ -94,8 +94,10 @@ const METHOD_SCOPE_GROUPS: Record<OperatorScope, readonly string[]> = {
     "cognitive.task.list",
     "cognitive.runtime.status",
     "cognitive.task.replay",
+    "cognitive.task.trajectory",
     "cognitive.memory.query",
     "cognitive.source.read",
+    "aeon.simulate_trace",
   ],
   [WRITE_SCOPE]: [
     "send",
@@ -118,6 +120,7 @@ const METHOD_SCOPE_GROUPS: Record<OperatorScope, readonly string[]> = {
     "cognitive.task.demo.run",
     "cognitive.task.transition",
     "cognitive.runtime.dispatch",
+    "cognitive.runtime.force_start",
     "cognitive.cognition.reflect",
     "cognitive.cognition.dream.run",
     "cognitive.memory.write",

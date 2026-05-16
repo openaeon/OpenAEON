@@ -45,7 +45,7 @@ export const COGNITIVE_POLICY = {
   /**
    * Interval for the background task orchestration loop.
    */
-  POLLING_INTERVAL_MS: 8_000,
+  POLLING_INTERVAL_MS: 4_000,
 
   /**
    * Maximum concurrent node dispatches globally.
@@ -61,4 +61,18 @@ export const COGNITIVE_POLICY = {
    * Heartbeat interval while a claimed node is executing.
    */
   NODE_HEARTBEAT_INTERVAL_MS: 10_000,
+
+  /**
+   * Threshold after which an in_progress node is considered stale and should be reset.
+   */
+  STALE_NODE_THRESHOLD_MS: 90_000,
+
+  /**
+   * Aggressive Autopilot configurations.
+   */
+  AGGRESSIVE_AUTOPILOT: {
+    ENABLED: true,
+    MAX_BLOCK_DURATION_MS: 10000, // 10 seconds of inactivity triggers a breakthrough
+    SPECULATIVE_DISPATCH: true, // Allow parallel pre-warming
+  },
 };

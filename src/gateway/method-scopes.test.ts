@@ -34,6 +34,12 @@ describe("operator scope authorization", () => {
       allowed: false,
       missingScope: "operator.write",
     });
+    expect(
+      authorizeOperatorScopesForMethod("cognitive.runtime.force_start", ["operator.read"]),
+    ).toEqual({
+      allowed: false,
+      missingScope: "operator.write",
+    });
   });
 
   it("requires approvals scope for approval methods", () => {

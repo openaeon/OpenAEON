@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/lobster",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "Lobster workflow tool plugin (typed pipelines + resumable approvals)",
   "type": "module",
   "openaeon": {

@@ -4,6 +4,9 @@ import type {
   AgentDispatchResult,
   ModelProvider,
 } from "../contracts/types.js";
+import crypto from "node:crypto";
+import { runAgentStep } from "../../agents/tools/agent-step.js";
+import { callGateway } from "../../gateway/call.js";
 
 function modelForProvider(provider: ModelProvider): string {
   if (provider === "gpt") return "gpt-5.4";
@@ -16,6 +19,7 @@ function scoreCandidate(params: {
   provider: ModelProvider;
   latencyMs: number;
   prompt: string;
+  role: AgentDispatchRequest["role"];
 }): { score: number; reason: string } {
   const text = params.output.toLowerCase();
   let score = 0.5;
@@ -27,6 +31,21 @@ function scoreCandidate(params: {
   }
   if (params.prompt.toLowerCase().includes("test") && text.includes("test")) {
     score += 0.1;
+  }
+  if (text.includes("acceptance") || text.includes("criteria")) {
+    score += 0.08;
+  }
+  if (text.includes("tool") || text.includes("artifact") || text.includes("evidence")) {
+    score += 0.06;
+  }
+  if (params.role === "QAAgent" && (text.includes("verify") || text.includes("assert"))) {
+    score += 0.05;
+  }
+  if (params.role === "OpsAgent" && (text.includes("deploy") || text.includes("rollback"))) {
+    score += 0.05;
+  }
+  if (params.role === "SalesAgent" && (text.includes("outreach") || text.includes("pipeline"))) {
+    score += 0.05;
   }
   if (params.provider === "gpt") {
     score += 0.06;
@@ -53,17 +72,66 @@ async function runProviderCandidate(
     req.prompt,
   ].join("\n");
 
-  // In a real system, this would call the LLM with augmentedPrompt
-  const output = `[${provider}] task=${req.nodeId} role=${req.role} completed with acceptance-oriented result based on ${req.context?.length || 0} context pieces.`;
+  let output = "";
+  let failed = false;
+  let error: string | undefined;
+
+  try {
+    const sessionKey = `cognitive-router:${provider}:${req.taskId}:${req.nodeId}:${crypto.randomUUID()}`;
+    await callGateway({
+      method: "sessions.patch",
+      params: { key: sessionKey, model: modelForProvider(provider) },
+      timeoutMs: 8_000,
+    });
+    output =
+      (await runAgentStep({
+        sessionKey,
+        message: augmentedPrompt,
+        extraSystemPrompt: `You are executing as ${req.role}. Respond with concrete work output and verification notes.`,
+        timeoutMs: req.timeoutMs,
+        sourceTool: "cognitive.runtime.dispatch",
+      })) ?? "";
+    if (!output) {
+      throw new Error("empty_agent_output");
+    }
+  } catch (err) {
+    failed = true;
+    error = String(err);
+    output = "";
+  }
+
   const latencyMs = Date.now() - startedAt;
-  const scored = scoreCandidate({ output, provider, latencyMs, prompt: augmentedPrompt });
+  const scored = scoreCandidate({
+    output,
+    provider,
+    latencyMs,
+    prompt: augmentedPrompt,
+    role: req.role,
+  });
+  const score = failed ? 0 : scored.score;
   return {
     provider,
     model: modelForProvider(provider),
     output,
-    score: scored.score,
-    reason: scored.reason,
+    score,
+    reason: failed ? "provider_execution_failed" : scored.reason,
     latencyMs,
+    evidence: output ? [`provider:${provider}`, `role:${req.role}`] : [],
+    toolEvents: [],
+    acceptanceMatched:
+      output.length > 0 &&
+      req.prompt
+        .toLowerCase()
+        .split(/acceptance:\s*/)[1]
+        ?.split(";")
+        .some(
+          (criterion) =>
+            criterion.trim().length > 0 &&
+            output.toLowerCase().includes(criterion.trim().toLowerCase()),
+        ),
+    recoverySignal: failed ? "provider_execution_failed" : undefined,
+    failed,
+    error,
   };
 }
 

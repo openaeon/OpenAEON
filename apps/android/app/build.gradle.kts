@@ -21,8 +21,8 @@ android {
         applicationId = "ai.openaeon.android"
         minSdk = 31
         targetSdk = 36
-        versionCode = 2026041090
-        versionName = "2026.4.10"
+        versionCode = 2026051790
+        versionName = "2026.5.17"
         ndk {
             // Support all major ABIs — native libs are tiny (~47 KB per ABI)
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
@@ -107,7 +107,7 @@ ktlint {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2026.02.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.5.17")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 

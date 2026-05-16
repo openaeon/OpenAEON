@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/nextcloud-talk",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "OpenAEON Nextcloud Talk channel plugin",
   "type": "module",
   "openaeon": {

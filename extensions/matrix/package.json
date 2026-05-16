@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/matrix",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "OpenAEON Matrix channel plugin",
   "type": "module",
   "dependencies": {

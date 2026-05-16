@@ -1,6 +1,6 @@
 {
   "name": "openaeon",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "OPENAEON: High-dimensional AI gateway with N-dimensional cognitive traversal",
   "keywords": [
     "aeon",
@@ -129,7 +129,12 @@
     "protocol:gen": "node --import tsx scripts/protocol-gen.ts",
     "protocol:gen:swift": "node --import tsx scripts/protocol-gen-swift.ts",
     "release:check": "node --import tsx scripts/release-check.ts",
-    "release": "pnpm release:check && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release $(node -p \"require('./package.json').version\")\" && git push origin main && git push origin v$(node -p \"require('./package.json').version\")",
+    "release": "pnpm release:check && pnpm pack",
+    "release:github": "pnpm release:check && node --import tsx scripts/release-github.ts --push",
+    "release:github:dry-run": "node --import tsx scripts/release-github.ts --dry-run --allow-dirty",
+    "release:tag": "node --import tsx scripts/release-github.ts",
+    "release:version": "node --import tsx scripts/set-release-version.ts",
+    "release:push": "git push --follow-tags origin HEAD",
     "start": "node scripts/run-node.mjs",
     "test": "node scripts/test-parallel.mjs",
     "test:all": "pnpm lint && pnpm build && pnpm test && pnpm test:e2e && pnpm test:live && pnpm test:docker:all",

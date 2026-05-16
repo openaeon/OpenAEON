@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/memory-lancedb",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "private": true,
   "description": "OpenAEON LanceDB-backed long-term memory plugin with auto-recall/capture",
   "type": "module",

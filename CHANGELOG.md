@@ -2,6 +2,14 @@
 
 Docs: https://docs.openaeon.ai
 
+## 2026.5.17
+
+### Changes
+
+- Cognitive Autopilot: close the full autonomous lifecycle from submit to execution, delegation, writeback, retry, reflection, and recovery, with runtime delegation summary and force-start gateway control.
+- Recursive subagents: allow Cognitive subagents in automatic mode to iterate locally and delegate descendant workers while preserving a single parent writeback owner.
+- Release automation: base release versions on the release date and add a GitHub release tag flow that triggers the existing release workflow and browser relay asset upload.
+
 ## 2026.4.12
 
 ### Changes

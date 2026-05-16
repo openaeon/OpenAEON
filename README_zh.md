@@ -266,8 +266,10 @@ OpenAEON 使用一种被称为 **Dreaming（睡眠模式）** 的复杂闲置演
 ### 7) 分布式 Autopilot 与任务生命周期
 
 - **自主派发 (Autonomous Dispatch)**：具备 Ready 队列自动分发机制，并支持指数级退避重试 (Backoff)。
-- **任务状态机 (v2)**：实现严格的五段闭环 (`planned` → `in_progress` → `done` → `verified` → `closed`)，确保任务收敛可验证。
-- **心跳与看门狗**：实时任务监控，支持停滞任务自动检测 (3m) 与恢复建议提醒。
+- **激进自动驾驶 (Aggressive Autopilot) (新)**：开启后无需人工干预，系统自动完成规划、入队、委派、回写、重试、反思与恢复闭环。[了解更多](docs/features/aggressive-autopilot.md)
+- **递归子代理委派**：Cognitive 子代理可在自动模式中自行迭代并委派下级 worker，同时保持父任务只有一个最终回写 owner。
+- **任务状态机 (v3)**：实现严格闭环 (`INIT` → `PLAN` → `EXECUTE` → `VERIFY` → `REFLECT` → `DONE`)，确保任务收敛可验证。
+- **心跳与看门狗**：实时任务监控，支持过期委派节点回收、过期 claim 释放与重试退避处理。
 - **内存同步抖动 (Jitter)**：引入随机化 Flush 阈值，防止多 Agent 协作时触发同步压缩。
 
 ### 8) QA-Lab 场景化测试系统

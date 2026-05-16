@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { TaskOrchestrator, mapCognitiveToLegacy } from "../../cognitive-os/index.js";
+import { TaskOrchestrator } from "../../cognitive-os/index.js";
 import { CognitiveMemoryService } from "../../cognitive-os/memory/service.js";
 import { CognitionService } from "../../cognitive-os/cognition/service.js";
 import { defaultWorldCapabilities } from "../../cognitive-os/world/capabilities.js";
@@ -9,12 +9,8 @@ import type { CognitiveTaskPhase } from "../../cognitive-os/contracts/types.js";
 import { assertNoPathAliasEscape } from "../../infra/path-alias-guards.js";
 import { isNotFoundPathError } from "../../infra/path-guards.js";
 import { queryCognitiveEvents } from "../../cognitive-os/observability/event-bus.js";
+import { buildCognitiveTrajectory } from "../../cognitive-os/observability/trajectory.js";
 import type { GatewayRequestHandlers } from "./types.js";
-
-function resolvePlannerFile(workspaceDir: string, sessionKey: string): string {
-  const safeKey = sessionKey.replace(/[^a-zA-Z0-9_-]/g, "_");
-  return path.join(workspaceDir, ".openaeon", "planner", `${safeKey}.json`);
-}
 
 async function resolveSourceFilePath(workspaceDir: string, requestPath: string): Promise<string> {
   const raw = requestPath.trim();
@@ -59,18 +55,6 @@ function formatSourceExcerpt(
   return { excerpt, contextStartLine, contextEndLine, lineCount: lines.length };
 }
 
-async function readLegacyTaskPlan(
-  workspaceDir: string,
-  sessionKey: string,
-): Promise<unknown | null> {
-  try {
-    const content = await fs.readFile(resolvePlannerFile(workspaceDir, sessionKey), "utf-8");
-    return JSON.parse(content);
-  } catch {
-    return null;
-  }
-}
-
 const orchestratorCache = new Map<string, TaskOrchestrator>();
 
 async function getOrchestrator(workspaceDir: string): Promise<TaskOrchestrator> {
@@ -89,6 +73,87 @@ async function getOrchestrator(workspaceDir: string): Promise<TaskOrchestrator> 
 async function findTaskBySessionKey(orchestrator: TaskOrchestrator, sessionKey: string) {
   const tasks = await orchestrator.list(200);
   return tasks.find((item) => item.sessionKey === sessionKey) ?? null;
+}
+
+async function buildCognitivePlanSnapshot(
+  orchestrator: TaskOrchestrator,
+  taskId: string,
+): Promise<Record<string, unknown> | null> {
+  const task = await orchestrator.read(taskId);
+  if (!task) return null;
+  const runtime = await orchestrator.runtimeSummary(task.id);
+  const rootId = task.tree.rootId;
+  const nodes = Object.values(task.tree.nodes).filter((node) => node.id !== rootId);
+  const displayPhase =
+    task.status.phase === "INIT" || task.status.phase === "PLAN"
+      ? "planning"
+      : task.status.phase === "EXECUTE"
+        ? "execution"
+        : task.status.phase === "VERIFY" || task.status.phase === "REFLECT"
+          ? "verification"
+          : "complete";
+  const blockedBy: Record<string, string[]> = {};
+  const readyNodeIds: string[] = [];
+  const blockedNodeIds: string[] = [];
+  for (const node of nodes) {
+    const blockers = node.dependsOn.filter((depId) => task.tree.nodes[depId]?.status !== "done");
+    blockedBy[node.id] = blockers;
+    if (node.status === "todo" && blockers.length === 0) readyNodeIds.push(node.id);
+    if (node.status === "todo" && blockers.length > 0) blockedNodeIds.push(node.id);
+  }
+
+  return {
+    taskId: task.id,
+    sessionKey: task.sessionKey,
+    title: task.title,
+    description: task.input,
+    nativePhase: task.status.phase,
+    phase: displayPhase,
+    todos: nodes.map((node) => ({
+      id: node.id,
+      title: node.title,
+      status: node.status === "failed" || node.status === "blocked" ? "todo" : node.status,
+      result: node.artifacts.length > 0 ? node.artifacts.join(", ") : undefined,
+      dependsOn: node.dependsOn,
+      ownerAgent: node.ownerRole,
+      acceptanceCriteria: node.acceptanceCriteria,
+      updatedAt: task.updatedAt,
+      attemptCount:
+        node.metadata && typeof node.metadata.retryCount === "number"
+          ? node.metadata.retryCount
+          : undefined,
+    })),
+    updatedAt: task.updatedAt,
+    stateProjection: runtime?.stateProjection ?? task.stateProjection ?? null,
+    invariants: runtime?.invariants ?? task.invariantReport ?? null,
+    memoryTrace: runtime?.memoryTrace ?? task.memoryTrace ?? null,
+    architecture: runtime?.architecture ?? null,
+    replayCursor: runtime?.replayCursor ?? task.runIds.at(-1) ?? null,
+    taskTree: {
+      rootId,
+      nodes: task.tree.nodes,
+    },
+    executionGraph: {
+      orderedTodoIds: nodes.map((node) => node.id),
+      readyTodoIds: readyNodeIds,
+      blockedTodoIds: blockedNodeIds,
+      inProgressTodoIds: nodes
+        .filter((node) => node.status === "in_progress")
+        .map((node) => node.id),
+      orderedNodeIds: nodes.map((node) => node.id),
+      readyNodeIds,
+      blockedNodeIds,
+      inProgressNodeIds: nodes
+        .filter((node) => node.status === "in_progress")
+        .map((node) => node.id),
+      failedNodeIds: nodes.filter((node) => node.status === "failed").map((node) => node.id),
+      doneNodeIds: nodes.filter((node) => node.status === "done").map((node) => node.id),
+      blockedBy,
+      queue: runtime?.queue ?? { pending: 0, claimed: 0 },
+      retries: runtime?.retries ?? { total: 0, pendingBackoff: 0, exhausted: 0 },
+    },
+    runtime,
+  };
 }
 
 export const cognitiveHandlers: GatewayRequestHandlers = {
@@ -112,7 +177,6 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
         sessionKey,
         taskId: record.id,
         phase: record.status.phase,
-        legacyPhase: record.status.legacyPhase,
         at: Date.now(),
       });
       respond(true, payload, undefined);
@@ -159,7 +223,6 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
 
   "cognitive.task.read": async ({ params, respond, context }) => {
     const taskId = typeof params.taskId === "string" ? params.taskId.trim() : "";
-    const includeLegacyPlan = params.includeLegacyPlan === true;
     if (!taskId) {
       respond(false, undefined, {
         code: "COGNITIVE_TASK_INVALID_REQUEST",
@@ -175,16 +238,18 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
         respond(true, { ok: true, task: null }, undefined);
         return;
       }
-      const legacyPlan = includeLegacyPlan
-        ? await readLegacyTaskPlan(context.workspaceDir, task.sessionKey)
-        : undefined;
+      const runtimeSummary = await orchestrator.runtimeSummary(task.id);
+      const cognitivePlan = await buildCognitivePlanSnapshot(orchestrator, task.id);
       respond(
         true,
         {
           ok: true,
           task,
-          legacyPlan,
+          cognitivePlan,
           runtime: {
+            summary: runtimeSummary,
+            replayCursor:
+              runtimeSummary?.replayCursor ?? task.runIds[task.runIds.length - 1] ?? null,
             events: queryCognitiveEvents({ taskId: task.id, limit: 100 }),
           },
         },
@@ -223,7 +288,6 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
       context.broadcast("cognitive.task.transitioned", {
         taskId,
         phase: task.status.phase,
-        legacyPhase: task.status.legacyPhase,
         at: Date.now(),
       });
       respond(true, { ok: true, task }, undefined);
@@ -251,7 +315,6 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
       context.broadcast("cognitive.runtime.dispatched", {
         taskId,
         phase: task.status.phase,
-        legacyPhase: task.status.legacyPhase,
         updatedAt: task.updatedAt,
       });
       respond(true, { ok: true, task }, undefined);
@@ -262,12 +325,68 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
       });
     }
   },
+  "cognitive.runtime.force_start": async ({ params, respond, context }) => {
+    const taskId = typeof params.taskId === "string" ? params.taskId.trim() : "";
+    const nodeId = typeof params.nodeId === "string" ? params.nodeId.trim() : "";
+    if (!taskId || !nodeId) {
+      respond(false, undefined, {
+        code: "COGNITIVE_RUNTIME_INVALID_REQUEST",
+        message: "taskId and nodeId are required",
+      });
+      return;
+    }
+
+    try {
+      const orchestrator = await getOrchestrator(context.workspaceDir);
+      const task = await orchestrator.forceStartNode(taskId, nodeId);
+      context.broadcast("cognitive.runtime.dispatched", {
+        taskId,
+        nodeId,
+        phase: task.status.phase,
+        mode: "force",
+      });
+      respond(true, { ok: true, task }, undefined);
+    } catch (err) {
+      respond(false, undefined, {
+        code: "COGNITIVE_RUNTIME_FORCE_START_ERROR",
+        message: String(err),
+      });
+    }
+  },
 
   "cognitive.runtime.status": async ({ params, respond, context }) => {
     const taskId = typeof params.taskId === "string" ? params.taskId.trim() : "";
     const runId = typeof params.runId === "string" ? params.runId.trim() : "";
     const orchestrator = await getOrchestrator(context.workspaceDir);
     const task = taskId ? await orchestrator.read(taskId) : null;
+    const summary = task ? await orchestrator.runtimeSummary(task.id) : null;
+    const recentRuntimeEvents = queryCognitiveEvents({
+      taskId: task?.id,
+      stream: "runtime_dispatch",
+      limit: 20,
+    });
+    const providerState = new Map<
+      string,
+      { lastModel?: string; success: number; failed: number }
+    >();
+    for (const event of recentRuntimeEvents) {
+      const winner =
+        event.payload && typeof event.payload === "object"
+          ? (event.payload.winner as { provider?: string; model?: string } | undefined)
+          : undefined;
+      const provider = winner?.provider;
+      if (!provider) continue;
+      const slot = providerState.get(provider) ?? { success: 0, failed: 0 };
+      if (typeof winner?.model === "string") {
+        slot.lastModel = winner.model;
+      }
+      if (event.payload && typeof event.payload.success === "boolean" && event.payload.success) {
+        slot.success += 1;
+      } else {
+        slot.failed += 1;
+      }
+      providerState.set(provider, slot);
+    }
     const phase = task?.status.phase ?? "INIT";
     respond(
       true,
@@ -277,8 +396,20 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
         shortTerm: runId ? getShortTermState(runId) : null,
         health: {
           phase,
-          legacyPhase: task?.status.legacyPhase ?? mapCognitiveToLegacy(phase),
-          providers: ["gpt", "claude", "gemini"],
+          providers:
+            providerState.size > 0
+              ? Array.from(providerState.entries()).map(([provider, state]) => ({
+                  provider,
+                  ...state,
+                }))
+              : ["gpt", "claude", "gemini"].map((provider) => ({
+                  provider,
+                  success: 0,
+                  failed: 0,
+                })),
+          queue: summary?.queue ?? { pending: 0, claimed: 0 },
+          retries: summary?.retries ?? { total: 0, pendingBackoff: 0, exhausted: 0 },
+          delegations: summary?.delegations ?? { active: 0, overdue: 0 },
         },
         capabilities: defaultWorldCapabilities(),
       },
@@ -300,6 +431,34 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
     const orchestrator = await getOrchestrator(context.workspaceDir);
     const events = orchestrator.replay(taskId, runId, limit);
     respond(true, { ok: true, events }, undefined);
+  },
+
+  "cognitive.task.trajectory": async ({ params, respond, context }) => {
+    const taskId = typeof params.taskId === "string" ? params.taskId.trim() : "";
+    const limit = typeof params.limit === "number" ? params.limit : 500;
+    if (!taskId) {
+      respond(false, undefined, {
+        code: "COGNITIVE_TASK_INVALID_REQUEST",
+        message: "taskId is required",
+      });
+      return;
+    }
+    const orchestrator = await getOrchestrator(context.workspaceDir);
+    const task = await orchestrator.read(taskId);
+    if (!task) {
+      respond(true, { ok: true, trajectory: null }, undefined);
+      return;
+    }
+    const events = queryCognitiveEvents({ taskId: task.id, limit }).map((entry) => ({
+      id: entry.id,
+      taskId: entry.taskId,
+      runId: entry.runId,
+      at: entry.at,
+      stream: entry.stream,
+      payload: entry.payload,
+    }));
+    const trajectory = buildCognitiveTrajectory({ task, events });
+    respond(true, { ok: true, trajectory }, undefined);
   },
 
   "cognitive.cognition.reflect": async ({ params, respond, context }) => {

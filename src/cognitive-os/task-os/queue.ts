@@ -116,10 +116,47 @@ export async function reconcileTaskQueue(
 
     for (const node of params.nodes) {
       if (node.status !== "todo") continue;
-      const ready = node.dependsOn.every((depId) => nodeById.get(depId)?.status === "done");
-      if (!ready) continue;
+      const nextRetryAtRaw =
+        node.metadata && typeof node.metadata.nextRetryAt === "number"
+          ? node.metadata.nextRetryAt
+          : undefined;
+      if (typeof nextRetryAtRaw === "number" && nextRetryAtRaw > now) {
+        continue;
+      }
+      const ready = node.dependsOn.every((depId) => {
+        const dep = nodeById.get(depId);
+        if (!dep) return true;
+        if (dep.status === "done") return true;
+
+        // AGGRESSIVE: Speculative dispatch if dependency is in progress
+        if (
+          COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.SPECULATIVE_DISPATCH &&
+          dep.status === "in_progress"
+        ) {
+          return true;
+        }
+
+        // AGGRESSIVE: Deadlock breaking if node has been blocked too long
+        if (COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.ENABLED) {
+          const updatedAt = node.metadata?.updatedAt ?? node.updatedAt ?? 0;
+          if (
+            updatedAt > 0 &&
+            now - updatedAt > COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.MAX_BLOCK_DURATION_MS
+          ) {
+            return true;
+          }
+        }
+
+        return false;
+      });
       const key = entryKey(params.taskId, node.id);
       const existing = state.entries[key];
+      if (!ready) {
+        if (existing?.status === "pending") {
+          delete state.entries[key];
+        }
+        continue;
+      }
       if (!existing) {
         state.entries[key] = {
           key,

@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/tlon",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "description": "OpenAEON Tlon/Urbit channel plugin",
   "type": "module",
   "dependencies": {

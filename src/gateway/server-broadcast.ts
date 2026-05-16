@@ -152,7 +152,6 @@ export function createGatewayBroadcaster(params: {
       return "tool_lane";
     }
     if (
-      event.startsWith("task_plan.") ||
       event.startsWith("exec.approval.") ||
       event.startsWith("node.") ||
       event === "device.pair.requested" ||

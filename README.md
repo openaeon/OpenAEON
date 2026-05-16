@@ -250,8 +250,10 @@ The following capabilities are now implemented in the current OpenAEON stack and
 ### 7) Distributed Autopilot and Task Lifecycle
 
 - **Autonomous Dispatch**: Automated subagent spawning from ready-queue with binary exponential backoff and retry limits.
-- **Task State Machine (v2)**: Strict 5-stage closed-loop (`planned` → `in_progress` → `done` → `verified` → `closed`) for verifiable task convergence.
-- **Heartbeat & Watchdog**: Active task monitoring with automated stale detection (3m) and recovery prompts.
+- **Aggressive Autopilot (New)**: Zero-confirm autonomous execution from PLAN to DONE, including queueing, delegation, writeback, retry, reflection, and recovery loops. [Learn more](docs/features/aggressive-autopilot.md)
+- **Recursive Subagent Delegation**: Cognitive subagents can iterate locally and spawn descendant workers while preserving a single parent writeback owner.
+- **Task State Machine (v3)**: Strict closed-loop lifecycle (`INIT` → `PLAN` → `EXECUTE` → `VERIFY` → `REFLECT` → `DONE`) for verifiable task convergence.
+- **Heartbeat & Watchdog**: Active task monitoring with automated stale delegated-node recovery, expired claim release, and retry backoff handling.
 - **Memory Sync Jitter**: Randomized flush thresholds to prevent synchronized compaction in multi-agent sessions.
 
 ### 8) QA-Lab Scenario System

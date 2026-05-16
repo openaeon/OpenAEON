@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/llm-task",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "private": true,
   "description": "OpenAEON JSON-only LLM task plugin",
   "type": "module",

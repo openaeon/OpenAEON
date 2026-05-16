@@ -1,6 +1,6 @@
 {
   "name": "@openaeon/telegram",
-  "version": "2026.4.10",
+  "version": "2026.5.17",
   "private": true,
   "description": "OpenAEON Telegram channel plugin",
   "type": "module",
