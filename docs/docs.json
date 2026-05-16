@@ -1444,7 +1444,7 @@
               },
               {
                 "group": "核心概念",
-                "pages": ["zh-CN/concepts/features"]
+                "pages": ["zh-CN/concepts/features", "zh-CN/features/aggressive-autopilot"]
               },
               {
                 "group": "第一步",
