@@ -5,52 +5,52 @@ title: "Aggressive Autopilot"
 
 # Aggressive Autopilot
 
-OpenAEON 的 **Aggressive Autopilot** 是一种全自动的任务编排模式，旨在实现“一次输入，全程无忧”的用户体验。它通过消除任务生命周期中的人工确认环节，实现从规划到交付的闭环自动化。
+Aggressive Autopilot is the zero-confirm execution mode for Cognitive Task OS. It is designed for unattended task convergence: once a task is submitted, OpenAEON can plan, execute, delegate, write back, retry, reflect, and recover without waiting for manual approval at each phase.
 
-## 核心特性
+## Core Capabilities
 
-### 1. 零确认启动 (Zero-Confirm Execution)
+### Zero-confirm execution
 
-在传统模式下，系统生成规划（PLAN）后需要用户点击“确认”才能开始执行。
-在 **Aggressive Autopilot** 开启时，系统会在规划生成的瞬间自动切换到 **EXECUTE** 状态，立即分发任务。
+When autopilot is enabled, tasks move from `PLAN` into `EXECUTE` automatically after planning. The runtime uses legal state-machine transitions instead of skipping directly across lifecycle phases.
 
-### 2. 队列自治 (Queue Autonomy)
+### Queue autonomy
 
-Ready 队列会自动过滤阻塞依赖、释放过期 claim、等待未到期的 retry backoff，并在 speculative dispatch 开启时允许依赖仍在执行中的节点提前入队。
+The ready queue filters blocked dependencies, releases expired claims, waits for future `nextRetryAt` backoff windows, and can speculatively enqueue nodes whose dependencies are still `in_progress` when speculative dispatch is enabled.
 
-### 3. 委派回收与重试 (Delegation Recovery)
+### Delegation recovery
 
-子代理 accepted 后节点保持 `in_progress`，运行摘要会显示 active/overdue delegations。超出 lease 的 delegated node 会自动回收为 `todo` 并重新入队；普通失败先按指数 backoff 重试，耗尽后进入 REFLECT 路径。
+Delegated nodes remain `in_progress` after a subagent accepts work. Runtime summaries expose `delegations.active` and `delegations.overdue`, so the UI or API can distinguish work that is still running from work that needs automatic recovery.
 
-### 4. 闭环自动化 (Closed-Loop Completion)
+If a delegated lease expires, OpenAEON recovers the node back to `todo` and re-enqueues it. Ordinary dispatcher and subagent failures retry with exponential backoff before escalating to reflection or final failure.
 
-任务跑完后，系统会自动进入 **VERIFY** 和 **REFLECT** 阶段进行质量检查和知识萃取，并最终自动标记为 **DONE**，无需用户手动关闭。
+### Closed-loop completion
 
-### 5. 递归子代理自治 (Recursive Delegation)
+Once executable nodes are complete, the runtime can advance through `VERIFY`, `REFLECT`, and `DONE`. Root nodes no longer block completion when all executable children have finished; single-node tasks still fall back to the root node.
 
-自动模式中的 Cognitive 子代理可以自行迭代，也可以在深度策略允许时继续委派下级 worker。下级 worker 使用 `parentCognitiveTask` 上下文，避免重复写回父任务；父级子代理仍是唯一最终 writeback owner。
+### Recursive subagent delegation
 
-## 使用方法
+Cognitive subagents can iterate locally and spawn descendant workers when depth policy allows. Descendants receive `parentCognitiveTask` context rather than the parent writeback link, so only the owning subagent writes final results back to the Cognitive Task OS runtime.
 
-### 开启方式
+## Manual Force Start
 
-1. 打开侧边栏的 **Tasks (任务)** 面板。
-2. 将顶部的 **Autopilot** 开关切换至 **ON**。
-3. (可选) 将 **Parallelism (并行度)** 设置为 `4x` 或更高以获得最佳性能。
+Operators can still force a specific node to start when they intentionally want to bypass dependency or backoff checks. The Gateway exposes this through `cognitive.runtime.force_start`, and the runtime dispatches the requested node rather than falling back to a generic ready-queue scan.
 
-### 手动突破 (⚡ Breakthrough)
+Use force start sparingly. It is intended for operator-directed recovery, not for bypassing security, permission, or invariant checks.
 
-如果在极其罕见的情况下自动算法没有及时触发，您可以点击任务旁边的 **⚡** 图标。
+## Runtime Signals
 
-- **作用**：无视一切前置依赖，强制将该任务推入执行队列。
-- **场景**：当您确定某个阻塞是误报，或者急需优先处理某个特定分支时。
+- **Lifecycle**: `INIT` -> `PLAN` -> `EXECUTE` -> `VERIFY` -> `REFLECT` -> `DONE`
+- **Queue**: pending and claimed node counts
+- **Retries**: total retries, pending backoff, and exhausted retries
+- **Delegations**: active and overdue delegated nodes
+- **Checkpoint**: last run id and run count
+- **Replay**: replay cursor for audit and inspection
 
----
+## Related APIs
 
-## 技术实现
-
-- **心跳频率**：4000ms / 周期
-- **委派租约**：超时自动回收 delegated node 并重新入队
-- **单次最大分发**：10 节点
-- **公共摘要**：`delegations.active` / `delegations.overdue`
-- **核心逻辑位置**：`src/cognitive-os/task-os/orchestrator.ts`
+- `cognitive.task.submit`
+- `cognitive.runtime.dispatch`
+- `cognitive.runtime.force_start`
+- `cognitive.runtime.status`
+- `cognitive.task.replay`
+- `cognitive.task.trajectory`
