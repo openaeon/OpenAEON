@@ -39,7 +39,7 @@ Use force start sparingly. It is intended for operator-directed recovery, not fo
 
 ## Runtime Signals
 
-- **Lifecycle**: `INIT` -> `PLAN` -> `EXECUTE` -> `VERIFY` -> `REFLECT` -> `DONE`
+- **Lifecycle**: `INIT` to `PLAN` to `EXECUTE` to `VERIFY` to `REFLECT` to `DONE`
 - **Queue**: pending and claimed node counts
 - **Retries**: total retries, pending backoff, and exhausted retries
 - **Delegations**: active and overdue delegated nodes

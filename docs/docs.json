@@ -61,7 +61,7 @@
     },
     {
       "source": "/cron",
-      "destination": "/cron-jobs"
+      "destination": "/automation/cron-jobs"
     },
     {
       "source": "/minimax",
@@ -513,11 +513,11 @@
     },
     {
       "source": "/model",
-      "destination": "/models"
+      "destination": "/concepts/models"
     },
     {
       "source": "/model/",
-      "destination": "/models"
+      "destination": "/concepts/models"
     },
     {
       "source": "/models",
@@ -853,7 +853,7 @@
               {
                 "group": "Guides",
                 "pages": [
-                  "start/openaeon",
+                  "start/openclaw",
                   "start/wizard-cli-reference",
                   "start/wizard-cli-automation"
                 ]
@@ -1457,7 +1457,7 @@
               },
               {
                 "group": "指南",
-                "pages": ["zh-CN/start/openaeon"]
+                "pages": ["zh-CN/start/openclaw"]
               }
             ]
           },
