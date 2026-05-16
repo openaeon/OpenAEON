@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --import tsx
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 type PackageJson = {
@@ -39,12 +39,20 @@ function readPackageVersion(): string {
   return version;
 }
 
-function extractReleaseNotes(version: string): string {
-  const changelogPath = resolve("CHANGELOG.md");
-  if (!existsSync(changelogPath)) {
-    throw new Error("CHANGELOG.md not found.");
+function readHeadFile(filePath: string): string {
+  return git(["show", `HEAD:${filePath}`]);
+}
+
+function readHeadPackageVersion(): string {
+  const pkg = JSON.parse(readHeadFile("package.json")) as PackageJson;
+  const version = pkg.version?.trim();
+  if (!version) {
+    throw new Error("HEAD:package.json is missing a version.");
   }
-  const changelog = readFileSync(changelogPath, "utf8");
+  return version;
+}
+
+function extractReleaseNotesFromChangelog(changelog: string, version: string): string {
   const headers = [...changelog.matchAll(/^##\s+.*$/gm)];
   const sections: string[] = [];
 
@@ -68,6 +76,18 @@ function extractReleaseNotes(version: string): string {
     throw new Error(`CHANGELOG.md does not contain a release section for ${version}.`);
   }
   return sections.join("\n\n").trim();
+}
+
+function extractReleaseNotes(version: string, source: "worktree" | "head"): string {
+  const changelog =
+    source === "head"
+      ? readHeadFile("CHANGELOG.md")
+      : readFileSync(resolve("CHANGELOG.md"), "utf8");
+  const notes = extractReleaseNotesFromChangelog(changelog, version);
+  if (!notes) {
+    throw new Error(`CHANGELOG.md does not contain a release section for ${version}.`);
+  }
+  return notes;
 }
 
 function ensureCleanWorktree(): void {
@@ -108,14 +128,18 @@ function run(): void {
   const allowDirty = hasArg("--allow-dirty");
   const version = readPackageVersion();
   const tagName = `v${version}`;
-  const notes = extractReleaseNotes(version);
 
-  if (!notes) {
-    throw new Error(`CHANGELOG.md release notes for ${version} are empty.`);
-  }
   if (!allowDirty) {
     ensureCleanWorktree();
+  } else {
+    const headVersion = readHeadPackageVersion();
+    if (headVersion !== version) {
+      throw new Error(
+        `Working tree package version ${version} does not match HEAD package version ${headVersion}. Commit version changes before tagging.`,
+      );
+    }
   }
+  const notes = extractReleaseNotes(version, allowDirty ? "head" : "worktree");
   ensureTagDoesNotExist(tagName);
 
   const head = git(["rev-parse", "--short", "HEAD"]);

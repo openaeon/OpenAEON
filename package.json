@@ -130,7 +130,7 @@
     "protocol:gen:swift": "node --import tsx scripts/protocol-gen-swift.ts",
     "release:check": "node --import tsx scripts/release-check.ts",
     "release": "pnpm release:check && pnpm pack",
-    "release:github": "pnpm release:check && node --import tsx scripts/release-github.ts --push",
+    "release:github": "pnpm release:check && node --import tsx scripts/release-github.ts --push --allow-dirty",
     "release:github:dry-run": "node --import tsx scripts/release-github.ts --dry-run --allow-dirty",
     "release:tag": "node --import tsx scripts/release-github.ts",
     "release:version": "node --import tsx scripts/set-release-version.ts",
