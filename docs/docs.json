@@ -834,7 +834,11 @@
               },
               {
                 "group": "Core concepts",
-                "pages": ["concepts/features", "concepts/principles"]
+                "pages": [
+                  "concepts/features",
+                  "features/aggressive-autopilot",
+                  "concepts/principles"
+                ]
               },
               {
                 "group": "First steps",

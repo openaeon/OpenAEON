@@ -1,4 +1,9 @@
-# Aggressive Autopilot (激进自动驾驶)
+---
+summary: "Aggressive Autopilot runs Cognitive Task OS work from planning through execution, delegation, retry, reflection, and recovery without manual confirmation."
+title: "Aggressive Autopilot"
+---
+
+# Aggressive Autopilot
 
 OpenAEON 的 **Aggressive Autopilot** 是一种全自动的任务编排模式，旨在实现“一次输入，全程无忧”的用户体验。它通过消除任务生命周期中的人工确认环节，实现从规划到交付的闭环自动化。
 

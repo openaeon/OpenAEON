@@ -29,6 +29,9 @@ title: "Features"
   <Card title="FCA Core" icon="brain">
     9-layer fractal cognitive architecture with Peano traversal.
   </Card>
+  <Card title="Aggressive Autopilot" href="/features/aggressive-autopilot" icon="zap">
+    Zero-confirm Cognitive Task OS execution with delegation, retry, reflection, and recovery loops.
+  </Card>
 </Columns>
 
 ## Full list
@@ -50,9 +53,12 @@ title: "Features"
 - iOS node with pairing and Canvas surface
 - Android node with pairing, Canvas, chat, and camera
 - **FCA Core**: Fractal Cognitive Adapter with multi-layer logic mapping
+- **Aggressive Autopilot**: autonomous Cognitive Task OS execution from PLAN to DONE with queueing, delegation, writeback, retry, reflection, and recovery
 - **Peano Traversal**: Locality-preserving cognitive space scanning
 - **Coupling Flux**: Closed-loop strategy auto-tuning via `CouplingVector`
 - **Forensic Simulation**: Foreword and backward thought-trace replay
+
+See [Aggressive Autopilot](/features/aggressive-autopilot) for the full lifecycle.
 
 <Note>
 Legacy Claude, Codex, Gemini, and Opencode paths have been removed. Pi is the only

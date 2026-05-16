@@ -180,6 +180,9 @@ Example:
   <Card title="Full feature list" href="/concepts/features" icon="list">
     Complete channel, routing, and media capabilities.
   </Card>
+  <Card title="Aggressive Autopilot" href="/features/aggressive-autopilot" icon="zap">
+    Zero-confirm Cognitive Task OS execution with delegation, retry, reflection, and recovery.
+  </Card>
   <Card title="Multi-agent routing" href="/concepts/multi-agent" icon="route">
     Workspace isolation and per-agent sessions.
   </Card>
