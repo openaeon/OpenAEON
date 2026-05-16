@@ -7,7 +7,7 @@ import {
   sessionStatusLabel,
 } from "./components/card.ts";
 import { renderAgentRecruitmentModal } from "./components/recruit-modal.ts";
-import { renderTimeline, renderTaskPlanPanel } from "./components/sidebar.ts";
+import { renderTimeline, renderCognitivePlanPanel } from "./components/sidebar.ts";
 import { SandboxProps } from "./types.ts";
 import type { GatewaySessionRow, SandboxChatEvents } from "../../types.ts";
 
@@ -619,7 +619,7 @@ export function renderSandbox(props: SandboxProps) {
 
             <div class="sbx-panel">
               <div class="sbx-panel__title">${ct("sandbox.v2.plan", "Live Task Plan")}</div>
-              ${renderTaskPlanPanel(props.taskPlan, activeSessions)}
+              ${renderCognitivePlanPanel(props.cognitivePlan, activeSessions)}
             </div>
           </aside>
 

@@ -110,7 +110,11 @@ export function normalizeUsage(raw?: UsageLike | null): NormalizedUsage | undefi
   const cacheWrite = asFiniteNumber(
     raw.cacheWrite ?? raw.cache_write ?? raw.cache_creation_input_tokens,
   );
-  const total = asFiniteNumber(raw.total ?? raw.totalTokens ?? raw.total_tokens);
+
+  // Fallback to totalTokens or total_tokens if present, otherwise calculate from parts.
+  const rawTotal = asFiniteNumber(raw.total ?? raw.totalTokens ?? raw.total_tokens);
+  const calculatedTotal = (input ?? 0) + (output ?? 0) + (cacheRead ?? 0) + (cacheWrite ?? 0);
+  const total = rawTotal ?? (calculatedTotal > 0 ? calculatedTotal : undefined);
 
   if (
     input === undefined &&

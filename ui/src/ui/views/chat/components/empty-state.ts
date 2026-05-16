@@ -32,12 +32,12 @@ export function renderEmptyState(props: ChatProps) {
       </div>
 
       <div class="chat-usage-examples">
-        <label>SENTIENT_SUGGESTIONS // 意识建议</label>
+        <label>${t("chat.sentientSuggestions")}</label>
         <div class="example-pill-cloud">
-          <button class="example-pill" @click=${() => props.onDraftChange?.("分析当前项目的自我演化逻辑...")}>分析演化逻辑</button>
-          <button class="example-pill" @click=${() => props.onDraftChange?.("查找代码库中的逻辑悖论并重构...")}>查找悖论</button>
-          <button class="example-pill" @click=${() => props.onDraftChange?.("优化当前的认知熵评分算法...")}>优化算法</button>
-          <button class="example-pill" @click=${() => props.onDraftChange?.("生成下一阶段的奇点跃迁规划...")}>奇点规划</button>
+          <button class="example-pill" @click=${() => props.onDraftChange?.(t("chat.suggestion1Prompt"))}>${t("chat.suggestion1")}</button>
+          <button class="example-pill" @click=${() => props.onDraftChange?.(t("chat.suggestion2Prompt"))}>${t("chat.suggestion2")}</button>
+          <button class="example-pill" @click=${() => props.onDraftChange?.(t("chat.suggestion3Prompt"))}>${t("chat.suggestion3")}</button>
+          <button class="example-pill" @click=${() => props.onDraftChange?.(t("chat.suggestion4Prompt"))}>${t("chat.suggestion4")}</button>
         </div>
       </div>
     </div>

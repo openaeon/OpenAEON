@@ -19,3 +19,10 @@ declare module "fluent-ffmpeg" {
   function ffmpeg(input: string): FfmpegCommand;
   export default ffmpeg;
 }
+
+declare module "silk-wasm" {
+  export function decode(
+    input: Uint8Array | Buffer,
+    sampleRate: number,
+  ): Promise<{ data: Uint8Array; duration: number }>;
+}

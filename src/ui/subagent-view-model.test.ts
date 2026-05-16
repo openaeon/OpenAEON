@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSubagentViewModel,
-  getVisiblePlanTodos,
+  getVisibleCognitivePlanTodos,
 } from "../../ui/src/ui/views/chat/components/subagent-view-model.ts";
 
 describe("subagent view model", () => {
   it("filters placeholder todos once via shared plan cleaner", () => {
-    const todos = getVisiblePlanTodos({
+    const todos = getVisibleCognitivePlanTodos({
       description: "test",
       phase: "execution",
       todos: [
@@ -19,7 +19,7 @@ describe("subagent view model", () => {
 
   it("maps ready/blocked/in_progress/done statuses from execution graph and todo state", () => {
     const vm = buildSubagentViewModel({
-      taskPlan: {
+      cognitivePlan: {
         description: "plan",
         phase: "execution",
         todos: [
@@ -47,7 +47,7 @@ describe("subagent view model", () => {
 
   it("uses event stream as in_progress signal when todo has no explicit running state", () => {
     const vm = buildSubagentViewModel({
-      taskPlan: {
+      cognitivePlan: {
         description: "plan",
         phase: "execution",
         todos: [{ id: "t1", title: "task", status: "todo", ownerAgent: "agent:worker:1" }],
@@ -76,7 +76,7 @@ describe("subagent view model", () => {
 
   it("prefers owner match in owner_first mode over fuzzy subject overlap", () => {
     const vm = buildSubagentViewModel({
-      taskPlan: {
+      cognitivePlan: {
         description: "plan",
         phase: "execution",
         todos: [
@@ -123,7 +123,7 @@ describe("subagent view model", () => {
 
   it("applies used-session penalty to reduce over-binding on one session", () => {
     const vm = buildSubagentViewModel({
-      taskPlan: {
+      cognitivePlan: {
         description: "plan",
         phase: "execution",
         todos: [

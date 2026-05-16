@@ -9,7 +9,7 @@ import type { GatewayHelloOk } from "./gateway.ts";
 import { normalizeBasePath } from "./navigation.ts";
 import type { ChatAttachment, ChatQueueItem } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
-import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadSandboxCognitivePlan } from "./controllers/sandbox.ts";
 
 export type ChatHost = {
   connected: boolean;
@@ -116,18 +116,20 @@ async function sendChatMessageNow(
     previousAttachments?: ChatAttachment[];
     restoreAttachments?: boolean;
     refreshSessions?: boolean;
+    mode?: string;
   },
 ) {
   resetToolStream(host as unknown as Parameters<typeof resetToolStream>[0]);
-  // Lift the task-plan suppression flag for real user messages (not /new responses)
+  // Lift the cognitive-plan suppression flag for real user messages (not /new responses)
   if (!opts?.refreshSessions) {
     const s = host as unknown as Record<string, unknown>;
-    if (s.sandboxTaskPlanSuppressed) {
-      s.sandboxTaskPlanSuppressed = false;
+    if (s.sandboxCognitivePlanSuppressed) {
+      s.sandboxCognitivePlanSuppressed = false;
     }
   }
   const runId = await sendChatMessage(host as unknown as OPENAEONApp, message, opts?.attachments, {
     webSearchEnabled: host.chatWebSearchEnabled,
+    chatMode: opts?.mode ?? "message",
   });
   const ok = Boolean(runId);
   if (!ok && opts?.previousDraft != null) {
@@ -150,7 +152,7 @@ async function sendChatMessageNow(
   }
   scheduleChatScroll(host as unknown as Parameters<typeof scheduleChatScroll>[0]);
   if (ok) {
-    void loadSandboxTaskPlan(host as unknown as OPENAEONApp);
+    void loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
   }
   if (ok && !host.chatRunId) {
     void flushChatQueue(host);
@@ -186,7 +188,7 @@ export function removeQueuedMessage(host: ChatHost, id: string) {
 export async function handleSendChat(
   host: ChatHost,
   messageOverride?: string,
-  opts?: { restoreDraft?: boolean },
+  opts?: { restoreDraft?: boolean; mode?: string },
 ) {
   if (!host.connected) {
     return;
@@ -211,10 +213,11 @@ export async function handleSendChat(
   if (refreshSessions) {
     writeSessionResetMarker(host.sessionKey, Date.now());
     const s = host as unknown as import("./app-view-state.ts").AppViewState;
-    s.sandboxTaskPlan = null;
-    s.sandboxTaskPlanLoading = false;
-    s.sandboxTaskPlanError = null;
-    (s as unknown as { sandboxTaskPlanSuppressed: boolean }).sandboxTaskPlanSuppressed = true;
+    s.sandboxCognitivePlan = null;
+    s.sandboxCognitivePlanLoading = false;
+    s.sandboxCognitivePlanError = null;
+    (s as unknown as { sandboxCognitivePlanSuppressed: boolean }).sandboxCognitivePlanSuppressed =
+      true;
     s.sandboxChatEvents = {};
     s.chatMessages = [];
     s.chatToolMessages = [];
@@ -243,6 +246,7 @@ export async function handleSendChat(
     previousAttachments: messageOverride == null ? attachments : undefined,
     restoreAttachments: Boolean(messageOverride && opts?.restoreDraft),
     refreshSessions,
+    mode: opts?.mode,
   });
 }
 

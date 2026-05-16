@@ -20,6 +20,11 @@ import { loadAgents, loadToolsCatalog } from "./controllers/agents.ts";
 import { loadChannels } from "./controllers/channels.ts";
 import { loadChatHistory } from "./controllers/chat.ts";
 import {
+  dispatchCognitiveTask,
+  forceStartCognitiveNode,
+  submitCognitiveTask,
+} from "./controllers/cognitive.ts";
+import {
   applyConfig,
   loadConfig,
   runUpdate,
@@ -63,7 +68,7 @@ import {
 import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
-import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadSandboxCognitivePlan } from "./controllers/sandbox.ts";
 import { deleteSessionAndRefresh, loadSessions, patchSession } from "./controllers/sessions.ts";
 import {
   installSkill,
@@ -82,7 +87,7 @@ import { renderAeonLogic } from "./views/aeon-logic.ts";
 import { renderAgents } from "./views/agents.ts";
 import { renderChannels } from "./views/channels.ts";
 import { renderChat } from "./views/chat.ts";
-import { isPlaceholderPlanTodo } from "./views/chat/components/subagent-view-model.ts";
+import { isPlaceholderCognitivePlanTodo } from "./views/chat/components/subagent-view-model.ts";
 import { renderCognitiveView } from "./views/cognitive.ts";
 import { renderConfig } from "./views/config.ts";
 import { renderCron } from "./views/cron.ts";
@@ -93,10 +98,10 @@ import { renderInstances } from "./views/instances.ts";
 import { renderLogs } from "./views/logs.ts";
 import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
-import { renderSandbox } from "./views/sandbox.ts";
+import { renderSandbox } from "./views/sandbox/index.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
-import { renderTaskPlanConfirmation } from "./views/task-plan-confirmation.ts";
+import { renderCognitivePlanConfirmation } from "./views/cognitive-plan-confirmation.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -323,9 +328,9 @@ export function renderApp(state: AppViewState) {
     state.chatQueue = [];
     state.resetToolStream();
     state.resetChatScroll();
-    state.sandboxTaskPlan = null;
-    state.sandboxTaskPlanLoading = false;
-    state.sandboxTaskPlanError = null;
+    state.sandboxCognitivePlan = null;
+    state.sandboxCognitivePlanLoading = false;
+    state.sandboxCognitivePlanError = null;
     state.executionWatchdog = {
       active: false,
       degraded: false,
@@ -412,8 +417,9 @@ export function renderApp(state: AppViewState) {
     }
   };
   const handleRecoverExecution = () => {
-    const staleCount = state.sandboxTaskPlan?.executionGraph?.staleTodoIds?.length ?? 0;
-    const longRunningCount = state.sandboxTaskPlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
+    const staleCount = state.sandboxCognitivePlan?.executionGraph?.staleTodoIds?.length ?? 0;
+    const longRunningCount =
+      state.sandboxCognitivePlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
     const recoveryPrompt =
       staleCount > 0 || longRunningCount > 0
         ? `恢复 execution：优先处理 stale(${staleCount}) 与 long-running(${longRunningCount}) 任务，逐步回填进展，禁止回到 planning。`
@@ -427,50 +433,131 @@ export function renderApp(state: AppViewState) {
     state.chatMessage = recoveryPrompt;
     void state.handleSendChat();
   };
-  const applyTaskPlanResponse = (res: {
-    plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-    executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-    taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
+  const applyCognitivePlanResponse = (res: {
+    plan?: import("./views/sandbox/types.ts").CognitivePlanSnapshot | null;
+    executionGraph?: import("./views/sandbox/types.ts").CognitivePlanSnapshot["executionGraph"];
+    taskRuntime?: import("./views/sandbox/types.ts").CognitivePlanSnapshot["taskRuntime"];
   }) => {
     if (!res.plan) {
       return;
     }
-    state.sandboxTaskPlan = {
+    state.sandboxCognitivePlan = {
       ...res.plan,
       executionGraph: res.executionGraph ?? res.plan.executionGraph,
       taskRuntime: res.taskRuntime ?? res.plan.taskRuntime,
     };
+  };
+  const resolveSelectedCognitiveTaskId = async (): Promise<string | null> => {
+    if (!state.client) {
+      return null;
+    }
+    const listRes = await state.client.request<{
+      ok?: boolean;
+      tasks?: Array<{ id: string; sessionKey: string; updatedAt: number }>;
+    }>("cognitive.task.list", { limit: 80 });
+    const tasks = Array.isArray(listRes?.tasks) ? listRes.tasks : [];
+    const selected = tasks
+      .filter((task) => task.sessionKey === state.sessionKey)
+      .toSorted((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))[0];
+    return selected?.id ?? null;
+  };
+  const runAutopilotTick = (maxConcurrent: number) => {
+    void (async () => {
+      if (!state.client || !state.connected) {
+        return;
+      }
+      const nextMax = Math.max(1, Math.min(8, Math.floor(maxConcurrent)));
+      try {
+        const taskId = await resolveSelectedCognitiveTaskId();
+        if (!taskId) {
+          return;
+        }
+        await state.client.request<{ ok?: boolean; task?: unknown }>("cognitive.runtime.dispatch", {
+          taskId,
+        });
+        await loadSandboxCognitivePlan(state as any);
+      } catch (err) {
+        state.lastError = `Failed to update autopilot parallelism: ${String(err)}`;
+      }
+    })();
+  };
+  const handleWorkbenchSend = (message?: string, options?: { mode?: string }) => {
+    if (options?.mode !== "task" && options?.mode !== "dispatch") {
+      return state.handleSendChat(message, options);
+    }
+
+    void (async () => {
+      const text = (message ?? state.chatMessage).trim();
+      if (!text && options.mode === "task") {
+        return;
+      }
+      if (!state.client || !state.connected) {
+        state.lastError = "Cognitive runtime is not connected.";
+        return;
+      }
+
+      try {
+        let taskId = await resolveSelectedCognitiveTaskId();
+        if (options.mode === "task" || !taskId) {
+          if (!text) {
+            state.lastError = "Dispatch needs an existing Cognitive task or a task prompt.";
+            return;
+          }
+          const title = text.split(/\r?\n/, 1)[0]?.slice(0, 80) || "Cognitive Task";
+          const submitted = await submitCognitiveTask(state, { title, text });
+          taskId = submitted?.id ?? null;
+        }
+
+        if (options.mode === "dispatch" && taskId) {
+          await dispatchCognitiveTask(state);
+        }
+
+        state.chatMessage = "";
+        state.chatAttachments = [];
+        await loadSandboxCognitivePlan(state);
+      } catch (err) {
+        state.lastError = `Failed to run Cognitive ${options.mode}: ${String(err)}`;
+      }
+    })();
+  };
+  const handleAutopilotMaxConcurrentChange = (maxConcurrent: number) => {
+    const nextMax = Math.max(1, Math.min(8, Math.floor(maxConcurrent)));
+    state.applySettings({
+      ...state.settings,
+      chatAutopilotMaxConcurrent: nextMax,
+    });
+    runAutopilotTick(nextMax);
   };
   const handleRetryPlanStage = () => {
     void (async () => {
       if (!state.client) {
         return;
       }
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "retry",
         title: "Retry Current Stage",
         message: "This will re-enter execution and append a new checkpoint.",
         confirmLabel: "Retry Stage",
         details: [
           `session=${state.sessionKey}`,
-          `phase=${state.sandboxTaskPlan?.phase ?? "unknown"}`,
-          `branch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `phase=${state.sandboxCognitivePlan?.phase ?? "unknown"}`,
+          `branch=${state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main"}`,
         ],
       });
       if (!confirmed) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.transition.apply", {
-          sessionKey: state.sessionKey,
-          action: "retry",
+        const taskId = await resolveSelectedCognitiveTaskId();
+        if (!taskId) {
+          return;
+        }
+        await state.client.request<{ ok?: boolean; task?: unknown }>("cognitive.task.transition", {
+          taskId,
+          to: "EXECUTE",
+          reason: "ui_retry_execution_stage",
         });
-        applyTaskPlanResponse(res);
+        await loadSandboxCognitivePlan(state as any);
         if (state.chatSending || Boolean(state.chatStream?.trim())) {
           state.executionAutoQueued = true;
           state.chatMessage = "已触发 retry。继续 execution，逐项推进并回填结果。";
@@ -490,7 +577,7 @@ export function renderApp(state: AppViewState) {
         return;
       }
       const customBranch = window.prompt("Branch id (optional):", "")?.trim() ?? "";
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "branch",
         title: customBranch ? "Create or Switch Branch" : "Create New Branch",
         message: customBranch
@@ -499,24 +586,15 @@ export function renderApp(state: AppViewState) {
         confirmLabel: "Create Branch",
         details: [
           `session=${state.sessionKey}`,
-          `fromBranch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `fromBranch=${state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main"}`,
         ],
       });
       if (!confirmed) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.transition.apply", {
-          sessionKey: state.sessionKey,
-          action: "branch",
-          branchId: customBranch || undefined,
-        });
-        applyTaskPlanResponse(res);
+        state.lastError =
+          "Branch operations are not available in Cognitive-only mode. Use task transitions and replay instead.";
       } catch (err) {
         state.lastError = `Failed to create branch: ${String(err)}`;
       }
@@ -527,10 +605,10 @@ export function renderApp(state: AppViewState) {
       if (!state.client || !checkpointId) {
         return;
       }
-      const checkpoint = state.sandboxTaskPlan?.checkpoints?.find(
+      const checkpoint = state.sandboxCognitivePlan?.checkpoints?.find(
         (entry) => entry.checkpointId === checkpointId,
       );
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "restore",
         title: "Restore Checkpoint",
         message: `Restore ${checkpointId.slice(0, 18)} and append restore checkpoint.`,
@@ -538,7 +616,7 @@ export function renderApp(state: AppViewState) {
         details: [
           `session=${state.sessionKey}`,
           `phase=${checkpoint?.stageId ?? "unknown"}`,
-          `branch=${checkpoint?.branchId ?? state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `branch=${checkpoint?.branchId ?? state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main"}`,
           `reason=${checkpoint?.reason ?? "unknown"}`,
         ],
       });
@@ -546,16 +624,16 @@ export function renderApp(state: AppViewState) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.checkpoint.restore", {
-          sessionKey: state.sessionKey,
-          checkpointId,
+        const taskId = await resolveSelectedCognitiveTaskId();
+        if (!taskId) {
+          return;
+        }
+        await state.client.request<{ ok?: boolean; task?: unknown }>("cognitive.task.transition", {
+          taskId,
+          to: "PLAN",
+          reason: "ui_restore_as_replan",
         });
-        applyTaskPlanResponse(res);
+        await loadSandboxCognitivePlan(state as any);
       } catch (err) {
         state.lastError = `Failed to restore checkpoint: ${String(err)}`;
       }
@@ -566,15 +644,15 @@ export function renderApp(state: AppViewState) {
       if (!state.client) {
         return;
       }
-      const checkpointId = state.sandboxTaskPlan?.taskRuntime?.latestCheckpointId;
+      const checkpointId = state.sandboxCognitivePlan?.taskRuntime?.latestCheckpointId;
       if (!checkpointId) {
         state.lastError = "No checkpoint available for rollback.";
         return;
       }
-      const latest = state.sandboxTaskPlan?.checkpoints?.find(
+      const latest = state.sandboxCognitivePlan?.checkpoints?.find(
         (entry) => entry.checkpointId === checkpointId,
       );
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "rollback-latest",
         title: "Rollback to Latest Checkpoint",
         message: `Rollback target: ${checkpointId.slice(0, 18)}`,
@@ -582,7 +660,7 @@ export function renderApp(state: AppViewState) {
         details: [
           `session=${state.sessionKey}`,
           `phase=${latest?.stageId ?? "unknown"}`,
-          `branch=${latest?.branchId ?? state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `branch=${latest?.branchId ?? state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main"}`,
           `reason=${latest?.reason ?? "unknown"}`,
         ],
       });
@@ -590,16 +668,16 @@ export function renderApp(state: AppViewState) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.checkpoint.restore", {
-          sessionKey: state.sessionKey,
-          checkpointId,
+        const taskId = await resolveSelectedCognitiveTaskId();
+        if (!taskId) {
+          return;
+        }
+        await state.client.request<{ ok?: boolean; task?: unknown }>("cognitive.task.transition", {
+          taskId,
+          to: "PLAN",
+          reason: "ui_rollback_as_replan",
         });
-        applyTaskPlanResponse(res);
+        await loadSandboxCognitivePlan(state as any);
       } catch (err) {
         state.lastError = `Failed to rollback checkpoint: ${String(err)}`;
       }
@@ -610,14 +688,14 @@ export function renderApp(state: AppViewState) {
       if (!state.client || !branchId) {
         return;
       }
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "switch-branch",
         title: "Switch Branch",
         message: `Switch to branch "${branchId}" and append transition checkpoint.`,
         confirmLabel: "Switch Branch",
         details: [
           `session=${state.sessionKey}`,
-          `fromBranch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `fromBranch=${state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main"}`,
           `toBranch=${branchId}`,
         ],
       });
@@ -625,17 +703,8 @@ export function renderApp(state: AppViewState) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.transition.apply", {
-          sessionKey: state.sessionKey,
-          action: "branch",
-          branchId,
-        });
-        applyTaskPlanResponse(res);
+        state.lastError =
+          "Branch switching is not available in Cognitive-only mode. Use task transitions and replay instead.";
       } catch (err) {
         state.lastError = `Failed to switch branch: ${String(err)}`;
       }
@@ -646,14 +715,14 @@ export function renderApp(state: AppViewState) {
       if (!state.client) {
         return;
       }
-      const stageId = state.sandboxTaskPlan?.phase ?? "execution";
+      const stageId = state.sandboxCognitivePlan?.phase ?? "execution";
       const summary =
         status === "passed"
           ? "Verifier checks passed"
           : status === "failed"
             ? "Verifier checks failed"
             : "Verifier blocked pending evidence";
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "retry",
         title: "Submit Verifier Result",
         message: `Submit verifier status: ${status}`,
@@ -661,24 +730,42 @@ export function renderApp(state: AppViewState) {
         details: [
           `session=${state.sessionKey}`,
           `stage=${stageId}`,
-          `branch=${state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main"}`,
+          `branch=${state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main"}`,
         ],
       });
       if (!confirmed) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.verifier.report", {
-          sessionKey: state.sessionKey,
-          stageId,
-          status,
-          summary,
-        });
-        applyTaskPlanResponse(res);
+        const taskId = await resolveSelectedCognitiveTaskId();
+        if (!taskId) {
+          return;
+        }
+        const to =
+          status === "passed"
+            ? "VERIFY"
+            : status === "failed" || status === "blocked"
+              ? "REFLECT"
+              : null;
+        if (to) {
+          await state.client.request<{ ok?: boolean; task?: unknown }>(
+            "cognitive.task.transition",
+            {
+              taskId,
+              to,
+              reason: `ui_verifier_${status}`,
+            },
+          );
+        }
+        await state.client.request<{ ok?: boolean; reflection?: unknown }>(
+          "cognitive.cognition.reflect",
+          {
+            taskId,
+            output: summary,
+            success: status === "passed",
+          },
+        );
+        await loadSandboxCognitivePlan(state as any);
       } catch (err) {
         state.lastError = `Failed to submit verifier result: ${String(err)}`;
       }
@@ -689,9 +776,9 @@ export function renderApp(state: AppViewState) {
       if (!state.client) {
         return;
       }
-      const phase = state.sandboxTaskPlan?.phase ?? "execution";
-      const branch = state.sandboxTaskPlan?.taskRuntime?.currentBranchId ?? "main";
-      const latestVerifier = state.sandboxTaskPlan?.verifierHistory?.slice(-1)[0];
+      const phase = state.sandboxCognitivePlan?.phase ?? "execution";
+      const branch = state.sandboxCognitivePlan?.taskRuntime?.currentBranchId ?? "main";
+      const latestVerifier = state.sandboxCognitivePlan?.verifierHistory?.slice(-1)[0];
       const summary =
         phase === "planning"
           ? "Planning decisions distilled"
@@ -700,7 +787,7 @@ export function renderApp(state: AppViewState) {
             : phase === "verification"
               ? "Verification outcomes distilled"
               : "Task completion distilled";
-      const confirmed = await state.requestTaskPlanConfirmation({
+      const confirmed = await state.requestCognitivePlanConfirmation({
         action: "branch",
         title: "Distill Dream",
         message: "Create dream summary and graph anchors from current stage.",
@@ -716,48 +803,40 @@ export function renderApp(state: AppViewState) {
         return;
       }
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.dream.distill", {
-          sessionKey: state.sessionKey,
-          stageId: phase,
-          branchId: branch,
-          summary,
-          keyDecisions: latestVerifier?.status
-            ? [`verifier:${latestVerifier.status}`]
-            : ["stage-progress"],
-          risks:
-            latestVerifier?.status === "failed"
-              ? ["verification-failed"]
-              : latestVerifier?.status === "blocked"
-                ? ["verification-blocked"]
-                : [],
-          nextAction: phase === "verification" ? "move-to-complete" : "continue-stage-flow",
-        });
-        applyTaskPlanResponse(res);
+        const taskId = await resolveSelectedCognitiveTaskId();
+        if (!taskId) {
+          return;
+        }
+        await state.client.request<{ ok?: boolean; task?: unknown }>(
+          "cognitive.cognition.dream.run",
+          {
+            taskId,
+          },
+        );
+        await loadSandboxCognitivePlan(state as any);
       } catch (err) {
         state.lastError = `Failed to distill dream: ${String(err)}`;
       }
     })();
   };
-  const handleTaskGraphNodeIdChange = (nodeId: string) => {
-    state.taskPlanGraphNodeId = nodeId;
+  const handleCognitivePlanGraphNodeIdChange = (nodeId: string) => {
+    state.cognitivePlanGraphNodeId = nodeId;
   };
-  const handleTaskGraphRelationChange = (relation: string) => {
-    state.taskPlanGraphRelation = relation;
+  const handleCognitivePlanGraphRelationChange = (relation: string) => {
+    state.cognitivePlanGraphRelation = relation;
   };
-  const handleTaskGraphAutoTrackChange = (enabled: boolean) => {
-    state.taskPlanGraphAutoTrack = enabled;
+  const handleCognitivePlanGraphAutoTrackChange = (enabled: boolean) => {
+    state.cognitivePlanGraphAutoTrack = enabled;
   };
   const resolveTodoFocusFromGraphNode = (nodeId: string): string | null => {
     const normalized = nodeId.trim();
     if (!normalized) {
       return null;
     }
-    const todos = Array.isArray(state.sandboxTaskPlan?.todos) ? state.sandboxTaskPlan!.todos : [];
-    const visibleTodos = todos.filter((todo) => !isPlaceholderPlanTodo(todo));
+    const todos = Array.isArray(state.sandboxCognitivePlan?.todos)
+      ? state.sandboxCognitivePlan!.todos
+      : [];
+    const visibleTodos = todos.filter((todo) => !isPlaceholderCognitivePlanTodo(todo));
     if (normalized.startsWith("todo:")) {
       const todoId = normalized.slice("todo:".length).trim();
       if (!todoId) {
@@ -789,50 +868,60 @@ export function renderApp(state: AppViewState) {
     }
     return null;
   };
-  const handleTaskPlanFocusTodoChange = (todoId: string | null) => {
-    state.taskPlanFocusTodoId = todoId?.trim() ? todoId : null;
+  const handleCognitivePlanFocusTodoChange = (todoId: string | null) => {
+    state.cognitivePlanFocusTodoId = todoId?.trim() ? todoId : null;
   };
-  const pushTaskGraphTrail = (nodeId: string) => {
+  const pushCognitivePlanGraphTrail = (nodeId: string) => {
     const normalized = nodeId.trim();
     if (!normalized) {
       return;
     }
-    if (state.taskPlanGraphTrail[state.taskPlanGraphTrail.length - 1] === normalized) {
+    if (state.cognitivePlanGraphTrail[state.cognitivePlanGraphTrail.length - 1] === normalized) {
       return;
     }
     const deduped = [
-      ...state.taskPlanGraphTrail.filter((entry) => entry !== normalized),
+      ...state.cognitivePlanGraphTrail.filter((entry) => entry !== normalized),
       normalized,
     ];
-    state.taskPlanGraphTrail = deduped.slice(-12);
+    state.cognitivePlanGraphTrail = deduped.slice(-12);
   };
-  const handleTaskGraphPageChange = (page: number) => {
-    state.taskPlanGraphPage = Math.max(1, Math.floor(page));
+  const handleCognitivePlanGraphPageChange = (page: number) => {
+    state.cognitivePlanGraphPage = Math.max(1, Math.floor(page));
   };
-  const handleTaskGraphExpandedRelationChange = (relation: string) => {
-    state.taskPlanGraphExpandedRelation = relation.trim();
+  const handleCognitivePlanGraphExpandedRelationChange = (relation: string) => {
+    state.cognitivePlanGraphExpandedRelation = relation.trim();
   };
-  const handleTaskGraphTrailJump = (nodeId: string, trailIndex: number) => {
+  const handleCognitivePlanGraphTrailJump = (nodeId: string, trailIndex: number) => {
     const normalized = nodeId.trim();
     if (!normalized) {
       return;
     }
-    const clampedIndex = Math.max(0, Math.min(trailIndex, state.taskPlanGraphTrail.length - 1));
-    state.taskPlanGraphTrail = state.taskPlanGraphTrail.slice(0, clampedIndex + 1);
-    handleQueryTaskGraph({ nodeId: normalized, relation: state.taskPlanGraphRelation }, false);
+    const clampedIndex = Math.max(
+      0,
+      Math.min(trailIndex, state.cognitivePlanGraphTrail.length - 1),
+    );
+    state.cognitivePlanGraphTrail = state.cognitivePlanGraphTrail.slice(0, clampedIndex + 1);
+    handleQueryCognitivePlanGraph(
+      { nodeId: normalized, relation: state.cognitivePlanGraphRelation },
+      false,
+    );
   };
-  const handleClearTaskGraph = () => {
-    state.taskPlanGraphEdges = [];
-    state.taskPlanGraphError = null;
-    state.taskPlanGraphLoading = false;
-    state.taskPlanGraphNodeId = "";
-    state.taskPlanGraphRelation = "";
-    state.taskPlanGraphPage = 1;
-    state.taskPlanGraphTrail = [];
-    state.taskPlanGraphExpandedRelation = "";
-    state.taskPlanFocusTodoId = null;
+  const handleClearCognitivePlanGraph = () => {
+    state.cognitivePlanGraphEdges = [];
+    state.cognitivePlanGraphError = null;
+    state.cognitivePlanGraphLoading = false;
+    state.cognitivePlanGraphNodeId = "";
+    state.cognitivePlanGraphRelation = "";
+    state.cognitivePlanGraphPage = 1;
+    state.cognitivePlanGraphTrail = [];
+    state.cognitivePlanGraphExpandedRelation = "";
+    state.cognitivePlanGraphSourceBreadcrumb = null;
+    state.cognitivePlanGraphSourceMemory = null;
+    state.cognitivePlanGraphSourceContext = null;
+    state.cognitivePlanGraphSourceSelectedLine = null;
+    state.cognitivePlanFocusTodoId = null;
   };
-  const handleQueryTaskGraph = (
+  const handleQueryCognitivePlanGraph = (
     query: { nodeId?: string; relation?: string },
     appendTrail = true,
   ) => {
@@ -842,45 +931,48 @@ export function renderApp(state: AppViewState) {
       }
       const normalizedNodeId = (query.nodeId ?? "").trim();
       const normalizedRelation = (query.relation ?? "").trim();
-      state.taskPlanGraphLoading = true;
-      state.taskPlanGraphError = null;
-      state.taskPlanGraphNodeId = normalizedNodeId;
-      state.taskPlanGraphRelation = normalizedRelation;
-      state.taskPlanGraphPage = 1;
+      state.cognitivePlanGraphLoading = true;
+      state.cognitivePlanGraphError = null;
+      state.cognitivePlanGraphNodeId = normalizedNodeId;
+      state.cognitivePlanGraphRelation = normalizedRelation;
+      state.cognitivePlanGraphPage = 1;
+      state.cognitivePlanGraphSourceBreadcrumb = null;
+      state.cognitivePlanGraphSourceMemory = null;
+      state.cognitivePlanGraphSourceContext = null;
       if (appendTrail && normalizedNodeId) {
-        pushTaskGraphTrail(normalizedNodeId);
+        pushCognitivePlanGraphTrail(normalizedNodeId);
       }
-      state.taskPlanFocusTodoId = resolveTodoFocusFromGraphNode(normalizedNodeId);
+      state.cognitivePlanFocusTodoId = resolveTodoFocusFromGraphNode(normalizedNodeId);
       try {
-        const res = await state.client.request<{
-          ok?: boolean;
-          edges?: Array<{
-            edgeId: string;
-            from: string;
-            to: string;
-            relation: string;
-            at: number;
-          }>;
-        }>("task_plan.graph.query", {
-          sessionKey: state.sessionKey,
-          nodeId: normalizedNodeId || undefined,
-          relation: normalizedRelation || undefined,
-          limit: 80,
+        const sourceEdges = Array.isArray(state.sandboxCognitivePlan?.graphEdges)
+          ? state.sandboxCognitivePlan!.graphEdges
+          : [];
+        state.cognitivePlanGraphEdges = sourceEdges.filter((edge) => {
+          if (
+            normalizedNodeId &&
+            !edge.from.includes(normalizedNodeId) &&
+            !edge.to.includes(normalizedNodeId)
+          ) {
+            return false;
+          }
+          if (normalizedRelation && edge.relation !== normalizedRelation) {
+            return false;
+          }
+          return true;
         });
-        state.taskPlanGraphEdges = Array.isArray(res?.edges) ? res.edges : [];
       } catch (err) {
-        state.taskPlanGraphError = `Failed to query graph memory: ${String(err)}`;
+        state.cognitivePlanGraphError = `Failed to query graph memory: ${String(err)}`;
       } finally {
-        state.taskPlanGraphLoading = false;
+        state.cognitivePlanGraphLoading = false;
       }
     })();
   };
   const handleSpawnAgentsFromPlan = () => {
-    const plan = state.sandboxTaskPlan;
+    const plan = state.sandboxCognitivePlan;
     const todos = Array.isArray(plan?.todos) ? plan.todos : [];
     const queued = todos
       .filter((todo) => todo.status !== "done")
-      .filter((todo) => !isPlaceholderPlanTodo(todo))
+      .filter((todo) => !isPlaceholderCognitivePlanTodo(todo))
       .slice(0, 5);
     if (queued.length === 0) {
       state.lastError = "No actionable TODOs found in the current task plan.";
@@ -1083,9 +1175,9 @@ export function renderApp(state: AppViewState) {
                   state.sessionKey = next;
                   state.chatMessage = "";
                   state.resetToolStream();
-                  state.sandboxTaskPlan = null;
-                  state.sandboxTaskPlanLoading = false;
-                  state.sandboxTaskPlanError = null;
+                  state.sandboxCognitivePlan = null;
+                  state.sandboxCognitivePlanLoading = false;
+                  state.sandboxCognitivePlanError = null;
                   state.sandboxChatEvents = {};
                   state.applySettings({
                     ...state.settings,
@@ -1190,7 +1282,7 @@ export function renderApp(state: AppViewState) {
                 result: state.sessionsResult,
                 error: state.sessionsError,
                 sandboxChatEvents: state.sandboxChatEvents,
-                taskPlan: state.sandboxTaskPlan ?? null,
+                cognitivePlan: state.sandboxCognitivePlan ?? null,
                 agentIdentityById: state.agentIdentityById,
                 recruitModalOpen: state.sandboxRecruitModalOpen,
                 nodes: state.nodes,
@@ -1210,7 +1302,7 @@ export function renderApp(state: AppViewState) {
                   void state.handleToggleEternalMode(!state.aeonEternalMode, "local"),
                 onRefresh: async () => {
                   await loadSessions(state);
-                  await loadSandboxTaskPlan(state);
+                  await loadSandboxCognitivePlan(state);
                   await state.handleAeonLogicRefresh();
                 },
                 onForceRestart: () => {
@@ -1226,7 +1318,7 @@ export function renderApp(state: AppViewState) {
                     sessionKey: next,
                     lastActiveSessionKey: next,
                   });
-                  void loadSandboxTaskPlan(state);
+                  void loadSandboxCognitivePlan(state);
                 },
                 onRecruitAgent: () => state.handleRecruitModalOpen(),
                 onRecruitModalClose: () => state.handleRecruitModalClose(),
@@ -1240,12 +1332,11 @@ export function renderApp(state: AppViewState) {
           state.tab === "cognitive"
             ? renderCognitiveView({
                 sessionKey: state.sessionKey,
-                taskPlan: state.sandboxTaskPlan ?? null,
+                cognitivePlan: state.sandboxCognitivePlan ?? null,
                 cognitiveTask: state.cognitiveTaskRecord,
                 cognitiveTaskList: state.cognitiveTaskList,
                 cognitiveSelectedTaskId: state.cognitiveSelectedTaskId,
                 cognitiveRuntimeEvents: state.cognitiveRuntimeEvents,
-                cognitiveLegacyPlan: state.cognitiveLegacyPlan,
                 cognitiveSubmitTitle: state.cognitiveSubmitTitle,
                 cognitiveSubmitText: state.cognitiveSubmitText,
                 cognitiveMemoryQuery: state.cognitiveMemoryQuery,
@@ -1976,7 +2067,7 @@ export function renderApp(state: AppViewState) {
                 error: state.lastError,
                 sessions: state.sessionsResult,
                 focusMode: chatFocus,
-                taskPlan: state.sandboxTaskPlan ?? null,
+                cognitivePlan: state.sandboxCognitivePlan ?? null,
                 executionWatchdog: state.executionWatchdog,
                 onRefresh: () => {
                   state.resetToolStream();
@@ -1998,7 +2089,7 @@ export function renderApp(state: AppViewState) {
                 },
                 attachments: state.chatAttachments,
                 onAttachmentsChange: (next) => (state.chatAttachments = next),
-                onSend: () => state.handleSendChat(),
+                onSend: handleWorkbenchSend,
                 canAbort: Boolean(state.chatRunId),
                 onAbort: () => void state.handleAbortChat(),
                 onQueueRemove: (id) => state.removeQueuedMessage(id),
@@ -2006,6 +2097,8 @@ export function renderApp(state: AppViewState) {
                 onOpenSandbox: () => state.setTab("sandbox"),
                 onOpenAeon: () => state.setTab("aeon"),
                 onOpenAgents: () => state.setTab("agents"),
+                onOpenCognitiveSource: () => void state.handleOpenCognitiveSource(),
+                onReopenCognitiveMemory: () => void state.handleReopenCognitiveMemory(),
                 onSpawnAgentsFromPlan: handleSpawnAgentsFromPlan,
                 autopilotEnabled: state.settings.chatAutopilotEnabled ?? true,
                 onToggleAutopilot: (enabled: boolean) =>
@@ -2013,6 +2106,11 @@ export function renderApp(state: AppViewState) {
                     ...state.settings,
                     chatAutopilotEnabled: enabled,
                   }),
+                autopilotMaxConcurrent: state.settings.chatAutopilotMaxConcurrent ?? 2,
+                onAutopilotMaxConcurrentChange: handleAutopilotMaxConcurrentChange,
+                onAutopilotDispatchNow: () =>
+                  runAutopilotTick(state.settings.chatAutopilotMaxConcurrent ?? 2),
+                onForceStartTodo: (todoId) => forceStartCognitiveNode(state, todoId),
                 eternalMode: state.aeonEternalMode,
                 onToggleEternalMode: () =>
                   void state.handleToggleEternalMode(!state.aeonEternalMode, "local"),
@@ -2023,6 +2121,7 @@ export function renderApp(state: AppViewState) {
                   lastOpenedAt: state.chatManualLastOpenedAt,
                   dismissedHints: state.chatManualDismissedHints,
                 },
+                aeonSystemStatus: state.aeonSystemStatus,
                 onManualToggle: (visible, options) =>
                   state.handleToggleChatManual(visible, options),
                 onManualModeChange: (mode) => state.handleToggleChatManual(true, { mode }),
@@ -2092,28 +2191,32 @@ export function renderApp(state: AppViewState) {
                     let changedToExecution = false;
                     try {
                       if (state.client) {
-                        const approveRes = await state.client.request<{
+                        const listRes = await state.client.request<{
                           ok?: boolean;
-                          plan?: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-                          executionGraph?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"];
-                          taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-                          approvedAt?: number;
-                          phaseTransition?: {
-                            from: "planning" | "execution" | "verification" | "complete";
-                            to: "planning" | "execution" | "verification" | "complete";
-                            changed: boolean;
-                          };
-                        }>("task_plan.approve", { sessionKey: state.sessionKey });
-                        applyTaskPlanResponse(approveRes);
-                        changedToExecution =
-                          approveRes?.phaseTransition?.changed === true &&
-                          approveRes?.phaseTransition?.to === "execution";
+                          tasks?: Array<{ id: string; sessionKey: string; updatedAt: number }>;
+                        }>("cognitive.task.list", { limit: 80 });
+                        const tasks = Array.isArray(listRes?.tasks) ? listRes.tasks : [];
+                        const selected = tasks
+                          .filter((task) => task.sessionKey === state.sessionKey)
+                          .toSorted((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))[0];
+                        if (selected?.id) {
+                          await state.client.request<{ ok?: boolean; task?: unknown }>(
+                            "cognitive.task.transition",
+                            {
+                              taskId: selected.id,
+                              to: "EXECUTE",
+                              reason: "ui_approve_plan",
+                            },
+                          );
+                          changedToExecution = true;
+                          await loadSandboxCognitivePlan(state as any);
+                        }
                         if (changedToExecution) {
                           // Gateway event is the primary execution trigger.
                           // Queue one fallback send only if event path did not arrive in time.
                           window.setTimeout(() => {
                             if (
-                              state.sandboxTaskPlan?.phase === "planning" &&
+                              state.sandboxCognitivePlan?.phase === "planning" &&
                               !state.chatSending &&
                               !state.chatStream?.trim()
                             ) {
@@ -2125,11 +2228,11 @@ export function renderApp(state: AppViewState) {
                         }
                       }
                     } catch (err) {
-                      state.lastError = `Failed to approve task plan: ${String(err)}`;
+                      state.lastError = `Failed to approve cognitive plan: ${String(err)}`;
                       return;
                     }
                     // Legacy fallback for gateways without execution trigger broadcast support.
-                    if (!changedToExecution && state.sandboxTaskPlan?.phase === "execution") {
+                    if (!changedToExecution && state.sandboxCognitivePlan?.phase === "execution") {
                       state.chatMessage = "继续执行当前 execution 阶段任务，逐项完成并回填结果。";
                       if (state.chatSending || Boolean(state.chatStream?.trim())) {
                         state.executionAutoQueued = true;
@@ -2147,26 +2250,31 @@ export function renderApp(state: AppViewState) {
                 onRestoreCheckpoint: handleRestoreCheckpoint,
                 onVerifierReport: handleVerifierReport,
                 onDistillDream: handleDistillDream,
-                onQueryTaskGraph: handleQueryTaskGraph,
-                onClearTaskGraph: handleClearTaskGraph,
-                onTaskGraphNodeIdChange: handleTaskGraphNodeIdChange,
-                onTaskGraphRelationChange: handleTaskGraphRelationChange,
-                onTaskGraphAutoTrackChange: handleTaskGraphAutoTrackChange,
-                onTaskGraphPageChange: handleTaskGraphPageChange,
-                onTaskGraphTrailJump: handleTaskGraphTrailJump,
-                onTaskGraphExpandedRelationChange: handleTaskGraphExpandedRelationChange,
-                taskPlanGraphEdges: state.taskPlanGraphEdges,
-                taskPlanGraphLoading: state.taskPlanGraphLoading,
-                taskPlanGraphError: state.taskPlanGraphError,
-                taskPlanGraphNodeId: state.taskPlanGraphNodeId,
-                taskPlanGraphRelation: state.taskPlanGraphRelation,
-                taskPlanGraphAutoTrack: state.taskPlanGraphAutoTrack,
-                taskPlanGraphPage: state.taskPlanGraphPage,
-                taskPlanGraphPageSize: state.taskPlanGraphPageSize,
-                taskPlanGraphTrail: state.taskPlanGraphTrail,
-                taskPlanGraphExpandedRelation: state.taskPlanGraphExpandedRelation,
-                taskPlanFocusTodoId: state.taskPlanFocusTodoId,
-                onTaskPlanFocusTodoChange: handleTaskPlanFocusTodoChange,
+                onQueryCognitivePlanGraph: handleQueryCognitivePlanGraph,
+                onClearCognitivePlanGraph: handleClearCognitivePlanGraph,
+                onCognitivePlanGraphNodeIdChange: handleCognitivePlanGraphNodeIdChange,
+                onCognitivePlanGraphRelationChange: handleCognitivePlanGraphRelationChange,
+                onCognitivePlanGraphAutoTrackChange: handleCognitivePlanGraphAutoTrackChange,
+                onCognitivePlanGraphPageChange: handleCognitivePlanGraphPageChange,
+                onCognitivePlanGraphTrailJump: handleCognitivePlanGraphTrailJump,
+                onCognitivePlanGraphExpandedRelationChange:
+                  handleCognitivePlanGraphExpandedRelationChange,
+                cognitivePlanGraphEdges: state.cognitivePlanGraphEdges,
+                cognitivePlanGraphLoading: state.cognitivePlanGraphLoading,
+                cognitivePlanGraphError: state.cognitivePlanGraphError,
+                cognitivePlanGraphNodeId: state.cognitivePlanGraphNodeId,
+                cognitivePlanGraphRelation: state.cognitivePlanGraphRelation,
+                cognitivePlanGraphAutoTrack: state.cognitivePlanGraphAutoTrack,
+                cognitivePlanGraphPage: state.cognitivePlanGraphPage,
+                cognitivePlanGraphPageSize: state.cognitivePlanGraphPageSize,
+                cognitivePlanGraphTrail: state.cognitivePlanGraphTrail,
+                cognitivePlanGraphExpandedRelation: state.cognitivePlanGraphExpandedRelation,
+                cognitivePlanGraphSourceBreadcrumb: state.cognitivePlanGraphSourceBreadcrumb,
+                cognitivePlanGraphSourceMemory: state.cognitivePlanGraphSourceMemory,
+                cognitivePlanGraphSourceContext: state.cognitivePlanGraphSourceContext,
+                cognitivePlanGraphSourceSelectedLine: state.cognitivePlanGraphSourceSelectedLine,
+                cognitivePlanFocusTodoId: state.cognitivePlanFocusTodoId,
+                onCognitivePlanFocusTodoChange: handleCognitivePlanFocusTodoChange,
                 sandboxSessions: state.sessionsResult?.sessions?.filter(
                   (r) => r.kind !== "global" && !r.systemSent,
                 ),
@@ -2295,7 +2403,7 @@ export function renderApp(state: AppViewState) {
       </div>
       ${renderExecApprovalPrompt(state)}
       ${renderGatewayUrlConfirmation(state)}
-      ${renderTaskPlanConfirmation(state)}
+      ${renderCognitivePlanConfirmation(state)}
     </div>
       </div>
     </div>

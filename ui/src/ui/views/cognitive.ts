@@ -1,6 +1,6 @@
 import { html, nothing } from "lit";
 import type { AeonStatusResult, SandboxChatEvents, CognitiveTaskRecord } from "../types.ts";
-import type { TaskPlanSnapshot } from "./sandbox.ts";
+import type { CognitivePlanSnapshot } from "./sandbox/types.ts";
 import type {
   CognitiveLongTermEntry,
   CognitiveMemoryQueryResult,
@@ -32,12 +32,11 @@ const PHASE_PROGRESS: Record<CognitiveTaskPhase, number> = {
 
 export type CognitiveViewProps = {
   sessionKey: string;
-  taskPlan: TaskPlanSnapshot | null;
+  cognitivePlan: CognitivePlanSnapshot | null;
   cognitiveTask: CognitiveTaskRecord | null;
   cognitiveTaskList: CognitiveTaskRecord[];
   cognitiveSelectedTaskId: string | null;
   cognitiveRuntimeEvents: CognitiveTaskEvent[];
-  cognitiveLegacyPlan: unknown | null;
   cognitiveSubmitTitle: string;
   cognitiveSubmitText: string;
   cognitiveMemoryQuery: string;
@@ -48,6 +47,7 @@ export type CognitiveViewProps = {
   cognitiveReplayLoading: boolean;
   cognitiveLoading: boolean;
   cognitiveMemoryLoading: boolean;
+  cognitiveSelectedMemoryResult: CognitiveLongTermEntry | null;
   cognitiveSourceContext: {
     path: string;
     startLine: number;
@@ -578,6 +578,174 @@ function renderSignals(props: CognitiveViewProps) {
   `;
 }
 
+function statusPill(status?: string) {
+  const normalized = status ?? "pending";
+  return html`<span class="pill ${normalized === "blocked" || normalized === "fail" ? "danger" : normalized === "active" ? "primary" : ""}">
+    <span class="mono">${normalized}</span>
+  </span>`;
+}
+
+function renderCapabilityLadder(plan: CognitivePlanSnapshot | null) {
+  const ladder = plan?.architecture?.capabilityLadder ?? [];
+  if (ladder.length === 0) return nothing;
+  return html`
+    <section class="aeon-fractal-module aeon-card-3d cog-panel">
+      ${cardHeader(
+        "AGI Ladder",
+        "Capability Levels",
+        html`
+          <span class="mono">L1-L9</span>
+        `,
+      )}
+      <div class="cog-panel-body">
+        <div class="cog-signals-grid">
+          ${ladder.map(
+            (level) => html`
+              <div class="cog-inline-card ${level.active ? "is-active" : ""}">
+                <div class="cog-inline-head">
+                  <strong>L${level.level}</strong>
+                  <span class="mono muted">${Math.round(level.score * 100)}%</span>
+                </div>
+                <div>${level.label}</div>
+                <div class="cog-progress-track" style="margin-top: 8px;">
+                  <div class="cog-progress-fill" style=${`width:${Math.round(level.score * 100)}%`}></div>
+                </div>
+              </div>
+            `,
+          )}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderArchitectureOverview(plan: CognitivePlanSnapshot | null) {
+  const arch = plan?.architecture;
+  const state = plan?.stateProjection;
+  if (!arch) {
+    return html`
+      <section class="aeon-fractal-module aeon-card-3d cog-panel">
+        ${cardHeader("OpenAEON 3.0", "Architecture Projection")}
+        <div class="cog-panel-body muted">No architecture projection yet. Submit or refresh a Cognitive task.</div>
+      </section>
+    `;
+  }
+
+  return html`
+    <section class="aeon-fractal-module aeon-card-3d cog-panel">
+      ${cardHeader("OpenAEON 3.0", "Cognitive Operating System", html`<span class="mono">${arch.formula}</span>`)}
+      <div class="cog-panel-body">
+        <div class="cog-signals-grid">
+          ${statCard("Z", phaseBadge(state?.z.phase ?? plan?.nativePhase), `confidence ${Math.round((state?.z.confidence ?? 0) * 100)}%`)}
+          ${statCard("Z²", html`<span class="mono">${state?.phi.completedNodeIds.length ?? 0}</span>`, "self evolution completions")}
+          ${statCard("C", html`<span class="mono">${state?.c.externalSignals.length ?? 0}</span>`, "external injections")}
+          ${statCard("R", statusPill(state?.r.reflectionVerdict), "reflection correction")}
+          ${statCard("Z+1", phaseBadge(state?.zNext.recommendedPhase), state?.zNext.invariantReady ? "invariant ready" : "needs correction")}
+        </div>
+
+        <div class="cog-field-label" style="margin-top: 14px;">Layered View</div>
+        <div class="cog-mini-list">
+          ${arch.layers.map(
+            (layer) => html`
+              <div class="cog-inline-card">
+                <div class="cog-inline-head">
+                  <strong>${layer.index}. ${layer.label}</strong>
+                  ${statusPill(layer.status)}
+                </div>
+                <div class="muted">${layer.signals.join(" · ")}</div>
+              </div>
+            `,
+          )}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderTopologyAndLoop(plan: CognitivePlanSnapshot | null) {
+  const arch = plan?.architecture;
+  if (!arch) return nothing;
+  return html`
+    <section class="aeon-fractal-module aeon-card-3d cog-panel">
+      ${cardHeader("Topology", "Cognitive Spaces & Operating Loop")}
+      <div class="cog-panel-body">
+        <div class="cog-signals-grid">
+          ${arch.spaces.map(
+            (space) => html`
+              <div class="cog-inline-card">
+                <div class="cog-inline-head">
+                  <strong>${space.id}. ${space.label}</strong>
+                  ${statusPill(space.active ? "active" : "idle")}
+                </div>
+                <div class="muted">permeability ${space.permeability} · stability ${space.stability}</div>
+                <div class="mono muted">${space.signals.join(" · ")}</div>
+              </div>
+            `,
+          )}
+        </div>
+
+        <div class="cog-field-label" style="margin-top: 14px;">End-to-End Loop</div>
+        <div class="cog-mini-list">
+          ${arch.operatingLoop.map(
+            (step) => html`
+              <div class="cog-inline-card">
+                <div class="cog-inline-head">
+                  <strong>${step.index}. ${step.label}</strong>
+                  ${statusPill(step.status)}
+                </div>
+              </div>
+            `,
+          )}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderSubsystemsAndRoadmap(plan: CognitivePlanSnapshot | null) {
+  const arch = plan?.architecture;
+  if (!arch) return nothing;
+  return html`
+    <section class="aeon-fractal-module aeon-card-3d cog-panel">
+      ${cardHeader("Subsystems", "Key Architecture & Roadmap")}
+      <div class="cog-panel-body">
+        <div class="cog-mini-list">
+          ${arch.subsystems.map(
+            (subsystem) => html`
+              <div class="cog-inline-card">
+                <div class="cog-inline-head">
+                  <strong>${subsystem.label}</strong>
+                  ${statusPill(subsystem.status)}
+                </div>
+                <div class="mono muted">
+                  ${Object.entries(subsystem.metrics)
+                    .map(([key, value]) => `${key}:${value}`)
+                    .join(" · ")}
+                </div>
+              </div>
+            `,
+          )}
+        </div>
+
+        <div class="cog-field-label" style="margin-top: 14px;">Roadmap</div>
+        <div class="cog-signals-grid">
+          ${arch.roadmap.map(
+            (stage) => html`
+              <div class="cog-inline-card">
+                <div class="cog-inline-head">
+                  <strong>Phase ${stage.phase}</strong>
+                  ${statusPill(stage.active ? "active" : "pending")}
+                </div>
+                <div>${stage.label}</div>
+              </div>
+            `,
+          )}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function renderSourceFoldout(props: CognitiveViewProps) {
   const source = props.cognitiveSourceContext;
   if (!source) {
@@ -610,6 +778,7 @@ function renderSourceViewer(props: CognitiveViewProps, source: SourceContext) {
     content: string;
     isMatch: boolean;
   }>;
+  const selectedMemory = props.cognitiveSelectedMemoryResult;
   const selectedLine = props.cognitiveSourceSelectedLine ?? source.startLine;
   const selectedIndex = lines.findIndex((line) => line.lineNo === selectedLine);
   const selectedEntry = selectedIndex >= 0 ? (lines[selectedIndex] ?? null) : null;
@@ -624,12 +793,61 @@ function renderSourceViewer(props: CognitiveViewProps, source: SourceContext) {
         <strong>${source.path}</strong>
         <span class="mono muted">${source.contextStartLine}-${source.contextEndLine}</span>
       </div>
+      <div class="cog-breadcrumbs" style="margin-top: 8px;">
+        <button
+          type="button"
+          class="cog-breadcrumb cog-breadcrumb-action"
+          @click=${() => props.onSourceLineSelect(source.startLine)}
+        >
+          Source
+        </button>
+        <span class="cog-breadcrumb-sep">/</span>
+        <button
+          type="button"
+          class="cog-breadcrumb cog-breadcrumb-action"
+          @click=${() => props.onSourceLineSelect(selectedLine)}
+        >
+          Line ${selectedLine}
+        </button>
+        ${
+          selectedMemory
+            ? html`
+                <span class="cog-breadcrumb-sep">/</span>
+                <button
+                  type="button"
+                  class="cog-breadcrumb cog-breadcrumb-action"
+                  @click=${() => props.onTraceMemoryResult(selectedMemory)}
+                >
+                  Memory Match
+                </button>
+              `
+            : nothing
+        }
+      </div>
       ${
         selectedEntry
           ? html`
             <div class="cog-inline-summary">
               <div class="muted">Selected line ${selectedLine}</div>
               <div class="mono">${selectedEntry.content || "(blank line)"}</div>
+              ${
+                selectedMemory
+                  ? html`
+                      <div class="cog-actions" style="margin-top: 8px;">
+                        <button
+                          class="btn btn--sm btn--secondary"
+                          type="button"
+                          @click=${() => props.onTraceMemoryResult(selectedMemory)}
+                        >
+                          Trace graph
+                        </button>
+                        <span class="muted" style="font-size: 11px;">
+                          ${formatMemoryLocation(selectedMemory)}
+                        </span>
+                      </div>
+                    `
+                  : nothing
+              }
               ${
                 nearbyLines.length > 0
                   ? html`
@@ -674,24 +892,25 @@ function renderSourceViewer(props: CognitiveViewProps, source: SourceContext) {
 }
 
 function renderBridgeFoldout(props: CognitiveViewProps) {
-  const legacyPlan =
-    ((props.cognitiveLegacyPlan && typeof props.cognitiveLegacyPlan === "object"
-      ? props.cognitiveLegacyPlan
-      : null) as TaskPlanSnapshot | null) ?? props.taskPlan;
-  const legacyNodes = legacyPlan?.todos?.length ?? 0;
-  const graphEdges = legacyPlan?.graphEdges?.length ?? 0;
+  const plan = props.cognitivePlan;
+  const nodeCount = plan?.taskTree
+    ? Object.keys(plan.taskTree.nodes).length
+    : (plan?.todos?.length ?? 0);
+  const graphEdges = plan?.graphEdges?.length ?? 0;
+  const invariantStatus = plan?.invariants?.status ?? "pending";
 
   return html`
     <details class="cog-foldout">
       <summary>
-        <span>Legacy Plan Snapshot</span>
-        <span class="mono muted">${legacyPlan?.phase ?? "-"}</span>
+        <span>Cognitive Runtime Projection</span>
+        <span class="mono muted">${plan?.nativePhase ?? plan?.phase ?? "-"}</span>
       </summary>
       <div class="cog-foldout-body">
         <div class="cog-signals-grid">
-          ${statCard("Phase", phaseBadge(legacyPlan?.phase), legacyPlan?.description ?? "-")}
-          ${statCard("Todos", html`<span class="mono">${legacyNodes}</span>`, "legacy bridge")}
-          ${statCard("Edges", html`<span class="mono">${graphEdges}</span>`, "graph memory")}
+          ${statCard("Phase", phaseBadge(plan?.nativePhase ?? plan?.phase), plan?.description ?? "-")}
+          ${statCard("Nodes", html`<span class="mono">${nodeCount}</span>`, "fractal task tree")}
+          ${statCard("Edges", html`<span class="mono">${graphEdges}</span>`, "runtime graph")}
+          ${statCard("Invariants", phaseBadge(invariantStatus), "governance checks")}
         </div>
       </div>
     </details>
@@ -822,15 +1041,19 @@ export function renderCognitiveView(props: CognitiveViewProps) {
         </aside>
 
         <section class="cog-center-col">
+          ${renderArchitectureOverview(props.cognitivePlan)}
           ${renderEngineCard(props, activeTask)}
           ${renderKernelStream(props)}
+          ${renderTopologyAndLoop(props.cognitivePlan)}
           ${renderNetworkMap(activeTask)}
           ${renderReplayFoldout(props)}
         </section>
 
         <aside class="cog-right-col">
+          ${renderCapabilityLadder(props.cognitivePlan)}
           ${renderMemoryBridge(props)}
           ${renderSignals(props)}
+          ${renderSubsystemsAndRoadmap(props.cognitivePlan)}
           ${renderSourceFoldout(props)}
           ${renderBridgeFoldout(props)}
         </aside>

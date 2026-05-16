@@ -3,7 +3,7 @@ import { t } from "../../../../i18n/index.ts";
 import { extractToolCards } from "../../../chat/tool-cards.ts";
 import type { GatewaySessionRow } from "../../../types.ts";
 import type { SandboxChatEvents } from "../../../types.ts";
-import type { TaskPlanSnapshot, TaskTodo } from "../types.ts";
+import type { CognitivePlanSnapshot, CognitiveTaskTodo } from "../types.ts";
 
 /** ─── Task status helpers ────────────────────────────────────────────────────── */
 export function tokenProgress(row: GatewaySessionRow): number {
@@ -54,7 +54,7 @@ export function renderTaskCard(
   row: GatewaySessionRow,
   index: number,
   sandboxChatEvents?: SandboxChatEvents,
-  taskPlan?: TaskPlanSnapshot | null,
+  cognitivePlan?: CognitivePlanSnapshot | null,
 ) {
   const progress = tokenProgress(row);
   const isWorking = Boolean(
@@ -148,10 +148,10 @@ export function renderTaskCard(
     }
   }
 
-  let linkedTask: TaskTodo | undefined;
-  if (taskPlan && taskPlan.todos) {
+  let linkedTask: CognitiveTaskTodo | undefined;
+  if (cognitivePlan && cognitivePlan.todos) {
     const wLabel = (row.label || row.subject || "").toLowerCase();
-    linkedTask = taskPlan.todos.find((t) => {
+    linkedTask = cognitivePlan.todos.find((t) => {
       const titleWords = t.title
         .toLowerCase()
         .split(/\s+/)

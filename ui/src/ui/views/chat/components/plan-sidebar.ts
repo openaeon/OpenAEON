@@ -1,7 +1,7 @@
 import { html, nothing } from "lit";
 import { t } from "../../../../i18n/index.ts";
 import type { ChatLayoutProps } from "../../chat-layout.ts";
-import { getVisiblePlanTodos } from "./subagent-view-model.ts";
+import { getVisibleCognitivePlanTodos } from "./subagent-view-model.ts";
 
 type PlanTodo = {
   id: string;
@@ -13,11 +13,11 @@ type PlanTodo = {
 };
 
 export function renderStickyPlanBar(props: ChatLayoutProps) {
-  const plan = props?.taskPlan;
+  const plan = props?.cognitivePlan;
   if (!plan || !plan.todos || plan.todos.length === 0) {
     return nothing;
   }
-  const visibleTodos = getVisiblePlanTodos(plan);
+  const visibleTodos = getVisibleCognitivePlanTodos(plan);
   if (visibleTodos.length === 0) {
     return nothing;
   }
@@ -28,9 +28,9 @@ export function renderStickyPlanBar(props: ChatLayoutProps) {
   const phase = plan.phase || "execution";
 
   const phaseSteps = [
-    { key: "planning", icon: "⚲", label: "PLANNING" },
-    { key: "execution", icon: "∿", label: "EXECUTION" },
-    { key: "verification", icon: "⊗", label: "VERIFICATION" },
+    { key: "planning", icon: "⚲", label: t("sandbox.plan.phasePlanning") },
+    { key: "execution", icon: "∿", label: t("sandbox.plan.phaseExecution") },
+    { key: "verification", icon: "⊗", label: t("sandbox.plan.phaseVerification") },
   ];
 
   return html`
@@ -71,7 +71,7 @@ export function renderStickyPlanBar(props: ChatLayoutProps) {
 }
 
 export function renderPlanSidebar(props: ChatLayoutProps) {
-  const plan = props?.taskPlan;
+  const plan = props?.cognitivePlan;
   if (!plan || !plan.todos || plan.todos.length === 0) {
     return nothing;
   }
@@ -82,11 +82,11 @@ export function renderPlanExecutionLayer(
   props: ChatLayoutProps,
   options?: { wrapPanel?: boolean },
 ) {
-  const plan = props?.taskPlan;
+  const plan = props?.cognitivePlan;
   if (!plan || !plan.todos || plan.todos.length === 0) {
     return nothing;
   }
-  const visibleTodos = getVisiblePlanTodos(plan);
+  const visibleTodos = getVisibleCognitivePlanTodos(plan);
   if (visibleTodos.length === 0) {
     return nothing;
   }
@@ -110,16 +110,19 @@ export function renderPlanExecutionLayer(
   const latestDream = dreams.length > 0 ? dreams[dreams.length - 1] : null;
   const latestVerifier =
     verifierHistory.length > 0 ? verifierHistory[verifierHistory.length - 1] : null;
-  const graphEdges = props.taskPlanGraphEdges ?? [];
-  const graphNodeId = props.taskPlanGraphNodeId ?? "";
-  const graphRelation = props.taskPlanGraphRelation ?? "";
-  const graphLoading = Boolean(props.taskPlanGraphLoading);
-  const graphError = props.taskPlanGraphError ?? null;
-  const graphAutoTrack = props.taskPlanGraphAutoTrack ?? true;
-  const graphPageSize = Math.max(1, props.taskPlanGraphPageSize ?? 15);
-  const graphPage = Math.max(1, props.taskPlanGraphPage ?? 1);
-  const graphTrail = props.taskPlanGraphTrail ?? [];
-  const graphExpandedRelation = props.taskPlanGraphExpandedRelation ?? "";
+  const graphEdges = props.cognitivePlanGraphEdges ?? [];
+  const graphNodeId = props.cognitivePlanGraphNodeId ?? "";
+  const graphRelation = props.cognitivePlanGraphRelation ?? "";
+  const graphLoading = Boolean(props.cognitivePlanGraphLoading);
+  const graphError = props.cognitivePlanGraphError ?? null;
+  const graphAutoTrack = props.cognitivePlanGraphAutoTrack ?? true;
+  const graphPageSize = Math.max(1, props.cognitivePlanGraphPageSize ?? 15);
+  const graphPage = Math.max(1, props.cognitivePlanGraphPage ?? 1);
+  const graphTrail = props.cognitivePlanGraphTrail ?? [];
+  const graphExpandedRelation = props.cognitivePlanGraphExpandedRelation ?? "";
+  const graphSourceBreadcrumb = props.cognitivePlanGraphSourceBreadcrumb ?? null;
+  const graphSourceMemory = props.cognitivePlanGraphSourceMemory ?? null;
+  const graphSourceSelectedLine = props.cognitivePlanGraphSourceSelectedLine ?? null;
   const graphRelationOptions = Array.from(
     new Set((plan.graphEdges ?? []).map((edge) => edge.relation).filter(Boolean)),
   );
@@ -177,20 +180,42 @@ export function renderPlanExecutionLayer(
   const selectedCheckpointId = selectedNode.startsWith("checkpoint:")
     ? selectedNode.slice("checkpoint:".length)
     : "";
-  const focusedTodoId = props.taskPlanFocusTodoId ?? null;
+  const focusedTodoId = props.cognitivePlanFocusTodoId ?? null;
   const jumpToGraphNode = (nodeId: string, relation?: string) => {
     const normalizedNodeId = nodeId.trim();
-    if (!normalizedNodeId || !props.onQueryTaskGraph) {
+    if (!normalizedNodeId || !props.onQueryCognitivePlanGraph) {
       return;
     }
     const nextRelation = (relation ?? graphRelation).trim();
-    props.onTaskGraphRelationChange?.(nextRelation);
-    props.onTaskGraphExpandedRelationChange?.(nextRelation);
-    props.onQueryTaskGraph({
+    props.onCognitivePlanGraphRelationChange?.(nextRelation);
+    props.onCognitivePlanGraphExpandedRelationChange?.(nextRelation);
+    props.onQueryCognitivePlanGraph({
       nodeId: normalizedNodeId,
       relation: nextRelation,
     });
   };
+  const renderChip = (label: string, title?: string, onClick?: () => void) =>
+    onClick
+      ? html`
+          <button
+            type="button"
+            class="plan-sidebar-approve-btn neon-btn"
+            style="display:inline-flex;align-items:center;margin:4px 6px 0 0;padding:2px 8px;"
+            title=${title ?? label}
+            @click=${onClick}
+          >
+            ${label}
+          </button>
+        `
+      : html`
+          <span
+            class="plan-sidebar-approve-btn neon-btn"
+            style="display:inline-flex;align-items:center;margin:4px 6px 0 0;padding:2px 8px;cursor:default;"
+            title=${title ?? label}
+          >
+            ${label}
+          </span>
+        `;
 
   const content = html`
       <div class="plan-sidebar-header matrix-header">
@@ -202,7 +227,7 @@ export function renderPlanExecutionLayer(
 
       <div class="plan-sidebar-progress matrix-progress">
         <div class="plan-sidebar-progress-row data-row">
-          <span>PROGRESS / 进度</span>
+          <span>${t("chat.progress").toUpperCase()} / ${t("chat.progress")}</span>
           <span class="data-numbers">${done}/${total} (${pct}%)</span>
         </div>
         <div class="plan-sidebar-bar flux-bar flux-bar--large">
@@ -215,16 +240,16 @@ export function renderPlanExecutionLayer(
           ? html`
               <div class="plan-sidebar-progress matrix-progress">
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>BRANCH / 分支</span>
+                  <span>${t("chat.branch").toUpperCase()} / ${t("chat.branch")}</span>
                   <span class="data-numbers">${runtime.currentBranchId}</span>
                 </div>
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>CHECKPOINTS / 检查点</span>
+                  <span>${t("chat.checkpoints").toUpperCase()} / ${t("chat.checkpoints")}</span>
                   <span class="data-numbers">${runtime.checkpointsCount}</span>
                 </div>
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>LATEST / 最新</span>
-                  <span class="data-numbers">${latestCheckpointShort || "none"}</span>
+                  <span>${t("chat.latest").toUpperCase()} / ${t("chat.latest")}</span>
+                  <span class="data-numbers">${latestCheckpointShort || t("common.none")}</span>
                 </div>
               </div>
             `
@@ -243,13 +268,13 @@ export function renderPlanExecutionLayer(
                 }
               >
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>DREAM / 梦境摘要</span>
+                  <span>${t("chat.dream").toUpperCase()} / ${t("chat.dream")}摘要</span>
                   <span class="data-numbers">${latestDream.dreamId.slice(0, 12)}</span>
                 </div>
                 <div class="plan-sidebar-todo-result-content data-text">
                   ${latestDream.summary}
                   ${
-                    props.onQueryTaskGraph
+                    props.onQueryCognitivePlanGraph
                       ? html`
                           <div style="margin-top:8px;">
                             <button
@@ -260,7 +285,7 @@ export function renderPlanExecutionLayer(
                                   "STAGE_GENERATES_DREAM",
                                 )}
                             >
-                              Trace Dream
+                              ${t("chat.traceDream")}
                             </button>
                           </div>
                         `
@@ -277,7 +302,7 @@ export function renderPlanExecutionLayer(
           ? html`
               <div class="plan-sidebar-progress matrix-progress">
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>VERIFIER / 验证状态</span>
+                  <span>${t("chat.verifier").toUpperCase()} / ${t("chat.verifier")}状态</span>
                   <span class="data-numbers">${latestVerifier.status}</span>
                 </div>
                 <div class="plan-sidebar-todo-result-content data-text">${latestVerifier.summary}</div>
@@ -291,7 +316,7 @@ export function renderPlanExecutionLayer(
           ? html`
               <div class="plan-sidebar-progress matrix-progress">
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>BRANCHES / 分支树</span>
+                  <span>${t("chat.branches").toUpperCase()} / ${t("chat.branches")}</span>
                   <span class="data-numbers">${branches.length}</span>
                 </div>
                 <div class="plan-sidebar-todo-result-content data-text">
@@ -331,13 +356,15 @@ export function renderPlanExecutionLayer(
                   ? html`
                     <div class="plan-sidebar-todo-result matrix-node-result">
                       <div class="plan-sidebar-todo-result-title aeon-subtitle">
-                        ${readySet.has(todo.id) ? "READY" : "BLOCKED"}
+                        ${readySet.has(todo.id) ? t("chat.readyTask") : t("chat.blockedTask")}
                       </div>
                       <div class="plan-sidebar-todo-result-content data-text">
                         ${
                           readySet.has(todo.id)
-                            ? "无依赖阻塞，可立即执行"
-                            : `等待依赖: ${(blockedBy[todo.id] ?? []).join(", ")}`
+                            ? t("chat.readyTaskHint")
+                            : t("chat.blockedTaskHint", {
+                                deps: (blockedBy[todo.id] ?? []).join(", "),
+                              })
                         }
                       </div>
                     </div>
@@ -364,9 +391,9 @@ export function renderPlanExecutionLayer(
               <div class="plan-sidebar-actions matrix-actions">
                 <button
                   class="plan-sidebar-approve-btn neon-btn"
-                  @click=${() => props.onTaskPlanFocusTodoChange?.(null)}
+                  @click=${() => props.onCognitivePlanFocusTodoChange?.(null)}
                 >
-                  Clear Todo Focus (${focusedTodoId})
+                  ${t("chat.clear")} Todo Focus (${focusedTodoId})
                 </button>
               </div>
             `
@@ -381,7 +408,7 @@ export function renderPlanExecutionLayer(
                 class="plan-sidebar-approve-btn neon-btn neon-btn--primary"
                 @click=${() => props.onApprovePlan?.()}
               >
-                Approve and Execute
+                ${t("chat.approveAndExecute")}
               </button>
             </div>
           `
@@ -400,7 +427,7 @@ export function renderPlanExecutionLayer(
                           class="plan-sidebar-approve-btn neon-btn neon-btn--primary"
                           @click=${() => props.onRetryPlanStage?.()}
                         >
-                          Retry Stage
+                          ${t("chat.retryStage")}
                         </button>
                       `
                     : nothing
@@ -412,7 +439,7 @@ export function renderPlanExecutionLayer(
                           class="plan-sidebar-approve-btn neon-btn"
                           @click=${() => props.onBranchFromCurrent?.()}
                         >
-                          Branch From Here
+                          ${t("chat.branchFromHere")}
                         </button>
                       `
                     : nothing
@@ -424,7 +451,7 @@ export function renderPlanExecutionLayer(
                           class="plan-sidebar-approve-btn neon-btn"
                           @click=${() => props.onRollbackToLatestCheckpoint?.()}
                         >
-                          Rollback Latest
+                          ${t("chat.rollbackLatest")}
                         </button>
                       `
                     : nothing
@@ -451,13 +478,13 @@ export function renderPlanExecutionLayer(
                           class="plan-sidebar-approve-btn neon-btn neon-btn--primary"
                           @click=${() => props.onVerifierReport?.("passed")}
                         >
-                          Mark Verified
+                          ${t("chat.markVerified")}
                         </button>
                         <button
                           class="plan-sidebar-approve-btn neon-btn"
                           @click=${() => props.onVerifierReport?.("failed")}
                         >
-                          Mark Failed
+                          ${t("chat.markFailed")}
                         </button>
                       `
                     : nothing
@@ -469,7 +496,7 @@ export function renderPlanExecutionLayer(
                           class="plan-sidebar-approve-btn neon-btn"
                           @click=${() => props.onDistillDream?.()}
                         >
-                          Distill Dream
+                          ${t("chat.distillDream")}
                         </button>
                       `
                     : nothing
@@ -480,29 +507,77 @@ export function renderPlanExecutionLayer(
       }
 
       ${
-        props.onQueryTaskGraph || graphEdges.length > 0
+        graphSourceBreadcrumb
           ? html`
               <div class="plan-sidebar-progress matrix-progress">
                 <div class="plan-sidebar-progress-row data-row">
-                  <span>GRAPH / 关系追踪</span>
-                  <span class="data-numbers">${graphLoading ? "loading" : `${graphEdges.length}`}</span>
+                  <span>${t("chat.source").toUpperCase()} / ${t("chat.source")}</span>
+                  <span class="data-numbers">breadcrumb</span>
+                </div>
+                <div class="plan-sidebar-todo-result-content data-text">
+                  ${renderChip(
+                    `Memory Match · ${graphSourceBreadcrumb}`,
+                    graphSourceBreadcrumb,
+                    () =>
+                      props.onOpenSidebar?.(
+                        `# Graph Source Breadcrumb\n\n- Origin: \`${graphSourceBreadcrumb}\`\n- This trace came from a memory/source selection and is currently reflected in the graph trail.\n`,
+                      ),
+                  )}
+                  <div style="margin-top:6px;" class="data-text">
+                    ${graphSourceSelectedLine ? `Focused line: ${graphSourceSelectedLine}` : "Focused line: source start"}
+                  </div>
+                  <div style="margin-top:8px;">
+                    <button
+                      class="plan-sidebar-approve-btn neon-btn"
+                      style="margin:4px 6px 0 0;"
+                      ?disabled=${!graphSourceMemory || !props.onOpenCognitiveSource}
+                      @click=${() => props.onOpenCognitiveSource?.()}
+                    >
+                      ${t("chat.openSource")}
+                    </button>
+                    <button
+                      class="plan-sidebar-approve-btn neon-btn"
+                      style="margin:4px 6px 0 0;"
+                      ?disabled=${!graphSourceMemory || !props.onReopenCognitiveMemory}
+                      @click=${() => props.onReopenCognitiveMemory?.()}
+                    >
+                      ${t("chat.reopenMemory")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `
+          : nothing
+      }
+
+      ${
+        props.onQueryCognitivePlanGraph || graphEdges.length > 0
+          ? html`
+              <div class="plan-sidebar-progress matrix-progress">
+                <div class="plan-sidebar-progress-row data-row">
+                  <span>${t("chat.graph").toUpperCase()} / ${t("chat.graph")}</span>
+                  <span class="data-numbers">${graphLoading ? t("common.loading") : `${graphEdges.length}`}</span>
                 </div>
                 <div class="plan-sidebar-todo-result-content data-text">
                   <input
                     type="text"
-                    placeholder="node id (task/stage/checkpoint/dream)"
+                    placeholder="${t("chat.searchAgentsPlaceholder")}"
                     .value=${graphNodeId}
                     style="width:100%;margin:4px 0 8px 0;padding:6px 8px;border-radius:8px;"
                     @input=${(event: Event) =>
-                      props.onTaskGraphNodeIdChange?.((event.target as HTMLInputElement).value)}
+                      props.onCognitivePlanGraphNodeIdChange?.(
+                        (event.target as HTMLInputElement).value,
+                      )}
                   />
                   <select
                     .value=${graphRelation}
                     style="width:100%;margin:0 0 8px 0;padding:6px 8px;border-radius:8px;"
                     @change=${(event: Event) =>
-                      props.onTaskGraphRelationChange?.((event.target as HTMLSelectElement).value)}
+                      props.onCognitivePlanGraphRelationChange?.(
+                        (event.target as HTMLSelectElement).value,
+                      )}
                   >
-                    <option value="">All relations</option>
+                    <option value="">${t("chat.allRelations")}</option>
                     ${graphRelationOptions.map(
                       (relation) => html`<option value=${relation}>${relation}</option>`,
                     )}
@@ -511,66 +586,66 @@ export function renderPlanExecutionLayer(
                     <button
                       class="plan-sidebar-approve-btn neon-btn"
                       style="margin:4px 6px 0 0;"
-                      ?disabled=${!props.onQueryTaskGraph || graphLoading}
+                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading}
                       @click=${() =>
-                        props.onQueryTaskGraph?.({
+                        props.onQueryCognitivePlanGraph?.({
                           nodeId: graphNodeId,
                           relation: graphRelation,
                         })}
                     >
-                      Query Graph
+                      ${t("chat.queryGraph")}
                     </button>
                     <button
                       class="plan-sidebar-approve-btn neon-btn"
                       style="margin:4px 6px 0 0;"
-                      ?disabled=${!props.onTaskGraphAutoTrackChange}
-                      @click=${() => props.onTaskGraphAutoTrackChange?.(!graphAutoTrack)}
+                      ?disabled=${!props.onCognitivePlanGraphAutoTrackChange}
+                      @click=${() => props.onCognitivePlanGraphAutoTrackChange?.(!graphAutoTrack)}
                     >
-                      Auto Track: ${graphAutoTrack ? "ON" : "OFF"}
+                      ${t("chat.autoTrack")}: ${graphAutoTrack ? "ON" : "OFF"}
                     </button>
                     <button
                       class="plan-sidebar-approve-btn neon-btn"
                       style="margin:4px 6px 0 0;"
-                      ?disabled=${!props.onQueryTaskGraph || graphLoading || !latestCheckpointId}
+                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading || !latestCheckpointId}
                       @click=${() =>
-                        props.onQueryTaskGraph?.({
+                        props.onQueryCognitivePlanGraph?.({
                           nodeId: `checkpoint:${latestCheckpointId}`,
                           relation: graphRelation,
                         })}
                     >
-                      From Checkpoint
+                      ${t("chat.fromCheckpoint")}
                     </button>
                     <button
                       class="plan-sidebar-approve-btn neon-btn"
                       style="margin:4px 6px 0 0;"
-                      ?disabled=${!props.onQueryTaskGraph || graphLoading || !latestDream?.dreamId}
+                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading || !latestDream?.dreamId}
                       @click=${() =>
-                        props.onQueryTaskGraph?.({
+                        props.onQueryCognitivePlanGraph?.({
                           nodeId: latestDream?.dreamId ? `dream:${latestDream.dreamId}` : "",
                           relation: graphRelation,
                         })}
                     >
-                      From Dream
+                      ${t("chat.fromDream")}
                     </button>
                     <button
                       class="plan-sidebar-approve-btn neon-btn"
                       style="margin:4px 6px 0 0;"
-                      ?disabled=${!props.onQueryTaskGraph || graphLoading || !latestContextNodeId}
+                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading || !latestContextNodeId}
                       @click=${() =>
-                        props.onQueryTaskGraph?.({
+                        props.onQueryCognitivePlanGraph?.({
                           nodeId: latestContextNodeId,
                           relation: graphRelation,
                         })}
                     >
-                      Latest Context
+                      ${t("chat.latestContext")}
                     </button>
                     <button
                       class="plan-sidebar-approve-btn neon-btn"
                       style="margin:4px 6px 0 0;"
-                      ?disabled=${!props.onClearTaskGraph}
-                      @click=${() => props.onClearTaskGraph?.()}
+                      ?disabled=${!props.onClearCognitivePlanGraph}
+                      @click=${() => props.onClearCognitivePlanGraph?.()}
                     >
-                      Clear
+                      ${t("chat.clear")}
                     </button>
                   </div>
                   ${
@@ -582,8 +657,8 @@ export function renderPlanExecutionLayer(
                               <button
                                 class="plan-sidebar-approve-btn neon-btn"
                                 style=${`margin:4px 6px 0 0;padding:2px 6px;${index === graphTrail.length - 1 ? "outline:1px solid #818cf8;" : ""}`}
-                                ?disabled=${!props.onTaskGraphTrailJump || graphLoading}
-                                @click=${() => props.onTaskGraphTrailJump?.(nodeId, index)}
+                                ?disabled=${!props.onCognitivePlanGraphTrailJump || graphLoading}
+                                @click=${() => props.onCognitivePlanGraphTrailJump?.(nodeId, index)}
                               >
                                 ${nodeId}
                               </button>
@@ -608,11 +683,11 @@ export function renderPlanExecutionLayer(
                                 <button
                                   class="plan-sidebar-approve-btn neon-btn"
                                   style="margin:4px 6px 0 0;${active ? "outline:1px solid #818cf8;" : ""}"
-                                  ?disabled=${!props.onQueryTaskGraph || graphLoading}
+                                  ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading}
                                   @click=${() => {
-                                    props.onTaskGraphRelationChange?.(relation);
-                                    props.onTaskGraphExpandedRelationChange?.(relation);
-                                    props.onQueryTaskGraph?.({
+                                    props.onCognitivePlanGraphRelationChange?.(relation);
+                                    props.onCognitivePlanGraphExpandedRelationChange?.(relation);
+                                    props.onQueryCognitivePlanGraph?.({
                                       nodeId: graphNodeId || latestContextNodeId,
                                       relation,
                                     });
@@ -628,17 +703,17 @@ export function renderPlanExecutionLayer(
                                     <button
                                       class="plan-sidebar-approve-btn neon-btn"
                                       style="margin:4px 6px 0 0;"
-                                      ?disabled=${!props.onQueryTaskGraph || graphLoading}
+                                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading}
                                       @click=${() => {
-                                        props.onTaskGraphRelationChange?.("");
-                                        props.onTaskGraphExpandedRelationChange?.("");
-                                        props.onQueryTaskGraph?.({
+                                        props.onCognitivePlanGraphRelationChange?.("");
+                                        props.onCognitivePlanGraphExpandedRelationChange?.("");
+                                        props.onQueryCognitivePlanGraph?.({
                                           nodeId: graphNodeId || latestContextNodeId,
                                           relation: "",
                                         });
                                       }}
                                     >
-                                      Clear Relation
+                                      ${t("chat.clearRelation")}
                                     </button>
                                   `
                                 : nothing
@@ -657,9 +732,9 @@ export function renderPlanExecutionLayer(
                               @toggle=${(event: Event) => {
                                 const target = event.target as HTMLDetailsElement;
                                 if (target.open) {
-                                  props.onTaskGraphExpandedRelationChange?.(relation);
+                                  props.onCognitivePlanGraphExpandedRelationChange?.(relation);
                                 } else if (graphExpandedRelation === relation) {
-                                  props.onTaskGraphExpandedRelationChange?.("");
+                                  props.onCognitivePlanGraphExpandedRelationChange?.("");
                                 }
                               }}
                               style="margin-top:6px;"
@@ -678,7 +753,7 @@ export function renderPlanExecutionLayer(
                                     <button
                                       class="plan-sidebar-approve-btn neon-btn"
                                       style="margin:0 6px 0 0;padding:2px 6px;"
-                                      ?disabled=${!props.onQueryTaskGraph || graphLoading}
+                                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading}
                                       @click=${() => jumpToGraphNode(edge.from, relation)}
                                     >
                                       ${edge.from}
@@ -689,7 +764,7 @@ export function renderPlanExecutionLayer(
                                     <button
                                       class="plan-sidebar-approve-btn neon-btn"
                                       style="margin:0 0 0 6px;padding:2px 6px;"
-                                      ?disabled=${!props.onQueryTaskGraph || graphLoading}
+                                      ?disabled=${!props.onQueryCognitivePlanGraph || graphLoading}
                                       @click=${() => jumpToGraphNode(edge.to, relation)}
                                     >
                                       ${edge.to}
@@ -704,24 +779,24 @@ export function renderPlanExecutionLayer(
                             <button
                               class="plan-sidebar-approve-btn neon-btn"
                               style="margin:4px 6px 0 0;"
-                              ?disabled=${!props.onTaskGraphPageChange || filteredSafeGraphPage <= 1 || graphLoading}
-                              @click=${() => props.onTaskGraphPageChange?.(filteredSafeGraphPage - 1)}
+                              ?disabled=${!props.onCognitivePlanGraphPageChange || filteredSafeGraphPage <= 1 || graphLoading}
+                              @click=${() => props.onCognitivePlanGraphPageChange?.(filteredSafeGraphPage - 1)}
                             >
-                              Prev
+                              ${t("chat.prev")}
                             </button>
                             <span class="data-numbers" style="margin-right:6px;">${filteredSafeGraphPage}/${filteredTotalGraphPages}</span>
                             <button
                               class="plan-sidebar-approve-btn neon-btn"
                               style="margin:4px 6px 0 0;"
-                              ?disabled=${!props.onTaskGraphPageChange || filteredSafeGraphPage >= filteredTotalGraphPages || graphLoading}
-                              @click=${() => props.onTaskGraphPageChange?.(filteredSafeGraphPage + 1)}
+                              ?disabled=${!props.onCognitivePlanGraphPageChange || filteredSafeGraphPage >= filteredTotalGraphPages || graphLoading}
+                              @click=${() => props.onCognitivePlanGraphPageChange?.(filteredSafeGraphPage + 1)}
                             >
-                              Next
+                              ${t("chat.next")}
                             </button>
                           </div>
                         `
                       : html`
-                          <div style="margin-top: 8px">No graph edges queried.</div>
+                          <div style="margin-top: 8px">${t("chat.noGraphEdges")}</div>
                         `
                   }
                 </div>
@@ -743,7 +818,7 @@ export function renderPlanExecutionLayer(
                     const shortId = checkpoint.checkpointId.slice(0, 18);
                     return html`
                       ${
-                        props.onQueryTaskGraph
+                        props.onQueryCognitivePlanGraph
                           ? html`
                               <button
                                 class="plan-sidebar-approve-btn neon-btn"

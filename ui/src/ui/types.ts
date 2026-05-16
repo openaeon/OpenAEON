@@ -1336,8 +1336,6 @@ export type ManualRuntimeSnapshot = {
   fractalState: FractalThemeState;
 };
 
-export type LegacyTaskPlanPhase = "planning" | "execution" | "verification" | "complete";
-
 export type CognitiveTaskPhase =
   | "INIT"
   | "PLAN"
@@ -1354,7 +1352,6 @@ export type ModelProvider = "gpt" | "claude" | "gemini";
 
 export type CognitiveTaskStatus = {
   phase: CognitiveTaskPhase;
-  legacyPhase: LegacyTaskPlanPhase;
   updatedAt: number;
   reason?: string;
 };
@@ -1370,6 +1367,7 @@ export type TaskNode = {
   priority: number;
   acceptanceCriteria: string[];
   artifacts: string[];
+  metadata?: Record<string, unknown>;
 };
 
 export type TaskTree = {
@@ -1387,6 +1385,121 @@ export type ReflectionRecord = {
   optimizations: string[];
 };
 
+export type CognitiveInvariantReport = {
+  id: string;
+  taskId: string;
+  at: number;
+  phase: CognitiveTaskPhase;
+  status: "pass" | "warn" | "fail";
+  blocked: boolean;
+  checks: Array<{
+    id: string;
+    status: "pass" | "warn" | "fail";
+    summary: string;
+    evidence: string[];
+  }>;
+};
+
+export type CognitiveStateProjection = {
+  taskId: string;
+  at: number;
+  z: {
+    phase: CognitiveTaskPhase;
+    activeNodeIds: string[];
+    blockedNodeIds: string[];
+    failedNodeIds: string[];
+    confidence: number;
+  };
+  phi: {
+    completedNodeIds: string[];
+    retryPressure: number;
+    learningSignals: string[];
+  };
+  c: {
+    sessionKey: string;
+    externalSignals: string[];
+  };
+  r: {
+    reflectionVerdict: "pass" | "warn" | "fail" | "pending";
+    correctionSignals: string[];
+  };
+  zNext: {
+    recommendedPhase: CognitiveTaskPhase;
+    invariantReady: boolean;
+  };
+};
+
+export type CognitiveMemoryTrace = {
+  shortTermExpiresAt?: number;
+  longTermSources: Array<{ source: string; score?: number; path?: string }>;
+  evolutionStrategyHits: Array<{
+    id: string;
+    taskId: string;
+    category: "success_path" | "failure_case" | "optimization_strategy";
+    content: string;
+    tags: string[];
+    runId?: string;
+    createdAt: number;
+  }>;
+};
+
+export type CognitiveArchitectureProjection = {
+  version: "3.0";
+  formula: "Z -> Z^2 + C + R -> Z+1";
+  layers: Array<{
+    id: string;
+    index: number;
+    label: string;
+    status: "idle" | "active" | "verified" | "blocked";
+    signals: string[];
+  }>;
+  capabilityLadder: Array<{
+    level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+    label: string;
+    active: boolean;
+    score: number;
+  }>;
+  spaces: Array<{
+    id: "G" | "W" | "T" | "B" | "E";
+    label: string;
+    permeability: "low" | "medium" | "high";
+    stability: "low" | "medium" | "high";
+    active: boolean;
+    signals: string[];
+  }>;
+  operatingLoop: Array<{
+    index: number;
+    id: string;
+    label: string;
+    status: "pending" | "active" | "done" | "blocked";
+  }>;
+  subsystems: Array<{
+    id: string;
+    label: string;
+    status: "idle" | "active" | "verified" | "blocked";
+    metrics: Record<string, number | string>;
+  }>;
+  roadmap: Array<{
+    phase: 1 | 2 | 3 | 4;
+    label: string;
+    active: boolean;
+  }>;
+};
+
+export type CognitiveRuntimeSummary = {
+  phase: CognitiveTaskPhase;
+  queue: { pending: number; claimed: number };
+  retries: { total: number; pendingBackoff: number; exhausted: number };
+  checkpoint: { lastRunId?: string; runCount: number };
+  dream: { ready: boolean; lastDreamAt?: number };
+  replayCursor: string | null;
+  providers: Array<{ provider: string; lastModel?: string; success: number; failed: number }>;
+  invariants?: CognitiveInvariantReport;
+  stateProjection?: CognitiveStateProjection;
+  memoryTrace?: CognitiveMemoryTrace;
+  architecture?: CognitiveArchitectureProjection;
+};
+
 export type CognitiveTaskRecord = {
   id: string;
   sessionKey: string;
@@ -1395,6 +1508,9 @@ export type CognitiveTaskRecord = {
   status: CognitiveTaskStatus;
   tree: TaskTree;
   reflections: ReflectionRecord[];
+  stateProjection?: CognitiveStateProjection;
+  invariantReport?: CognitiveInvariantReport;
+  memoryTrace?: CognitiveMemoryTrace;
   runIds: string[];
   createdAt: number;
   updatedAt: number;

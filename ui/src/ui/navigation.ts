@@ -170,7 +170,7 @@ export function iconForTab(tab: Tab): IconName {
     case "logs":
       return "scrollText";
     case "aeon":
-      return "gitBranch";
+      return "scrollText";
     case "cognitive":
       return "brain";
     default:

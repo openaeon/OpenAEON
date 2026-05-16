@@ -56,7 +56,7 @@ import type { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import type { SessionLogEntry } from "./views/usage.ts";
 
-export type TaskPlanConfirmDialog = {
+export type CognitivePlanConfirmDialog = {
   action: "retry" | "branch" | "switch-branch" | "restore" | "rollback-latest";
   title: string;
   message: string;
@@ -124,26 +124,30 @@ export type AppViewState = {
   execApprovalBusy: boolean;
   execApprovalError: string | null;
   pendingGatewayUrl: string | null;
-  taskPlanConfirmDialog: TaskPlanConfirmDialog | null;
-  requestTaskPlanConfirmation: (dialog: TaskPlanConfirmDialog) => Promise<boolean>;
-  handleTaskPlanConfirmDecision: (confirmed: boolean) => void;
-  taskPlanGraphEdges: Array<{
+  cognitivePlanConfirmDialog: CognitivePlanConfirmDialog | null;
+  requestCognitivePlanConfirmation: (dialog: CognitivePlanConfirmDialog) => Promise<boolean>;
+  handleCognitivePlanConfirmDecision: (confirmed: boolean) => void;
+  cognitivePlanGraphEdges: Array<{
     edgeId: string;
     from: string;
     to: string;
     relation: string;
     at: number;
   }>;
-  taskPlanGraphLoading: boolean;
-  taskPlanGraphError: string | null;
-  taskPlanGraphNodeId: string;
-  taskPlanGraphRelation: string;
-  taskPlanGraphAutoTrack: boolean;
-  taskPlanGraphPage: number;
-  taskPlanGraphPageSize: number;
-  taskPlanGraphTrail: string[];
-  taskPlanGraphExpandedRelation: string;
-  taskPlanFocusTodoId: string | null;
+  cognitivePlanGraphLoading: boolean;
+  cognitivePlanGraphError: string | null;
+  cognitivePlanGraphNodeId: string;
+  cognitivePlanGraphRelation: string;
+  cognitivePlanGraphAutoTrack: boolean;
+  cognitivePlanGraphPage: number;
+  cognitivePlanGraphPageSize: number;
+  cognitivePlanGraphTrail: string[];
+  cognitivePlanGraphExpandedRelation: string;
+  cognitivePlanGraphSourceBreadcrumb: string | null;
+  cognitivePlanGraphSourceMemory: CognitiveLongTermEntry | null;
+  cognitivePlanGraphSourceContext: CognitiveSourceContext | null;
+  cognitivePlanGraphSourceSelectedLine: number | null;
+  cognitivePlanFocusTodoId: string | null;
   configLoading: boolean;
   configRaw: string;
   configRawOriginal: string;
@@ -230,9 +234,9 @@ export type AppViewState = {
   chatManualSection: ChatManualSection;
   chatManualLastOpenedAt: number | null;
   chatManualDismissedHints: string[];
-  sandboxTaskPlan: import("./views/sandbox.js").TaskPlanSnapshot | null;
-  sandboxTaskPlanLoading: boolean;
-  sandboxTaskPlanError: string | null;
+  sandboxCognitivePlan: import("./views/sandbox.js").CognitivePlanSnapshot | null;
+  sandboxCognitivePlanLoading: boolean;
+  sandboxCognitivePlanError: string | null;
   executionWatchdog: {
     active: boolean;
     degraded: boolean;
@@ -251,7 +255,6 @@ export type AppViewState = {
   cognitiveTaskList: CognitiveTaskRecord[];
   cognitiveSelectedTaskId: string | null;
   cognitiveRuntimeEvents: import("./controllers/cognitive.ts").CognitiveTaskEvent[];
-  cognitiveLegacyPlan: unknown | null;
   cognitiveSubmitTitle: string;
   cognitiveSubmitText: string;
   cognitiveMemoryQuery: string;
@@ -262,9 +265,9 @@ export type AppViewState = {
   cognitiveReplayLoading: boolean;
   cognitiveLoading: boolean;
   cognitiveMemoryLoading: boolean;
+  cognitiveSelectedMemoryResult: CognitiveLongTermEntry | null;
   cognitiveSourceContext: CognitiveSourceContext | null;
   cognitiveSourceSelectedLine: number | null;
-  cognitiveSelectedMemoryResult: CognitiveLongTermEntry | null;
   handleInspectMemoryResult: (result: CognitiveLongTermEntry) => Promise<void>;
   handleTraceMemoryResult: (result: CognitiveLongTermEntry) => Promise<void>;
   handleSourceLineSelect: (lineNo: number) => void;
@@ -429,7 +432,10 @@ export type AppViewState = {
   setPassword: (next: string) => void;
   setSessionKey: (next: string) => void;
   setChatMessage: (next: string) => void;
-  handleSendChat: (messageOverride?: string, opts?: { restoreDraft?: boolean }) => Promise<void>;
+  handleSendChat: (
+    messageOverride?: string,
+    opts?: { restoreDraft?: boolean; mode?: string },
+  ) => Promise<void>;
   handleToggleEternalMode: (next: boolean, source?: "local" | "url") => Promise<void>;
   handleAbortChat: () => Promise<void>;
   removeQueuedMessage: (id: string) => void;
@@ -468,4 +474,6 @@ export type AppViewState = {
   handleCognitiveReflect: () => Promise<void>;
   handleCognitiveMemoryQuery: () => Promise<void>;
   handleCognitiveReplay: (runId: string) => Promise<void>;
+  handleOpenCognitiveSource: () => Promise<void>;
+  handleReopenCognitiveMemory: () => Promise<void>;
 };

@@ -3,9 +3,9 @@ import { loadDebug } from "./controllers/debug.ts";
 import { loadAeonLogic } from "./controllers/aeon.ts";
 import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
-import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadSandboxCognitivePlan } from "./controllers/sandbox.ts";
 import { loadCognitiveTask } from "./controllers/cognitive.ts";
-import type { TaskPlanSnapshot } from "./views/sandbox.ts";
+import type { CognitivePlanSnapshot } from "./views/sandbox.ts";
 
 type PollingHost = {
   nodesPollInterval: number | null;
@@ -21,7 +21,7 @@ type SandboxWatchdogHost = PollingHost & {
   connected: boolean;
   settings: import("./storage.ts").UiSettings;
   sessionKey: string;
-  sandboxTaskPlan: TaskPlanSnapshot | null;
+  sandboxCognitivePlan: CognitivePlanSnapshot | null;
   chatSending: boolean;
   chatStream: string | null;
   chatMessage: string;
@@ -44,21 +44,39 @@ type SandboxWatchdogHost = PollingHost & {
   handleSendChat: () => Promise<void>;
 };
 
-function isPlanTodoExecutable(todo: TaskPlanSnapshot["todos"][number]): boolean {
+function isPlanTodoExecutable(todo: CognitivePlanSnapshot["todos"][number]): boolean {
   return todo.status !== "done";
 }
 
-function countExecutableTodos(plan: TaskPlanSnapshot): number {
+function countExecutableTodos(plan: CognitivePlanSnapshot): number {
   return (Array.isArray(plan.todos) ? plan.todos : []).filter(isPlanTodoExecutable).length;
 }
 
-function isUnknownTaskPlanApprove(err: unknown): boolean {
-  const text = String(err ?? "");
-  return text.includes("unknown method") && text.includes("task_plan.approve");
+async function resolveSessionCognitiveTaskId(host: SandboxWatchdogHost): Promise<string | null> {
+  if (!host.client || !host.connected) {
+    return null;
+  }
+  const sessionKey = host.sessionKey.trim();
+  if (!sessionKey) {
+    return null;
+  }
+  try {
+    const list = await host.client.request<{
+      ok?: boolean;
+      tasks?: Array<{ id: string; sessionKey: string; updatedAt: number }>;
+    }>("cognitive.task.list", { limit: 80 });
+    const tasks = Array.isArray(list?.tasks) ? list.tasks : [];
+    const match = tasks
+      .filter((task) => task.sessionKey === sessionKey)
+      .toSorted((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))[0];
+    return match?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<void> {
-  const plan = host.sandboxTaskPlan;
+  const plan = host.sandboxCognitivePlan;
   if (!host.aeonEternalMode || !plan || plan.phase !== "planning") {
     return;
   }
@@ -79,19 +97,19 @@ async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<v
     return;
   }
   try {
-    const approveRes = await host.client.request<{
-      ok?: boolean;
-      plan?: TaskPlanSnapshot | null;
-      taskRuntime?: TaskPlanSnapshot["taskRuntime"];
-    }>("task_plan.approve", {
-      sessionKey: host.sessionKey,
-    });
-    if (approveRes?.plan) {
-      host.sandboxTaskPlan = {
-        ...approveRes.plan,
-        taskRuntime: approveRes.taskRuntime ?? approveRes.plan.taskRuntime,
-      };
+    const taskId = await resolveSessionCognitiveTaskId(host);
+    if (!taskId) {
+      return;
     }
+    await host.client.request<{ ok?: boolean; task?: { id: string } }>(
+      "cognitive.task.transition",
+      {
+        taskId,
+        to: "EXECUTE",
+        reason: "ui_eternal_auto_approve",
+      },
+    );
+    await loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
     host.executionWatchdog = {
       ...host.executionWatchdog,
       lastRetryAt: now,
@@ -108,32 +126,6 @@ async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<v
     host.chatMessage = executionPrompt;
     await host.handleSendChat();
   } catch (err) {
-    if (isUnknownTaskPlanApprove(err)) {
-      try {
-        const fallbackRes = await host.client.request<{
-          ok?: boolean;
-          plan?: TaskPlanSnapshot | null;
-          taskRuntime?: TaskPlanSnapshot["taskRuntime"];
-        }>("task_plan.transition.apply", {
-          sessionKey: host.sessionKey,
-          action: "forward",
-        });
-        if (fallbackRes?.plan) {
-          host.sandboxTaskPlan = {
-            ...fallbackRes.plan,
-            taskRuntime: fallbackRes.taskRuntime ?? fallbackRes.plan.taskRuntime,
-          };
-        }
-        host.executionWatchdog = {
-          ...host.executionWatchdog,
-          lastRetryAt: now,
-          reason: "eternal_auto_forward_transition",
-        };
-        return;
-      } catch {
-        // fall through to original error handling
-      }
-    }
     host.lastError = `Eternal auto-drive failed: ${String(err)}`;
     host.executionWatchdog = {
       ...host.executionWatchdog,
@@ -144,7 +136,7 @@ async function runEternalPlanningAutodrive(host: SandboxWatchdogHost): Promise<v
   }
 }
 
-function digestTaskPlan(plan: TaskPlanSnapshot): string {
+function digestCognitivePlan(plan: CognitivePlanSnapshot): string {
   const parts = (plan.todos ?? []).map((todo) => `${todo.id}:${todo.status}`).sort();
   return `${plan.phase ?? "planning"}|${parts.join("|")}`;
 }
@@ -161,7 +153,7 @@ function mirrorWatchdogToTelemetry(host: SandboxWatchdogHost) {
 }
 
 async function runExecutionAutopilotTick(host: SandboxWatchdogHost): Promise<void> {
-  const plan = host.sandboxTaskPlan;
+  const plan = host.sandboxCognitivePlan;
   if (!host.connected || !host.client) {
     return;
   }
@@ -172,31 +164,24 @@ async function runExecutionAutopilotTick(host: SandboxWatchdogHost): Promise<voi
     return;
   }
   try {
-    const res = await host.client.request<{
-      ok?: boolean;
-      plan?: TaskPlanSnapshot | null;
-      executionGraph?: TaskPlanSnapshot["executionGraph"];
-      taskRuntime?: TaskPlanSnapshot["taskRuntime"];
-    }>("task_plan.autopilot.tick", {
-      sessionKey: host.sessionKey,
-      autopilot: true,
-      maxConcurrent: 2,
-      chaosScore: host.chatChaosScore,
-    });
-    if (res?.plan) {
-      host.sandboxTaskPlan = {
-        ...res.plan,
-        executionGraph: res.executionGraph ?? res.plan.executionGraph,
-        taskRuntime: res.taskRuntime ?? res.plan.taskRuntime,
-      };
+    const taskId = await resolveSessionCognitiveTaskId(host);
+    if (!taskId) {
+      return;
     }
+    await host.client.request<{ ok?: boolean; task?: { id: string } }>(
+      "cognitive.runtime.dispatch",
+      {
+        taskId,
+      },
+    );
+    await loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
   } catch {
     // best-effort tick; watchdog handles degraded recovery path
   }
 }
 
 async function runExecutionWatchdog(host: SandboxWatchdogHost) {
-  const plan = host.sandboxTaskPlan;
+  const plan = host.sandboxCognitivePlan;
   if (
     !plan ||
     plan.phase !== "execution" ||
@@ -220,7 +205,7 @@ async function runExecutionWatchdog(host: SandboxWatchdogHost) {
     return;
   }
   const now = Date.now();
-  const digest = digestTaskPlan(plan);
+  const digest = digestCognitivePlan(plan);
   if (!host.executionWatchdog.active) {
     host.executionWatchdog = {
       ...host.executionWatchdog,
@@ -347,7 +332,7 @@ export function startSandboxPolling(host: PollingHost & { sessionKey: string }) 
       return;
     }
     void (async () => {
-      await loadSandboxTaskPlan(host as unknown as OPENAEONApp);
+      await loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
       await runEternalPlanningAutodrive(host as unknown as SandboxWatchdogHost);
       await runExecutionAutopilotTick(host as unknown as SandboxWatchdogHost);
       await runExecutionWatchdog(host as unknown as SandboxWatchdogHost);

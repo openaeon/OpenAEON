@@ -802,7 +802,7 @@ export function createTaskPlannerTool(options?: {
               "Provide result with evidence refs",
             ];
           const item: TodoItem = {
-            id: crypto.randomUUID().substring(0, 8),
+            id: readStringParam(params, "taskId") || crypto.randomUUID().substring(0, 8),
             title,
             status: "planned",
             owner,

@@ -3,7 +3,7 @@ import { t } from "../../../../i18n/index.ts";
 import type { SubagentViewModel } from "../../../types.ts";
 import type { ChatLayoutProps } from "../../chat-layout.ts";
 import { renderPlanExecutionLayer } from "./plan-sidebar.ts";
-import { buildSubagentViewModel, getVisiblePlanTodos } from "./subagent-view-model.ts";
+import { buildSubagentViewModel, getVisibleCognitivePlanTodos } from "./subagent-view-model.ts";
 
 function renderSubagentCard(
   entry: SubagentViewModel,
@@ -11,6 +11,7 @@ function renderSubagentCard(
     selectedTodoId?: string | null;
     todoTitleById: Map<string, string>;
     onSelectTodoId?: (todoId: string | null) => void;
+    onForceStart?: (todoId: string) => void;
   },
 ) {
   const statusClass =
@@ -43,7 +44,25 @@ function renderSubagentCard(
       <div class="subagent-card__header">
         <span class="subagent-card__icon node-icon">${statusIcon}</span>
         <span class="subagent-card__name node-name">${entry.title}</span>
-        <span class="subagent-card__status status-badge">${statusText}</span>
+        <div class="subagent-card__status-wrap">
+          ${
+            entry.status === "blocked" || entry.status === "ready"
+              ? html`
+                <button
+                  class="subagent-card__action-btn subagent-card__action-btn--force"
+                  title="${t("chat.forceStart", "Force Start")}"
+                  @click=${(e: Event) => {
+                    e.stopPropagation();
+                    if (entry.todoId) options.onForceStart?.(entry.todoId);
+                  }}
+                >
+                  ⚡
+                </button>
+              `
+              : nothing
+          }
+          <span class="subagent-card__status status-badge">${statusText}</span>
+        </div>
       </div>
       ${
         entry.ownerAgent
@@ -131,6 +150,10 @@ type SidebarControls = {
   onCreateAgent?: () => void;
   autopilotEnabled?: boolean;
   onToggleAutopilot?: (enabled: boolean) => void;
+  autopilotMaxConcurrent?: number;
+  onAutopilotMaxConcurrentChange?: (maxConcurrent: number) => void;
+  onAutopilotDispatchNow?: () => void;
+  onForceStart?: (todoId: string) => void;
 };
 
 function matchStatus(
@@ -161,30 +184,30 @@ function getCollaborationHint(params: {
   runningCount: number;
   staleCount: number;
   longRunningCount: number;
-}): string {
+}): { text: string; action?: "dispatch" | "focus_blocked" | "reset" } {
   if (params.staleCount > 0) {
-    return "Stale tasks detected. Re-activate owners and post heartbeat updates first.";
+    return { text: t("chat.staleHint"), action: "reset" };
   }
   if (params.longRunningCount > 0) {
-    return "Long-running tasks need scoped checkpoints before deeper execution.";
+    return { text: t("chat.longRunningHint"), action: "focus_blocked" };
   }
   if (params.blockedCount > 0) {
-    return "Resolve blockers first, then resume blocked agents.";
+    return { text: t("chat.blockedHint"), action: "focus_blocked" };
   }
   if (params.readyCount > 0 && params.runningCount === 0) {
-    return "Dispatch ready tasks to keep the pipeline moving.";
+    return { text: t("chat.readyHint"), action: "dispatch" };
   }
   if (params.runningCount > 0) {
-    return "Monitor running agents and prepare verification handoff.";
+    return { text: t("chat.runningHint") };
   }
-  return "No active collaboration signal yet.";
+  return { text: t("chat.noCollaborationHint") };
 }
 
 export function renderSubagentSidebar(props: ChatLayoutProps, controls?: SidebarControls) {
   const models =
     props.subagentViewModel ??
     buildSubagentViewModel({
-      taskPlan: props.taskPlan,
+      cognitivePlan: props.cognitivePlan,
       sandboxChatEvents: props.sandboxChatEvents,
       sessions: props.sandboxSessions,
     });
@@ -204,13 +227,13 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
   const blockedCount = models.filter((entry) => entry.status === "blocked").length;
   const doneCount = models.filter((entry) => entry.status === "done").length;
   const readyCount = models.filter((entry) => entry.status === "ready").length;
-  const visibleTodos = getVisiblePlanTodos(props.taskPlan);
+  const visibleTodos = getVisibleCognitivePlanTodos(props.cognitivePlan);
   const blockedEdges = visibleTodos.reduce(
-    (acc, todo) => acc + (props.taskPlan?.executionGraph?.blockedBy?.[todo.id]?.length ?? 0),
+    (acc, todo) => acc + (props.cognitivePlan?.executionGraph?.blockedBy?.[todo.id]?.length ?? 0),
     0,
   );
-  const staleCount = props.taskPlan?.executionGraph?.staleTodoIds?.length ?? 0;
-  const longRunningCount = props.taskPlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
+  const staleCount = props.cognitivePlan?.executionGraph?.staleTodoIds?.length ?? 0;
+  const longRunningCount = props.cognitivePlan?.executionGraph?.longRunningTodoIds?.length ?? 0;
   const collaborationHint = getCollaborationHint({
     blockedCount,
     readyCount,
@@ -221,19 +244,31 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
   if (models.length === 0 && visibleTodos.length === 0) {
     return nothing;
   }
-  const phase = props?.taskPlan?.phase || "execution";
+  const phase = props?.cognitivePlan?.phase || "execution";
   const hasExecutionLayer = visibleTodos.length > 0;
-  const autoDispatch = props.taskPlan?.executionGraph?.autoDispatch;
+  const autoDispatch = props.cognitivePlan?.executionGraph?.autoDispatch;
   const autopilotEnabled = controls?.autopilotEnabled ?? autoDispatch?.enabled ?? true;
+  const autopilotMaxConcurrent = Math.max(
+    1,
+    Math.min(8, controls?.autopilotMaxConcurrent ?? autoDispatch?.maxConcurrent ?? 2),
+  );
+  const queueDepth = autoDispatch?.queueDepth ?? readyCount;
+  const effectiveRunningCount = autoDispatch?.runningCount ?? runningCount;
+  const availableSlots = Math.max(0, autopilotMaxConcurrent - effectiveRunningCount);
+  const parallelPressure = Math.max(0, queueDepth - availableSlots);
+  const parallelHint =
+    parallelPressure > 0
+      ? t("chat.backlogHint", { count: parallelPressure })
+      : t("chat.parallelHealthy");
   const autopilotLabel = autoDispatch?.frozen
     ? `Frozen · ${autoDispatch.freezeReason ?? "policy"}`
-    : `Queue ${autoDispatch?.queueDepth ?? readyCount} · Running ${autoDispatch?.runningCount ?? runningCount}`;
+    : `${t("chat.queue")} ${queueDepth} · ${t("chat.running")} ${effectiveRunningCount} · Max ${autopilotMaxConcurrent}x`;
 
   return html`
     <div class="orchestration-sidebar">
       <section class="orchestration-controls">
         <div class="orchestration-controls__autopilot">
-          <span class="orchestration-controls__autopilot-label">Autopilot</span>
+          <span class="orchestration-controls__autopilot-label">${t("chat.autopilot")}</span>
           <button
             type="button"
             class="orchestration-controls__autopilot-toggle"
@@ -244,34 +279,63 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
           </button>
           <span class="orchestration-controls__autopilot-meta">${autopilotLabel}</span>
         </div>
+        <div class="orchestration-controls__parallel">
+          <span class="orchestration-controls__parallel-label">${t("chat.parallelism")}</span>
+          <div class="orchestration-controls__parallel-presets" role="group" aria-label="Max concurrent agents">
+            ${([1, 2, 3, 4, 6] as const).map(
+              (preset) => html`
+                <button
+                  type="button"
+                  class="orchestration-controls__parallel-btn ${
+                    autopilotMaxConcurrent === preset
+                      ? "orchestration-controls__parallel-btn--active"
+                      : ""
+                  }"
+                  @click=${() => controls?.onAutopilotMaxConcurrentChange?.(preset)}
+                >
+                  ${preset}x
+                </button>
+              `,
+            )}
+            <button
+              type="button"
+              class="orchestration-controls__dispatch"
+              ?disabled=${!autopilotEnabled}
+              @click=${() => controls?.onAutopilotDispatchNow?.()}
+            >
+              ${t("chat.dispatchNow")}
+            </button>
+          </div>
+          <div class="orchestration-controls__parallel-meta">${parallelHint}</div>
+        </div>
         <button
           class="orchestration-controls__create"
           type="button"
           @click=${() => controls?.onCreateAgent?.()}
         >
-          + New Agent
+          + ${t("chat.newAgent")}
         </button>
         <label class="orchestration-controls__search-wrap" aria-label="Search agents">
           <span class="orchestration-controls__search-icon">⌕</span>
           <input
             class="orchestration-controls__search"
             type="text"
-            placeholder="Search agents or tasks..."
+            placeholder="${t("chat.searchAgentsPlaceholder")}"
             .value=${controls?.query ?? ""}
             @input=${(event: Event) =>
               controls?.onQueryChange?.((event.target as HTMLInputElement).value)}
           />
         </label>
         <div class="orchestration-controls__stats" role="status" aria-live="polite">
-          <span class="orchestration-controls__chip">Fleet ${models.length}</span>
+          <span class="orchestration-controls__chip">${t("chat.fleet")} ${models.length}</span>
           <span class="orchestration-controls__chip orchestration-controls__chip--running">
-            Running ${runningCount}
+            ${t("chat.running")} ${runningCount}
           </span>
           <span class="orchestration-controls__chip orchestration-controls__chip--blocked">
-            Blocked ${blockedCount}
+            ${t("chat.sidebarStatusBlocked")} ${blockedCount}
           </span>
           <span class="orchestration-controls__chip orchestration-controls__chip--done">
-            Done ${doneCount}
+            ${t("chat.sidebarStatusDone")} ${doneCount}
           </span>
         </div>
         <div class="orchestration-controls__filters" role="tablist" aria-label="Filter agents">
@@ -289,28 +353,77 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
             `,
           )}
         </div>
+        <div class="orchestration-controls__actions">
+          <button
+            type="button"
+            class="orchestration-controls__action"
+            @click=${() => controls?.onStatusFilterChange?.("ready")}
+          >
+            ${t("chat.focusReady")}
+          </button>
+          <button
+            type="button"
+            class="orchestration-controls__action"
+            @click=${() => controls?.onStatusFilterChange?.("blocked")}
+          >
+            ${t("chat.focusBlocked")}
+          </button>
+          <button
+            type="button"
+            class="orchestration-controls__action"
+            @click=${() => {
+              controls?.onStatusFilterChange?.("all");
+              controls?.onSelectTodoId?.(null);
+            }}
+          >
+            ${t("chat.resetFocus")}
+          </button>
+        </div>
       </section>
       <section class="orchestration-handoff">
-        <header class="orchestration-handoff__header">Collaboration Flow</header>
+        <header class="orchestration-handoff__header">${t("chat.collaborationFlow")}</header>
         <div class="orchestration-handoff__metrics">
-          <span>Ready ${readyCount}</span>
-          <span>Blocked links ${blockedEdges}</span>
-          <span>Running ${runningCount}</span>
-          <span>Stale ${staleCount}</span>
-          <span>Long-running ${longRunningCount}</span>
+          <span>${t("chat.ready")} ${readyCount}</span>
+          <span>${t("chat.blockedLinks")} ${blockedEdges}</span>
+          <span>${t("chat.running")} ${runningCount}</span>
+          <span>${t("chat.stale")} ${staleCount}</span>
+          <span>${t("chat.longRunning")} ${longRunningCount}</span>
         </div>
-        <div class="orchestration-handoff__hint">${collaborationHint}</div>
+        <div class="orchestration-handoff__hint">
+          ${
+            collaborationHint.action
+              ? html`
+                  <button
+                    type="button"
+                    class="orchestration-handoff__action-btn"
+                    @click=${() => {
+                      if (collaborationHint.action === "dispatch") {
+                        controls?.onAutopilotDispatchNow?.();
+                      } else if (collaborationHint.action === "focus_blocked") {
+                        controls?.onStatusFilterChange?.("blocked");
+                      } else if (collaborationHint.action === "reset") {
+                        controls?.onStatusFilterChange?.("all");
+                        controls?.onSelectTodoId?.(null);
+                      }
+                    }}
+                  >
+                    ${collaborationHint.text}
+                  </button>
+                `
+              : collaborationHint.text
+          }
+        </div>
         ${
           selectedTodoId
             ? html`
                 <div class="orchestration-handoff__focus">
-                  Focus: ${todoTitleById.get(selectedTodoId) ?? selectedTodoId}
+                  ${t("chat.focus")}: ${todoTitleById.get(selectedTodoId) ?? selectedTodoId}
                   <button
                     type="button"
                     class="orchestration-handoff__focus-clear"
                     @click=${() => controls?.onSelectTodoId?.(null)}
                   >
-                    Clear
+                    ${t("chat.clear")}
                   </button>
                 </div>
               `
@@ -333,6 +446,7 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
                         selectedTodoId,
                         todoTitleById,
                         onSelectTodoId: controls?.onSelectTodoId,
+                        onForceStart: controls?.onForceStart,
                       }),
                     )}
                   </div>
@@ -341,7 +455,7 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
                   <div class="sidebar-empty">
                     ${
                       models.length > 0
-                        ? "No agents matched your search."
+                        ? t("chat.noAgentsMatched")
                         : t("chat.sidebarWaitingTaskAssignment")
                     }
                   </div>

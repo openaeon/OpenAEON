@@ -11,6 +11,39 @@ type QuickCommandSpec = {
   template: string;
 };
 
+type ChatComposeMode = "message" | "task" | "dispatch";
+
+const COMPOSE_MODES: Array<{
+  id: ChatComposeMode;
+  label: string;
+  icon: unknown;
+  hint: string;
+  placeholder: string;
+}> = [
+  {
+    id: "message",
+    label: "Message",
+    icon: icons.message,
+    hint: "Reply in the current thread.",
+    placeholder: "Ask, explain, or continue the conversation...",
+  },
+  {
+    id: "task",
+    label: "Task",
+    icon: icons.check,
+    hint: "Turn this into a Cognitive task.",
+    placeholder: "Describe the mission. I will decompose, execute, verify, and reflect...",
+  },
+  {
+    id: "dispatch",
+    label: "Dispatch",
+    icon: icons.terminal,
+    hint: "Send work to the agent runtime.",
+    placeholder:
+      "Dispatch DevAgent / QAAgent / OpsAgent with constraints and acceptance criteria...",
+  },
+];
+
 const QUICK_COMMANDS: QuickCommandSpec[] = [
   { name: "new", syntax: "/new", template: "/new" },
   { name: "main", syntax: "/main", template: "/main" },
@@ -48,6 +81,7 @@ export class ChatInputArea extends LitElement {
   @property({ type: Boolean }) sending = false;
   @property({ type: Boolean }) canAbort = false;
   @property({ type: Array }) attachments: ChatAttachment[] = [];
+  @state() private currentMode: ChatComposeMode = "message";
   @state() private commandCursor = 0;
   @state() private attachmentError: string | null = null;
   private static readonly MAX_ATTACHMENT_BYTES = 5_000_000;
@@ -58,60 +92,244 @@ export class ChatInputArea extends LitElement {
       position: relative;
     }
 
-    .chat-compose {
-      background: var(--input-bg, rgba(5, 5, 15, 0.75));
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 12px;
-      padding: 12px 16px;
+    .chat-compose-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      box-shadow: var(--input-shadow, 0 12px 40px rgba(0, 0, 0, 0.6));
-      max-width: 840px;
-      margin: 0 auto;
       width: 100%;
+      margin: 0 auto;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 24px;
+      padding: 12px 16px;
+      transition:
+        border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
 
-    .chat-compose::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      padding: 1px;
-      background: var(
-        --input-border-grad,
-        linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(139, 92, 246, 0.6), rgba(225, 29, 72, 0.3))
-      );
-      mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-      -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
+    .chat-compose-container:focus-within {
+      border-color: rgba(45, 212, 191, 0.4);
+      box-shadow:
+        0 0 0 1px rgba(45, 212, 191, 0.1),
+        0 8px 32px rgba(0, 0, 0, 0.4);
+      background: rgba(15, 23, 42, 0.8);
     }
 
-    :host-context([data-theme="light"]) .chat-compose {
-      --input-bg: rgba(255, 255, 255, 0.85);
-      --input-border: rgba(99, 102, 241, 0.3);
-      --input-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+    .chat-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .mode-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px;
+      border-radius: 18px;
+      background: rgba(2, 6, 23, 0.34);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .mode-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 16px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-btn svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.7;
+      transition: transform 0.2s;
+    }
+
+    .mode-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+    }
+
+    .mode-btn:hover svg {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+
+    .mode-btn[data-active="true"] {
+      background: rgba(45, 212, 191, 0.1);
+      color: #2dd4bf;
+      border-color: rgba(45, 212, 191, 0.2);
+    }
+
+    .mode-btn[data-active="true"] svg {
+      opacity: 1;
+      filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.4));
+    }
+
+    .mode-hint {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chat-compose-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      gap: 12px;
+    }
+
+    .footer-left,
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .context-pill {
+      background: rgba(30, 41, 59, 0.6);
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #94a3b8;
+      font-weight: 600;
+      font-size: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.05);
+      transition: all 0.2s;
+    }
+
+    .context-pill:hover {
+      background: rgba(30, 41, 59, 0.8);
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .command-pill {
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(15, 23, 42, 0.54);
+      color: #94a3b8;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .command-pill:hover {
+      color: #e2e8f0;
+      border-color: rgba(45, 212, 191, 0.28);
+      background: rgba(45, 212, 191, 0.08);
+    }
+
+    .attach-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .attach-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    .attach-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 18px;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .action-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .action-btn.send {
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: white;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
+    }
+
+    .action-btn.send:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+      filter: brightness(1.1);
+    }
+
+    .action-btn.send:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .action-btn.stop {
+      background: rgba(225, 29, 72, 0.1);
+      color: #e11d48;
+      border: 1px solid rgba(225, 29, 72, 0.2);
+    }
+
+    .action-btn.stop:hover:not(:disabled) {
+      background: rgba(225, 29, 72, 0.2);
+      border-color: rgba(225, 29, 72, 0.4);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
     }
 
     .chat-attachments {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 4px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
     .chat-attachment {
       position: relative;
-      width: 60px;
-      height: 60px;
+      width: 54px;
+      height: 54px;
       border-radius: 8px;
       border: 1px solid var(--border);
       overflow: hidden;
@@ -158,27 +376,6 @@ export class ChatInputArea extends LitElement {
       transition: background 0.2s;
     }
 
-    .chat-attachment__remove:hover {
-      background: rgba(255, 77, 79, 0.8);
-    }
-
-    .chat-compose__row {
-      display: flex;
-      align-items: flex-end;
-      gap: 12px;
-    }
-
-    .chat-compose__field {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .chat-compose__field span {
-      display: none;
-    }
-
     textarea {
       width: 100%;
       min-height: 40px;
@@ -193,77 +390,10 @@ export class ChatInputArea extends LitElement {
       padding: 8px 0;
       outline: none;
     }
-    :host-context([data-theme="light"]) textarea {
-      --text-color: #0f172a;
-    }
 
     textarea::placeholder {
       color: var(--muted-color, #94a3b8);
       opacity: 0.7;
-    }
-    :host-context([data-theme="light"]) textarea::placeholder {
-      --muted-color: #64748b;
-    }
-
-    .chat-compose__actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px; /* Align with textarea text center better */
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 16px;
-      height: 36px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-accent);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.2s var(--ease-out);
-      white-space: nowrap;
-    }
-
-    .btn:hover:not(:disabled) {
-      background: var(--bg-hover);
-      border-color: var(--border-strong);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn.primary {
-      background: var(--primary);
-      color: var(--primary-foreground);
-      border-color: var(--primary);
-    }
-
-    .btn.primary:hover:not(:disabled) {
-      filter: brightness(1.05);
-      box-shadow: 0 2px 8px var(--accent-subtle);
-    }
-
-    .btn-kbd {
-      margin-left: 8px;
-      font-family: var(--mono);
-      font-size: 11px;
-      opacity: 0.6;
-      padding: 1px 4px;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 4px;
-    }
-
-    .attachment-error {
-      font-size: 12px;
-      color: #f87171;
-      margin-top: 2px;
     }
 
     .quick-commands {
@@ -306,55 +436,6 @@ export class ChatInputArea extends LitElement {
       font-size: 11px;
       color: var(--muted-color, #94a3b8);
       padding: 0 2px;
-    }
-
-    :host-context(.chat[data-visual-mode="professional"]) .chat-compose {
-      background: #161d28;
-      border: 1px solid rgba(148, 163, 184, 0.26);
-      box-shadow: none;
-      border-radius: 10px;
-      padding: 10px 12px;
-      gap: 8px;
-    }
-
-    :host-context(.chat[data-visual-mode="professional"]) .chat-compose::before {
-      display: none;
-    }
-
-    :host-context(.chat[data-visual-mode="professional"]) textarea {
-      min-height: 36px;
-      color: #e2e8f0;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    :host-context(.chat[data-visual-mode="professional"]) .btn {
-      height: 34px;
-      border-radius: 8px;
-      border-color: rgba(148, 163, 184, 0.28);
-      background: rgba(15, 23, 42, 0.72);
-      color: #cbd5e1;
-      font-size: 12px;
-    }
-
-    :host-context(.chat[data-visual-mode="professional"]) .btn.primary {
-      background: rgba(56, 189, 248, 0.2);
-      border-color: rgba(56, 189, 248, 0.45);
-      color: #e0f2fe;
-    }
-
-    :host-context(.chat[data-visual-density="compact"]) .chat-compose {
-      padding: 8px 10px;
-      gap: 6px;
-    }
-
-    :host-context(.chat[data-visual-density="compact"]) .chat-compose__row {
-      gap: 8px;
-    }
-
-    :host-context(.chat[data-visual-density="compact"]) textarea {
-      font-size: 12px;
-      min-height: 32px;
     }
   `;
 
@@ -547,6 +628,16 @@ export class ChatInputArea extends LitElement {
     requestAnimationFrame(() => this.focusTextarea());
   }
 
+  private emitSend() {
+    this.dispatchEvent(
+      new CustomEvent("send", {
+        detail: { message: this.draft, mode: this.currentMode },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   private handlePickFiles() {
     const input = this.renderRoot.querySelector<HTMLInputElement>("#chat-file-input");
     input?.click();
@@ -558,14 +649,35 @@ export class ChatInputArea extends LitElement {
     const commandPanelVisible = quickCommands.length > 0 && this.connected;
     const activeCommand =
       quickCommands[Math.max(0, Math.min(this.commandCursor, quickCommands.length - 1))];
+    const activeMode =
+      COMPOSE_MODES.find((mode) => mode.id === this.currentMode) ?? COMPOSE_MODES[0];
     const composePlaceholder = this.connected
       ? hasAttachments
         ? t("chat.composePlaceholderWithAttachments")
-        : t("chat.composePlaceholder")
+        : activeMode.placeholder
       : t("chat.composeDisconnectedPlaceholder");
 
     return html`
-      <div class="chat-compose">
+      <div class="chat-compose-container">
+        <div class="chat-top-bar">
+          <div class="mode-group" aria-label="Chat input mode">
+            ${COMPOSE_MODES.map(
+              (mode) => html`
+                <button
+                  class="mode-btn"
+                  data-active=${String(this.currentMode === mode.id)}
+                  @click=${() => (this.currentMode = mode.id)}
+                  title=${mode.hint}
+                  type="button"
+                >
+                  ${mode.icon} <span>${mode.label}</span>
+                </button>
+              `,
+            )}
+          </div>
+          <div class="mode-hint">${activeMode.hint}</div>
+        </div>
+
         ${
           this.attachments.length > 0
             ? html`
@@ -589,117 +701,129 @@ export class ChatInputArea extends LitElement {
         `
             : nothing
         }
-        ${this.attachmentError ? html`<div class="attachment-error" role="status">${this.attachmentError}</div>` : nothing}
+        ${this.attachmentError ? html`<div class="attachment-error" role="status" style="color: #e11d48; font-size: 11px; margin-bottom: 8px; font-weight: 600;">${this.attachmentError}</div>` : nothing}
 
-        <div class="chat-compose__row">
-          <label class="field chat-compose__field">
-            <span>${t("chat.messageLabel")}</span>
-            <textarea
-              .value=${this.draft}
-              dir=${detectTextDirection(this.draft)}
-              ?disabled=${!this.connected}
-              @keydown=${(e: KeyboardEvent) => {
-                if (commandPanelVisible && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
-                  e.preventDefault();
-                  const delta = e.key === "ArrowDown" ? 1 : -1;
-                  const size = quickCommands.length;
-                  this.commandCursor = (this.commandCursor + delta + size) % size;
-                  return;
-                }
-                if (commandPanelVisible && e.key === "Tab" && !e.shiftKey) {
-                  e.preventDefault();
-                  if (activeCommand) {
-                    this.applyQuickCommandTemplate(activeCommand.template);
-                  }
-                  return;
-                }
-                if (
-                  e.key !== "Enter" ||
-                  e.isComposing ||
-                  e.keyCode === 229 ||
-                  e.shiftKey ||
-                  !this.connected
-                ) {
-                  return;
-                }
-                e.preventDefault();
-                if (this.tryDispatchQuickCommand()) {
-                  return;
-                }
-                this.dispatchEvent(new CustomEvent("send", { bubbles: true, composed: true }));
-              }}
-              @input=${(e: Event) => {
-                const target = e.target as HTMLTextAreaElement;
-                this.adjustTextareaHeight(target);
-                this.emitDraftChange(target.value);
-                if (this.commandCursor >= quickCommands.length) {
-                  this.commandCursor = 0;
-                }
-              }}
-              @paste=${this.handlePaste}
-              @dragover=${(e: DragEvent) => {
-                if (!this.connected) {
-                  return;
-                }
-                e.preventDefault();
-              }}
-              @drop=${(e: DragEvent) => {
-                const files = Array.from(e.dataTransfer?.files ?? []);
-                if (files.length === 0) {
-                  return;
-                }
-                e.preventDefault();
-                void this.addFiles(files);
-              }}
-              placeholder=${composePlaceholder}
-            ></textarea>
-          </label>
+        <textarea
+          .value=${this.draft}
+          dir=${detectTextDirection(this.draft)}
+          ?disabled=${!this.connected}
+          @keydown=${(e: KeyboardEvent) => {
+            if (commandPanelVisible && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+              e.preventDefault();
+              const delta = e.key === "ArrowDown" ? 1 : -1;
+              const size = quickCommands.length;
+              this.commandCursor = (this.commandCursor + delta + size) % size;
+              return;
+            }
+            if (commandPanelVisible && e.key === "Tab" && !e.shiftKey) {
+              e.preventDefault();
+              if (activeCommand) {
+                this.applyQuickCommandTemplate(activeCommand.template);
+              }
+              return;
+            }
+            if (
+              e.key !== "Enter" ||
+              e.isComposing ||
+              e.keyCode === 229 ||
+              e.shiftKey ||
+              !this.connected
+            ) {
+              return;
+            }
+            e.preventDefault();
+            if (this.tryDispatchQuickCommand()) {
+              return;
+            }
+            this.emitSend();
+          }}
+          @input=${(e: Event) => {
+            const target = e.target as HTMLTextAreaElement;
+            this.adjustTextareaHeight(target);
+            this.emitDraftChange(target.value);
+            if (this.commandCursor >= quickCommands.length) {
+              this.commandCursor = 0;
+            }
+          }}
+          @paste=${this.handlePaste}
+          @dragover=${(e: DragEvent) => {
+            if (!this.connected) {
+              return;
+            }
+            e.preventDefault();
+          }}
+          @drop=${(e: DragEvent) => {
+            const files = Array.from(e.dataTransfer?.files ?? []);
+            if (files.length === 0) {
+              return;
+            }
+            e.preventDefault();
+            void this.addFiles(files);
+          }}
+          placeholder=${composePlaceholder}
+        ></textarea>
 
-          <div class="chat-compose__actions">
-            <input
-              id="chat-file-input"
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              @change=${(e: Event) => {
-                const input = e.target as HTMLInputElement;
-                const files = Array.from(input.files ?? []);
-                if (files.length > 0) {
-                  void this.addFiles(files);
-                }
-                input.value = "";
-              }}
-            />
+        <div class="chat-compose-footer">
+          <div class="footer-left">
             <button
-              class="btn"
+              class="attach-btn"
+              @click=${() => {
+                this.handlePickFiles();
+              }}
+              title="Upload Files"
               type="button"
-              ?disabled=${!this.connected}
-              @click=${() => this.handlePickFiles()}
-              title=${t("chat.uploadTitle")}
             >
-              ${icons.paperclip} ${t("chat.uploadButton")}
+              ${icons.paperclip}
             </button>
             <button
-              class="btn"
-              ?disabled=${!this.connected || (!this.canAbort && this.sending)}
+              class="command-pill"
+              type="button"
+              @click=${() => this.applyQuickCommandTemplate(this.draft.trim() ? this.draft : "/")}
+              title="Open command palette"
+            >
+              / Commands
+            </button>
+          </div>
+          <div class="footer-right">
+            <button
+              class="action-btn stop"
+              ?disabled=${!this.connected}
               @click=${() => this.dispatchEvent(new CustomEvent(this.canAbort ? "abort" : "new-session", { bubbles: true, composed: true }))}
+              type="button"
             >
-              ${this.canAbort ? t("chat.stop") : t("chat.newSession")}
+              ${this.canAbort ? icons.stop : icons.zap} <span>${this.canAbort ? "Stop" : "Reset"}</span>
             </button>
             <button
-              class="btn primary"
+              class="action-btn send"
               ?disabled=${!this.connected}
-              @click=${() => this.dispatchEvent(new CustomEvent("send", { bubbles: true, composed: true }))}
+              @click=${() => this.emitSend()}
+              type="button"
             >
-              ${this.sending ? t("chat.queue") : t("chat.send")}<kbd class="btn-kbd">↵</kbd>
+              ${icons.send} <span>${this.currentMode === "task" ? "Submit Task" : this.currentMode === "dispatch" ? "Dispatch" : "Send"}</span>
             </button>
           </div>
         </div>
+
+        <input
+          id="chat-file-input"
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          @change=${(e: Event) => {
+            const input = e.target as HTMLInputElement;
+            const files = Array.from(input.files ?? []);
+            if (files.length > 0) {
+              void this.addFiles(files);
+            }
+            input.value = "";
+          }}
+        />
+
         ${
           commandPanelVisible
             ? html`
-                <div class="quick-commands" role="listbox" aria-label="Quick commands">
+                <div class="quick-commands" role="listbox" aria-label="Quick commands" style="position: absolute; bottom: 100%; left: 0; right: 0; z-index: 100; margin-bottom: 12px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
                   ${quickCommands.map(
                     (entry, index) => html`
                       <button
@@ -708,18 +832,19 @@ export class ChatInputArea extends LitElement {
                         data-active=${String(index === this.commandCursor)}
                         @mouseenter=${() => (this.commandCursor = index)}
                         @click=${() => this.applyQuickCommandTemplate(entry.template)}
+                        style="padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(148, 163, 184, 0.05);"
                       >
-                        <code>${entry.syntax}</code>
-                        <span>${quickCommandDescription(entry.name)}</span>
+                        <code style="background: rgba(45, 212, 191, 0.1); color: #2dd4bf; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${entry.syntax}</code>
+                        <span style="color: #94a3b8; font-size: 11px;">${quickCommandDescription(entry.name)}</span>
                       </button>
                     `,
                   )}
                 </div>
-                <div class="quick-command-hint">${t("chat.quickCommandTip")}</div>
               `
             : nothing
         }
       </div>
+
     `;
   }
 }

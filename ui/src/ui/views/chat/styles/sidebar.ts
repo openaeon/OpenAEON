@@ -243,6 +243,72 @@ export const chatSidebarStyles = css`
     filter: brightness(1.06);
   }
 
+  .orchestration-controls__parallel {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.56);
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .orchestration-controls__parallel-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #cbd5e1;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .orchestration-controls__parallel-presets {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .orchestration-controls__parallel-btn {
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+
+  .orchestration-controls__parallel-btn--active {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(22, 101, 52, 0.34);
+    color: #86efac;
+  }
+
+  .orchestration-controls__dispatch {
+    margin-left: auto;
+    border: 1px solid rgba(96, 165, 250, 0.45);
+    background: rgba(30, 58, 138, 0.34);
+    color: #bfdbfe;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .orchestration-controls__dispatch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .orchestration-controls__parallel-meta {
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: var(--font-mono, monospace);
+  }
+
   .orchestration-controls__search-wrap {
     display: flex;
     align-items: center;
@@ -284,6 +350,22 @@ export const chatSidebarStyles = css`
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+  }
+
+  .orchestration-controls__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .orchestration-controls__action {
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(15, 23, 42, 0.56);
+    color: #cbd5e1;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
   }
 
   .orchestration-controls__filter {
@@ -362,6 +444,23 @@ export const chatSidebarStyles = css`
     line-height: 1.45;
     border-left: 2px solid rgba(59, 130, 246, 0.4);
     padding-left: 8px;
+  }
+  .orchestration-handoff__action-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: underline dotted rgba(59, 130, 246, 0.5);
+    transition: color 0.2s ease;
+  }
+  .orchestration-handoff__action-btn:hover {
+    color: #60a5fa;
+    text-decoration-color: #60a5fa;
   }
 
   .orchestration-handoff__focus {
@@ -650,6 +749,49 @@ export const chatSidebarStyles = css`
     display: flex;
     align-items: center;
     gap: 12px;
+  }
+
+  .subagent-card__status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .subagent-card__action-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .subagent-card__action-btn:hover {
+    color: #f8fafc;
+  }
+
+  .subagent-card__action-btn--force {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: rgba(45, 212, 191, 0.08);
+    color: #2dd4bf;
+    font-size: 11px;
+    border: 1px solid rgba(45, 212, 191, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .subagent-card__action-btn--force:hover {
+    background: #2dd4bf;
+    color: #0f172a;
+    box-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+    transform: translateY(-1px) scale(1.05);
   }
   .node-icon {
     font-size: 20px;

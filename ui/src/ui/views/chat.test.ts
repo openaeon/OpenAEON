@@ -136,13 +136,13 @@ describe("chat view", () => {
     expect(section?.getAttribute("data-page-state")).toBe("recovery");
   });
 
-  it("keeps advanced workbench collapsed by default", async () => {
+  it("shows the Cognitive Runtime dock by default", async () => {
     const container = document.createElement("div");
     document.body.append(container);
     render(
       renderChat(
         createProps({
-          taskPlan: {
+          cognitivePlan: {
             phase: "execution",
             todos: [{ id: "todo-1", title: "Task 1", status: "todo" }],
             executionGraph: {
@@ -152,7 +152,7 @@ describe("chat view", () => {
               staleTodoIds: [],
               longRunningTodoIds: [],
             },
-          } as unknown as NonNullable<ChatProps["taskPlan"]>,
+          } as unknown as NonNullable<ChatProps["cognitivePlan"]>,
           sidebarDefault: "collapsed",
         }),
       ),
@@ -161,12 +161,9 @@ describe("chat view", () => {
 
     const shadow = await getChatShadowAsync(container);
     const sidebar = shadow?.querySelector(".chat-sidebar");
-    expect(sidebar).toBeNull();
-
-    const showWorkbenchButton = Array.from(shadow?.querySelectorAll("button") ?? []).find((btn) =>
-      btn.textContent?.includes("Show workbench"),
-    );
-    expect(showWorkbenchButton).not.toBeUndefined();
+    expect(sidebar).not.toBeNull();
+    expect(shadow?.textContent).toContain("Cognitive Runtime");
+    expect(shadow?.textContent).toContain("Parallel Agent Orchestration");
   });
 
   it("uses professional visual mode by default", async () => {
@@ -210,13 +207,13 @@ describe("chat view", () => {
     expect(section?.getAttribute("data-visual-density")).toBe("compact");
   });
 
-  it("opens advanced workbench by default when sidebarDefault is last-state", async () => {
+  it("keeps the agent orchestration dock visible for legacy last-state preference", async () => {
     const container = document.createElement("div");
     document.body.append(container);
     render(
       renderChat(
         createProps({
-          taskPlan: {
+          cognitivePlan: {
             phase: "execution",
             todos: [{ id: "todo-1", title: "Task 1", status: "todo" }],
             executionGraph: {
@@ -226,7 +223,7 @@ describe("chat view", () => {
               staleTodoIds: [],
               longRunningTodoIds: [],
             },
-          } as unknown as NonNullable<ChatProps["taskPlan"]>,
+          } as unknown as NonNullable<ChatProps["cognitivePlan"]>,
           sidebarDefault: "last-state",
         }),
       ),
@@ -236,6 +233,49 @@ describe("chat view", () => {
     const shadow = await getChatShadowAsync(container);
     const sidebar = shadow?.querySelector(".chat-sidebar");
     expect(sidebar).not.toBeNull();
+    expect(shadow?.textContent).toContain("DevAgent");
+    expect(shadow?.textContent).toContain("QAAgent");
+  });
+
+  it("shows Cognitive memory traces in the runtime dock", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    render(
+      renderChat(
+        createProps({
+          cognitivePlan: {
+            phase: "execution",
+            todos: [{ id: "todo-1", title: "Task 1", status: "todo" }],
+            memoryTrace: {
+              longTermSources: [
+                { source: "Memory Match", path: "src/trace.ts:30-32", score: 0.91 },
+              ],
+              evolutionStrategyHits: [],
+            },
+            executionGraph: {
+              blockedBy: {},
+              readyTodoIds: [],
+              blockedTodoIds: [],
+              staleTodoIds: [],
+              longRunningTodoIds: [],
+            },
+          } as unknown as NonNullable<ChatProps["cognitivePlan"]>,
+          sidebarDefault: "last-state",
+        }),
+      ),
+      container,
+    );
+
+    const shadow = await getChatShadowAsync(container);
+    const memoryTab = Array.from(shadow?.querySelectorAll(".sidebar-tab") ?? []).find((tab) =>
+      tab.textContent?.trim().includes("Memory"),
+    ) as HTMLElement | undefined;
+    memoryTab?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const text = shadow?.textContent ?? "";
+    expect(text).toContain("Memory Trace");
+    expect(text).toContain("Memory Match");
+    expect(text).toContain("src/trace.ts:30-32");
   });
 
   it("renders compacting indicator as a badge", () => {
@@ -369,6 +409,63 @@ describe("chat view", () => {
     nowSpy.mockRestore();
   });
 
+  it("renders parallel controls and handles dispatch actions in subagent sidebar", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const onAutopilotMaxConcurrentChange = vi.fn();
+    const onAutopilotDispatchNow = vi.fn();
+    render(
+      renderChat(
+        createProps({
+          cognitivePlan: {
+            phase: "execution",
+            todos: [{ id: "todo-1", title: "Task 1", status: "in_progress" }],
+            executionGraph: {
+              blockedBy: {},
+              readyTodoIds: ["todo-2", "todo-3"],
+              blockedTodoIds: [],
+              staleTodoIds: [],
+              longRunningTodoIds: [],
+              autoDispatch: {
+                enabled: true,
+                queueDepth: 2,
+                runningCount: 1,
+                maxConcurrent: 4,
+              },
+            },
+          } as unknown as NonNullable<ChatProps["cognitivePlan"]>,
+          sidebarDefault: "last-state",
+          autopilotEnabled: true,
+          onAutopilotMaxConcurrentChange,
+          onAutopilotDispatchNow,
+        }),
+      ),
+      container,
+    );
+
+    const shadow = await getChatShadowAsync(container);
+    const tasksTab = Array.from(shadow?.querySelectorAll(".sidebar-tab") ?? []).find((tab) =>
+      tab.textContent?.trim().includes("Tasks"),
+    ) as HTMLElement | undefined;
+    tasksTab?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(shadow?.textContent).toContain("Dispatch Now");
+
+    const preset = Array.from(shadow?.querySelectorAll("button") ?? []).find((btn) =>
+      btn.textContent?.trim().includes("3x"),
+    );
+    expect(preset).not.toBeUndefined();
+    preset?.click();
+    expect(onAutopilotMaxConcurrentChange).toHaveBeenCalledWith(3);
+
+    const dispatch = Array.from(shadow?.querySelectorAll("button") ?? []).find((btn) =>
+      btn.textContent?.trim().includes("Dispatch Now"),
+    );
+    expect(dispatch).not.toBeUndefined();
+    dispatch?.click();
+    expect(onAutopilotDispatchNow).toHaveBeenCalledTimes(1);
+  });
+
   it("shows a stop button when aborting is available", async () => {
     const container = document.createElement("div");
     document.body.append(container);
@@ -388,6 +485,43 @@ describe("chat view", () => {
     expect(input).toBeDefined();
     input?.dispatchEvent(new CustomEvent("abort", { bubbles: true, composed: true }));
     expect(onAbort).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends the draft with the selected composer mode", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const onSend = vi.fn();
+    render(
+      renderChat(
+        createProps({
+          draft: "ship the runtime dock",
+          onSend,
+        }),
+      ),
+      container,
+    );
+
+    const shadow = await getChatShadowAsync(container);
+    const input = shadow?.querySelector("chat-input-area") as
+      | ({
+          renderRoot?: ShadowRoot;
+          shadowRoot: ShadowRoot | null;
+          updateComplete?: Promise<boolean>;
+        } & Element)
+      | null;
+    await input?.updateComplete;
+    const inputRoot = input?.renderRoot ?? input?.shadowRoot;
+    const taskButton = Array.from(inputRoot?.querySelectorAll("button") ?? []).find((button) =>
+      button.textContent?.includes("Task"),
+    );
+    taskButton?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+    await input?.updateComplete;
+    const submitButton = Array.from(inputRoot?.querySelectorAll("button") ?? []).find((button) =>
+      button.textContent?.includes("Submit Task"),
+    );
+    submitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+
+    expect(onSend).toHaveBeenCalledWith("ship the runtime dock", { mode: "task" });
   });
 
   it("shows a new session button when aborting is unavailable", async () => {

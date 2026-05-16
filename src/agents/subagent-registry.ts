@@ -10,6 +10,10 @@ import { onAgentEvent } from "../infra/agent-events.js";
 import { defaultRuntime } from "../runtime.js";
 import { type DeliveryContext, normalizeDeliveryContext } from "../utils/delivery-context.js";
 import { resolveWorkspaceRoot } from "./workspace-dir.js";
+import {
+  completeCognitiveNodeFromSubagent,
+  extractCognitiveTaskLink,
+} from "../cognitive-os/task-os/subagent-writeback.js";
 import { resetAnnounceQueuesForTests } from "./subagent-announce-queue.js";
 import {
   readLatestSubagentOutput,
@@ -364,6 +368,31 @@ async function applySubagentTodoBackfill(params: {
   persistSubagentRuns();
 }
 
+async function applyCognitiveSubagentWriteback(params: {
+  entry: SubagentRunRecord;
+  outcome: SubagentRunOutcome;
+}) {
+  const link = extractCognitiveTaskLink(params.entry.sharedContext);
+  if (!link) {
+    return;
+  }
+  const cfg = loadConfig();
+  const workspaceDir = resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
+  const outputText =
+    params.outcome.status === "ok"
+      ? await readLatestSubagentOutput(params.entry.childSessionKey).catch(() => undefined)
+      : undefined;
+  await completeCognitiveNodeFromSubagent({
+    workspaceDir,
+    taskId: link.taskId,
+    nodeId: link.nodeId,
+    subagentRunId: params.entry.runId,
+    childSessionKey: params.entry.childSessionKey,
+    outcome: params.outcome,
+    outputText,
+  });
+}
+
 function schedulePendingLifecycleError(params: { runId: string; endedAt: number; error?: string }) {
   clearPendingLifecycleError(params.runId);
   const timer = setTimeout(() => {
@@ -477,6 +506,10 @@ async function completeSubagentRun(params: {
   }
 
   await applySubagentTodoBackfill({
+    entry,
+    outcome: params.outcome,
+  });
+  await applyCognitiveSubagentWriteback({
     entry,
     outcome: params.outcome,
   });

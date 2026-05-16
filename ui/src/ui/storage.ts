@@ -19,6 +19,7 @@ export type UiSettings = {
   locale?: string;
   chatWebSearchEnabled?: boolean;
   chatAutopilotEnabled?: boolean;
+  chatAutopilotMaxConcurrent?: number;
   chatVisualDensity?: "comfortable" | "compact";
   chatSidebarDefault?: "collapsed" | "last-state";
   chatVisualMode?: "professional" | "legacy";
@@ -52,6 +53,7 @@ export function loadSettings(): UiSettings {
     navGroupsCollapsed: {},
     chatWebSearchEnabled: true,
     chatAutopilotEnabled: true,
+    chatAutopilotMaxConcurrent: 2,
     chatVisualDensity: "comfortable",
     chatSidebarDefault: "collapsed",
     chatVisualMode: "professional",
@@ -110,6 +112,11 @@ export function loadSettings(): UiSettings {
         typeof parsed.chatAutopilotEnabled === "boolean"
           ? parsed.chatAutopilotEnabled
           : defaults.chatAutopilotEnabled,
+      chatAutopilotMaxConcurrent:
+        typeof parsed.chatAutopilotMaxConcurrent === "number" &&
+        Number.isFinite(parsed.chatAutopilotMaxConcurrent)
+          ? Math.max(1, Math.min(8, Math.floor(parsed.chatAutopilotMaxConcurrent)))
+          : defaults.chatAutopilotMaxConcurrent,
       chatVisualDensity:
         parsed.chatVisualDensity === "comfortable" || parsed.chatVisualDensity === "compact"
           ? parsed.chatVisualDensity

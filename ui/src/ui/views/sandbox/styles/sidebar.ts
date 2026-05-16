@@ -234,41 +234,41 @@ export const sidebarStyles = html`
     }
 
     /* ─── Task Plan Panel ─── */
-    .sandbox-wrap .task-plan {
+    .sandbox-wrap .cognitive-plan {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .sandbox-wrap .task-plan__desc {
+    .sandbox-wrap .cognitive-plan__desc {
       font-size: 0.75rem;
       color: rgba(255, 255, 255, 0.5);
       font-style: italic;
       border-left: 2px solid rgba(129, 140, 248, 0.4);
       padding-left: 8px;
     }
-    .sandbox-wrap .task-plan__progress-row {
+    .sandbox-wrap .cognitive-plan__progress-row {
       display: flex;
       justify-content: space-between;
       font-size: 0.7rem;
       color: rgba(255, 255, 255, 0.5);
     }
-    .sandbox-wrap .task-plan__bar {
+    .sandbox-wrap .cognitive-plan__bar {
       height: 6px;
       background: rgba(255, 255, 255, 0.08);
       border-radius: 4px;
       overflow: hidden;
     }
-    .sandbox-wrap .task-plan__fill {
+    .sandbox-wrap .cognitive-plan__fill {
       height: 100%;
       border-radius: 4px;
       transition: width 0.6s ease;
     }
-    .sandbox-wrap .task-plan__list {
+    .sandbox-wrap .cognitive-plan__list {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-    .sandbox-wrap .task-plan__item {
+    .sandbox-wrap .cognitive-plan__item {
       font-size: 0.75rem;
       color: rgba(255, 255, 255, 0.45);
       padding: 6px 8px;
@@ -276,18 +276,18 @@ export const sidebarStyles = html`
       border-radius: 6px;
       border-left: 2px solid rgba(255, 255, 255, 0.1);
     }
-    .sandbox-wrap .task-plan__item--active {
+    .sandbox-wrap .cognitive-plan__item--active {
       color: rgba(255, 255, 255, 0.9);
       background: rgba(129, 140, 248, 0.1);
       border-left-color: #818cf8;
       font-weight: 600;
     }
-    .sandbox-wrap .task-plan__item--done {
+    .sandbox-wrap .cognitive-plan__item--done {
       color: rgba(255, 255, 255, 0.25);
       text-decoration: line-through;
       border-left-color: rgba(16, 185, 129, 0.3);
     }
-    .sandbox-wrap .task-plan__complete {
+    .sandbox-wrap .cognitive-plan__complete {
       font-size: 0.75rem;
       font-weight: 700;
       color: #10b981;
@@ -301,7 +301,7 @@ export const sidebarStyles = html`
       justify-content: center;
       gap: 8px;
     }
-    .sandbox-wrap .task-plan--complete {
+    .sandbox-wrap .cognitive-plan--complete {
       border-color: rgba(16, 185, 129, 0.4);
       animation: planCompletePulse 2s ease infinite;
     }
@@ -314,7 +314,7 @@ export const sidebarStyles = html`
         box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.15);
       }
     }
-    .sandbox-wrap .task-plan__celebrate {
+    .sandbox-wrap .cognitive-plan__celebrate {
       font-size: 1.2rem;
       animation: celebrateBounce 0.6s ease infinite alternate;
     }
@@ -326,17 +326,17 @@ export const sidebarStyles = html`
         transform: translateY(-4px);
       }
     }
-    .sandbox-wrap .task-plan__worker-link {
+    .sandbox-wrap .cognitive-plan__worker-link {
       font-size: 0.65rem;
       cursor: help;
       opacity: 0.6;
       transition: opacity 0.2s;
       margin-left: 4px;
     }
-    .sandbox-wrap .task-plan__worker-link:hover {
+    .sandbox-wrap .cognitive-plan__worker-link:hover {
       opacity: 1;
     }
-    .sandbox-wrap .task-plan__confetti {
+    .sandbox-wrap .cognitive-plan__confetti {
       position: relative;
       height: 40px;
       overflow: hidden;

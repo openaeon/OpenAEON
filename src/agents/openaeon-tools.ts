@@ -21,7 +21,6 @@ import { createSessionsSendTool } from "./tools/sessions-send-tool.js";
 import { createSessionsSpawnTool } from "./tools/sessions-spawn-tool.js";
 import { createSkillsDefineTool } from "./tools/skills-define-tool.js";
 import { createSubagentsTool } from "./tools/subagents-tool.js";
-import { createTaskPlannerTool } from "./tools/task-planner-tool.js";
 import { createTtsTool } from "./tools/tts-tool.js";
 import { createWebFetchTool, createWebSearchTool } from "./tools/web-tools.js";
 import { createEvolutionTool } from "./tools/evolution-tool.js";
@@ -195,18 +194,6 @@ export function createOPENAEONTools(options?: {
     createSubagentsTool({
       agentSessionKey: options?.agentSessionKey,
     }),
-    // Task planner: write_todos (create_plan, add_todo, update_todo, read_plan, complete_plan)
-    ...(createTaskPlannerTool({
-      agentSessionKey: options?.agentSessionKey,
-      workspaceDir,
-    })
-      ? [
-          createTaskPlannerTool({
-            agentSessionKey: options?.agentSessionKey,
-            workspaceDir,
-          })!,
-        ]
-      : []),
     createSessionStatusTool({
       agentSessionKey: options?.agentSessionKey,
       config: options?.config,

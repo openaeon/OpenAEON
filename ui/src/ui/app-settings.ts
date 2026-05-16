@@ -24,7 +24,7 @@ import { loadExecApprovals } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
-import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadSandboxCognitivePlan } from "./controllers/sandbox.ts";
 import { loadSessions } from "./controllers/sessions.ts";
 import { loadSkills } from "./controllers/skills.ts";
 import {
@@ -175,8 +175,8 @@ function startSandboxPolling(host: SettingsHost) {
     void loadSessions(host as unknown as OPENAEONApp);
     // Respect the suppression flag set by /new reset
     const hostAny = host as unknown as Record<string, unknown>;
-    if (!hostAny.sandboxTaskPlanSuppressed) {
-      void loadSandboxTaskPlan(host as unknown as OPENAEONApp);
+    if (!hostAny.sandboxCognitivePlanSuppressed) {
+      void loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
     }
   }, 5_000);
 }
@@ -276,7 +276,7 @@ export async function refreshActiveTab(host: SettingsHost) {
   }
   if (host.tab === "sandbox") {
     await loadSessions(host as unknown as OPENAEONApp);
-    await loadSandboxTaskPlan(host as unknown as OPENAEONApp);
+    await loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
   }
   if (host.tab === "nodes") {
     await loadNodes(host as unknown as OPENAEONApp);

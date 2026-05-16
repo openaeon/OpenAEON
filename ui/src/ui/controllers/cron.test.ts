@@ -534,7 +534,9 @@ describe("cron controller", () => {
       timeoutSeconds: "0",
     });
     expect(payload.kind).toBe("agentTurn");
-    expect(payload.timeoutSeconds).toBe(0);
+    if (payload.kind === "agentTurn") {
+      expect(payload.timeoutSeconds).toBe(0);
+    }
   });
 
   it("blocks add/update submit when validation errors exist", async () => {

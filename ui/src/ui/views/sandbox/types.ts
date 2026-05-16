@@ -1,4 +1,4 @@
-export type TaskTodo = {
+export type CognitiveTaskTodo = {
   id: string;
   title: string;
   status: "todo" | "in_progress" | "done";
@@ -17,7 +17,7 @@ export type TaskTodo = {
   lastProgressAt?: number;
 };
 
-export type TaskPlanExecutionGraph = {
+export type CognitivePlanExecutionGraph = {
   orderedTodoIds: string[];
   readyTodoIds: string[];
   blockedTodoIds: string[];
@@ -54,10 +54,21 @@ export type TaskPlanExecutionGraph = {
   advisories?: string[];
 };
 
-export type TaskPlanSnapshot = {
+export type CognitivePlanSnapshot = {
+  taskId?: string;
+  sessionKey?: string;
+  title?: string;
   description: string;
-  todos: TaskTodo[];
+  nativePhase?: import("../../types.ts").CognitiveTaskPhase;
+  todos: CognitiveTaskTodo[];
   phase?: "planning" | "execution" | "verification" | "complete";
+  stateProjection?: import("../../types.ts").CognitiveStateProjection | null;
+  invariants?: import("../../types.ts").CognitiveInvariantReport | null;
+  memoryTrace?: import("../../types.ts").CognitiveMemoryTrace | null;
+  architecture?: import("../../types.ts").CognitiveArchitectureProjection | null;
+  replayCursor?: string | null;
+  taskTree?: import("../../types.ts").TaskTree;
+  runtime?: import("../../types.ts").CognitiveRuntimeSummary | null;
   currentBranchId?: string;
   branches?: Array<{
     id: string;
@@ -107,7 +118,7 @@ export type TaskPlanSnapshot = {
     relation: string;
     at: number;
   }>;
-  executionGraph?: TaskPlanExecutionGraph;
+  executionGraph?: CognitivePlanExecutionGraph;
   taskRuntime?: {
     currentBranchId: string;
     branchesCount: number;
@@ -135,8 +146,8 @@ export type SandboxProps = {
   onRefresh: () => void;
   onForceRestart?: () => void;
   onSessionFocus?: (sessionKey: string) => void;
-  /** Live task plan from the main agent's planner file. Optional. */
-  taskPlan?: TaskPlanSnapshot | null;
+  /** Live cognitive plan derived from the cognitive task tree. */
+  cognitivePlan?: CognitivePlanSnapshot | null;
   /** Live chat messages sent by agents */
   sandboxChatEvents?: import("../../types.ts").SandboxChatEvents;
   /** Map of agent IDs to their identity metadata (for avatars) */

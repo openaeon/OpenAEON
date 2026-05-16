@@ -125,34 +125,34 @@ export class DeepSeekWebClient {
 
   async createPowChallenge(targetPath: string): Promise<DeepSeekPowChallenge> {
     console.log(`[DeepSeekWebClient] Creating PoW challenge for ${targetPath}...`);
-    const res = await fetch("https://chat.deepseek.com/api/v0/chat/create_pow_challenge", {
-      method: "POST",
-      headers: await this.fetchHeaders(),
-      body: JSON.stringify({
-        target_path: targetPath,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+      const res = await fetch("https://chat.deepseek.com/api/v0/chat/create_pow_challenge", {
+        method: "POST",
+        headers: await this.fetchHeaders(),
+        body: JSON.stringify({
+          target_path: targetPath,
+        }),
+        signal: controller.signal,
+      });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`[DeepSeekWebClient] Failed to create PoW challenge: ${res.status}`, errorText);
-      throw new Error(`Failed to create PoW challenge: ${res.status} ${errorText}`);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(
+          `[DeepSeekWebClient] Failed to create PoW challenge: ${res.status}`,
+          errorText,
+        );
+        throw new Error(`Failed to create PoW challenge: ${res.status} ${errorText}`);
+      }
+      const json = await res.json();
+      console.log(`[DeepSeekWebClient] Challenge received:`, json);
+      const challenge =
+        json.data?.biz_data?.challenge || json.data?.challenge || json.challenge || json;
+      return challenge;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = (await res.json()) as DeepSeekPowResponse;
-    console.log(`[DeepSeekWebClient] PoW data full-log:`, JSON.stringify(data));
-
-    const challenge = data.data?.biz_data?.challenge || data.data?.challenge || data.challenge;
-    if (!challenge) {
-      console.error(
-        `[DeepSeekWebClient] Critical Error: PoW challenge missing in response! Keys present:`,
-        Object.keys(data),
-      );
-      throw new Error(`PoW challenge missing in response`);
-    }
-
-    console.log(`[DeepSeekWebClient] Challenge extracted successfully:`, challenge);
-    return challenge;
   }
 
   private wasmModule: WebAssembly.Instance | null = null;
@@ -226,6 +226,7 @@ export class DeepSeekWebClient {
       const retptr = add_to_stack(-16);
 
       const start = Date.now();
+      console.log(`[DeepSeekWebClient] Calling WASM wasm_solve (difficulty: ${difficulty})...`);
       wasm_solve(retptr, ptrC, lenC, ptrP, lenP, difficulty);
       const end = Date.now();
 
@@ -294,14 +295,21 @@ export class DeepSeekWebClient {
     ).toString("base64");
 
     console.log(
-      `[DeepSeekWebClient] Sending chat completion request (session: ${params.sessionId})...`,
+      `[DeepSeekWebClient] Chat completion → session=${params.sessionId} len=${params.message.length}` +
+        `\n  head: ${params.message.slice(0, 120).replace(/\n/g, " ")}` +
+        `\n  tail: ${params.message.slice(-200).replace(/\n/g, " ")}`,
+    );
+    const headers = {
+      ...(await this.fetchHeaders()),
+      "x-ds-pow-response": powResponse,
+    };
+
+    console.log(
+      `[DeepSeekWebClient] Sending chat completion request to /api/v0/chat/completion...`,
     );
     const res = await fetch(`https://chat.deepseek.com${targetPath}`, {
       method: "POST",
-      headers: {
-        ...(await this.fetchHeaders()),
-        "x-ds-pow-response": powResponse,
-      },
+      headers,
       body: JSON.stringify({
         chat_session_id: params.sessionId,
         parent_message_id: params.parentMessageId ?? null,

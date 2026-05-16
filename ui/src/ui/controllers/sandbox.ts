@@ -1,63 +1,68 @@
 import type { GatewayBrowserClient } from "../gateway.ts";
-import type { TaskPlanSnapshot } from "../views/sandbox.ts";
+import type { CognitiveTaskRecord } from "../types.ts";
+import type { CognitivePlanSnapshot } from "../views/sandbox/types.ts";
 
 export type SandboxState = {
   client: GatewayBrowserClient | null;
   connected: boolean;
   sessionKey: string;
-  sandboxTaskPlan: TaskPlanSnapshot | null;
-  sandboxTaskPlanLoading: boolean;
-  sandboxTaskPlanError: string | null;
-  /** When true, suppress automatic task-plan re-fetches (set after /new reset). */
-  sandboxTaskPlanSuppressed?: boolean;
+  sandboxCognitivePlan: CognitivePlanSnapshot | null;
+  sandboxCognitivePlanLoading: boolean;
+  sandboxCognitivePlanError: string | null;
+  /** When true, suppress automatic cognitive-plan re-fetches (set after /new reset). */
+  sandboxCognitivePlanSuppressed?: boolean;
 };
 
-type TaskPlanReadResponse = {
+type CognitiveTaskListResponse = {
   ok: boolean;
-  plan: TaskPlanSnapshot | null;
-  executionGraph?: TaskPlanSnapshot["executionGraph"];
-  taskRuntime?: TaskPlanSnapshot["taskRuntime"];
-  error?: string;
+  tasks: CognitiveTaskRecord[];
+};
+
+type CognitiveTaskReadResponse = {
+  ok: boolean;
+  task: CognitiveTaskRecord | null;
+  cognitivePlan?: CognitivePlanSnapshot | null;
+  runtime?: {
+    summary?: import("../types.ts").CognitiveRuntimeSummary | null;
+  };
 };
 
 /**
- * Loads the live task plan for the current main agent session from the gateway.
- * The gateway reads `.openaeon/planner/<sessionKey>.json` from disk.
+ * Loads the native cognitive-plan snapshot from the Cognitive runtime.
  */
-export async function loadSandboxTaskPlan(state: SandboxState): Promise<void> {
+export async function loadSandboxCognitivePlan(state: SandboxState): Promise<void> {
   if (!state.client || !state.connected) {
     return;
   }
-  if (state.sandboxTaskPlanLoading) {
+  if (state.sandboxCognitivePlanLoading) {
     return;
   }
   // After /new reset, suppress automatic re-fetches until a fresh session produces new data
-  if (state.sandboxTaskPlanSuppressed) {
+  if (state.sandboxCognitivePlanSuppressed) {
     return;
   }
-  state.sandboxTaskPlanLoading = true;
-  state.sandboxTaskPlanError = null;
+  state.sandboxCognitivePlanLoading = true;
+  state.sandboxCognitivePlanError = null;
   try {
-    const res = await state.client.request<TaskPlanReadResponse>("task_plan.read", {
-      sessionKey: state.sessionKey,
+    const listRes = await state.client.request<CognitiveTaskListResponse>("cognitive.task.list", {
+      limit: 50,
     });
-    if (res?.ok) {
-      if (res.plan) {
-        state.sandboxTaskPlan = {
-          ...res.plan,
-          executionGraph: res.executionGraph ?? res.plan.executionGraph,
-          taskRuntime: res.taskRuntime ?? res.plan.taskRuntime,
-        };
-      } else {
-        state.sandboxTaskPlan = null;
-      }
-    } else {
-      state.sandboxTaskPlan = null;
+    const tasks = Array.isArray(listRes?.tasks) ? listRes.tasks : [];
+    const selected = tasks
+      .filter((task) => task.sessionKey === state.sessionKey)
+      .toSorted((a, b) => b.updatedAt - a.updatedAt)[0];
+    if (!selected?.id) {
+      state.sandboxCognitivePlan = null;
+      return;
     }
+    const readRes = await state.client.request<CognitiveTaskReadResponse>("cognitive.task.read", {
+      taskId: selected.id,
+    });
+    state.sandboxCognitivePlan = readRes?.cognitivePlan ?? null;
   } catch (err) {
-    state.sandboxTaskPlanError = String(err);
-    state.sandboxTaskPlan = null;
+    state.sandboxCognitivePlanError = String(err);
+    state.sandboxCognitivePlan = null;
   } finally {
-    state.sandboxTaskPlanLoading = false;
+    state.sandboxCognitivePlanLoading = false;
   }
 }

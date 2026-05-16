@@ -10,6 +10,7 @@ import {
   isCronSessionKey,
   normalizeAgentId,
   parseAgentSessionKey,
+  resolveAgentIdFromSessionKey,
 } from "../routing/session-key.js";
 import { normalizeDeliveryContext } from "../utils/delivery-context.js";
 import {
@@ -292,6 +293,76 @@ ${antithesisOutputs.map((out, i) => `[审查者 ${i + 1}]:\n${out}`).join("\n\n"
   return await spawnSubagentDirect(synthesisParams, ctx);
 }
 
+async function getAutomatedWorkspaceContext(params: {
+  cfg: any;
+  sessionKey: string;
+}): Promise<{ fileTree: string; recentHistory: string }> {
+  let fileTree = "(unable to list directory)";
+  let recentHistory = "(no recent history recorded)";
+
+  try {
+    const workspaceRoot = resolveWorkspaceRoot(params.cfg.agents?.defaults?.workspace);
+    const walk = async (dir: string, depth = 0): Promise<string[]> => {
+      if (depth > 2) return []; // Stay shallow to avoid context bloat
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        const lines: string[] = [];
+        for (const entry of entries) {
+          if (entry.name === "node_modules" || entry.name === ".git" || entry.name === ".next")
+            continue;
+          const rel = path.relative(workspaceRoot, path.join(dir, entry.name));
+          lines.push(`${"  ".repeat(depth)}${entry.isDirectory() ? "📁" : "📄"} ${rel}`);
+          if (entry.isDirectory()) {
+            lines.push(...(await walk(path.join(dir, entry.name), depth + 1)));
+          }
+        }
+        return lines;
+      } catch {
+        return [];
+      }
+    };
+    const tree = await walk(workspaceRoot);
+    if (tree.length > 0) {
+      fileTree = tree.join("\n");
+      if (tree.length > 50) {
+        fileTree = tree.slice(0, 50).join("\n") + "\n... (truncated)";
+      }
+    }
+  } catch (err) {
+    console.error(`[SubagentSpawn] Failed to build file tree: ${err}`);
+  }
+
+  try {
+    const history = await callGateway<{
+      messages: Array<{ role: string; content: any; tool_calls?: any[] }>;
+    }>({
+      method: "chat.history",
+      params: { sessionKey: params.sessionKey, limit: 10 },
+    });
+    if (history.messages && history.messages.length > 0) {
+      const toolSummaries = history.messages
+        .filter((m) => m.tool_calls && m.tool_calls.length > 0)
+        .slice(0, 5)
+        .map((m) => {
+          return (m.tool_calls ?? [])
+            .map(
+              (tc: any) =>
+                `- Tool Executed: ${tc.function?.name}(${tc.function?.arguments?.slice(0, 50)}...)`,
+            )
+            .join("\n");
+        })
+        .join("\n");
+      if (toolSummaries) {
+        recentHistory = toolSummaries;
+      }
+    }
+  } catch (err) {
+    console.error(`[SubagentSpawn] Failed to fetch session history: ${err}`);
+  }
+
+  return { fileTree, recentHistory };
+}
+
 export async function spawnSubagentDirect(
   params: SpawnSubagentParams,
   ctx: SpawnSubagentContext,
@@ -390,12 +461,24 @@ export async function spawnSubagentDirect(
   const requesterAgentId = normalizeAgentId(
     ctx.requesterAgentIdOverride ?? parseAgentSessionKey(requesterInternalKey)?.agentId,
   );
-  const targetAgentId = requestedAgentId ? normalizeAgentId(requestedAgentId) : requesterAgentId;
+
+  // Robustly resolve targetAgentId even if a full session key (agent:main:main) is passed.
+  const targetAgentIdRaw = requestedAgentId?.trim();
+  const targetAgentId = targetAgentIdRaw
+    ? targetAgentIdRaw.includes(":") || targetAgentIdRaw.toLowerCase().startsWith("agent:")
+      ? resolveAgentIdFromSessionKey(targetAgentIdRaw)
+      : normalizeAgentId(targetAgentIdRaw)
+    : requesterAgentId;
+
   console.log(
     `[SubagentSpawn] request: target=${targetAgentId}, requester=${requesterAgentId}, label=${label}`,
   );
   if (targetAgentId !== requesterAgentId) {
-    const allowAgents = resolveAgentConfig(cfg, requesterAgentId)?.subagents?.allowAgents ?? [];
+    let allowAgents = resolveAgentConfig(cfg, requesterAgentId)?.subagents?.allowAgents ?? [];
+    // Default allow-any for the main agent to ensure detect-to-dispatch orchestration works out of the box.
+    if (requesterAgentId === "main" && allowAgents.length === 0) {
+      allowAgents = ["*"];
+    }
     const allowAny = allowAgents.some((value) => value.trim() === "*");
     const normalizedTargetId = targetAgentId.toLowerCase();
     const allowSet = new Set(
@@ -636,6 +719,12 @@ export async function spawnSubagentDirect(
     // Best-effort only
   }
 
+  // Pre-dispatch: Capture project context so subagents aren't 'blind' to existing files or recent steps.
+  const workspaceContext = await getAutomatedWorkspaceContext({
+    cfg,
+    sessionKey: requesterInternalKey,
+  });
+
   const sharedContext = {
     ...params.sharedContext,
     cognitiveDepth: childIterationDepth,
@@ -654,18 +743,24 @@ export async function spawnSubagentDirect(
     freedomMode: ctx.freedom,
   });
 
+  // Task is placed FIRST so it survives any context-window truncation in the DeepSeek Web UI.
   const childTaskMessage = [
-    `[Subagent Context] You are running as a subagent (depth ${childDepth}/${maxSpawnDepth}, iteration ${childIterationDepth}). Results auto-announce to your requester; do not busy-poll for status.`,
+    `### YOUR TASK\n<task_description>\n${task}\n</task_description>`,
+    `[Subagent Context] Depth ${childDepth}/${maxSpawnDepth}. Results auto-announce to your requester.`,
     spawnMode === "session"
-      ? "[Subagent Context] This subagent session is persistent and remains available for thread follow-up messages."
+      ? "[Subagent Context] This session is persistent and remains available for thread follow-up messages."
       : undefined,
-    sharedContext
-      ? `[Shared Context] The following context/memory was passed from your requester (Cognitive Iteration Formula: Z ⇌ Z² + C):\n\`\`\`json\n${JSON.stringify(sharedContext, null, 2)}\n\`\`\`\nIf you modify this shared state during your task, you MUST return the final updated JSON wrapped in a \`<updated_shared_context>\` XML block at the very end of your final response.`
+    `[Workspace State]\n\`\`\`\n${workspaceContext.fileTree}\n\`\`\``,
+    `[Recent History]\n${workspaceContext.recentHistory}`,
+    sharedContext && Object.keys(sharedContext).length > 0
+      ? `[Shared Context]\n\`\`\`json\n${JSON.stringify(sharedContext, null, 2)}\n\`\`\`\nReturn updated state in an <updated_shared_context> block if modified.`
       : undefined,
-    `[Subagent Task]: ${task}`,
   ]
     .filter((line): line is string => Boolean(line))
-    .join("\n\n");
+    .join("\n\n---\n\n"); // Use separators for clarity
+  console.log(
+    `[SubagentSpawn] childTaskMessage length=${childTaskMessage.length}, task preview: ${task.slice(0, 80).replace(/\n/g, " ")}`,
+  );
 
   setSubagentRunSharedContext({ runId: childRunId, sharedContext });
   markSubagentRunSpawnPhase({ runId: childRunId, phase: "dispatched" });

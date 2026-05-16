@@ -1,7 +1,7 @@
 import { html, nothing } from "lit";
 import { t } from "../../../../i18n/index.ts";
 import type { GatewaySessionRow } from "../../../types.ts";
-import type { TaskPlanSnapshot, TaskTodo } from "../types.ts";
+import type { CognitivePlanSnapshot, CognitiveTaskTodo } from "../types.ts";
 import { sessionStatusColor, sessionStatusLabel, relativeTime } from "./card.ts";
 
 /** ─── Timeline panel per subagent tasks ─────────────────────────────────────── */
@@ -59,8 +59,8 @@ export function renderTimeline(rows: GatewaySessionRow[]) {
 }
 
 /** ─── Task Plan Panel (main agent's write_todos state) ──────────────────────── */
-export function renderTaskPlanPanel(
-  plan: TaskPlanSnapshot | null | undefined,
+export function renderCognitivePlanPanel(
+  plan: CognitivePlanSnapshot | null | undefined,
   workerRows?: GatewaySessionRow[],
 ) {
   if (!plan || plan.todos.length === 0) {
@@ -70,7 +70,7 @@ export function renderTaskPlanPanel(
       </div>
     `;
   }
-  const done = plan.todos.filter((t: TaskTodo) => t.status === "done").length;
+  const done = plan.todos.filter((t: CognitiveTaskTodo) => t.status === "done").length;
   const total = plan.todos.length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const allDone = done === total;
@@ -89,33 +89,33 @@ export function renderTaskPlanPanel(
   }
 
   return html`
-    <div class="task-plan ${allDone ? "task-plan--complete" : ""}">
-      ${plan.description ? html`<div class="task-plan__desc">${plan.description}</div>` : nothing}
-      <div class="task-plan__progress-row">
+    <div class="cognitive-plan ${allDone ? "cognitive-plan--complete" : ""}">
+      ${plan.description ? html`<div class="cognitive-plan__desc">${plan.description}</div>` : nothing}
+      <div class="cognitive-plan__progress-row">
         <span>${t("sandbox.plan.tasksProgress", { done: String(done), total: String(total) })}</span>
         <span>${pct}%</span>
       </div>
-      <div class="task-plan__bar">
+      <div class="cognitive-plan__bar">
         <div
-          class="task-plan__fill"
+          class="cognitive-plan__fill"
           style="width: ${pct}%; background: ${allDone ? "#10b981" : "#818cf8"};"
         ></div>
       </div>
-      <div class="task-plan__list">
-        ${plan.todos.map((todo: TaskTodo) => {
+      <div class="cognitive-plan__list">
+        ${plan.todos.map((todo: CognitiveTaskTodo) => {
           const icon = todo.status === "done" ? "✅" : todo.status === "in_progress" ? "🔄" : "⏳";
           const cls =
             todo.status === "done"
-              ? "task-plan__item task-plan__item--done"
+              ? "cognitive-plan__item cognitive-plan__item--done"
               : todo.status === "in_progress"
-                ? "task-plan__item task-plan__item--active"
-                : "task-plan__item";
+                ? "cognitive-plan__item cognitive-plan__item--active"
+                : "cognitive-plan__item";
           const linked = findLinkedWorker(todo.title);
           return html`<div class="${cls}">
             ${icon} ${todo.title}
             ${
               linked
-                ? html`<span class="task-plan__worker-link" title="${t("sandbox.sidebar.linked", { name: linked.label || linked.key })}">🔗</span>`
+                ? html`<span class="cognitive-plan__worker-link" title="${t("sandbox.sidebar.linked", { name: linked.label || linked.key })}">🔗</span>`
                 : nothing
             }
           </div>`;
@@ -124,12 +124,12 @@ export function renderTaskPlanPanel(
       ${
         allDone
           ? html`
-              <div class="task-plan__complete">
-                <span class="task-plan__celebrate">🎉</span>
+              <div class="cognitive-plan__complete">
+                <span class="cognitive-plan__celebrate">🎉</span>
                 <span>${t("sandbox.plan.allDone")}</span>
-                <span class="task-plan__celebrate">🎉</span>
+                <span class="cognitive-plan__celebrate">🎉</span>
               </div>
-              <div class="task-plan__confetti">
+              <div class="cognitive-plan__confetti">
                 ${Array.from(
                   { length: 20 },
                   (_, i) =>

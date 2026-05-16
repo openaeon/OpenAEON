@@ -8431,3 +8431,1738 @@ This document records the autonomous and manual evolutionary milestones of the A
 - Homeostasis mode: stabilize
 - Evaluation trend: stable
 - Ethics trusted: false
+
+## 2026-04-12 11:56:16 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0508,"memorySaturation":1,"idleTimeMs":76593,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 11:56:16 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.54, 0.74]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 12:06:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0183,"memorySaturation":1,"idleTimeMs":89074,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 12:06:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.22, 0.42]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 12:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1283,"memorySaturation":1,"idleTimeMs":1138686,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 13:01:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1161,"memorySaturation":1,"idleTimeMs":2938688,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 13:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1005,"memorySaturation":1,"idleTimeMs":4738699,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 13:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.44, 0.64]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 14:01:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0879,"memorySaturation":1,"idleTimeMs":6538708,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 14:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.083,"memorySaturation":1,"idleTimeMs":8338730,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 14:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.31, 0.51]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 15:01:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.088,"memorySaturation":1,"idleTimeMs":10138739,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 15:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1009,"memorySaturation":1,"idleTimeMs":11938753,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 15:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.16, 0.36]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 16:01:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1167,"memorySaturation":1,"idleTimeMs":13738775,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 16:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.129,"memorySaturation":1,"idleTimeMs":15538791,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 16:31:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.21, 0.41]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 17:01:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1329,"memorySaturation":1,"idleTimeMs":17338806,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 17:36:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1144,"memorySaturation":1,"idleTimeMs":19438801,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 17:36:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.41, 0.61]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 18:06:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1278,"memorySaturation":1,"idleTimeMs":21238829,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 18:41:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0967,"memorySaturation":1,"idleTimeMs":23338823,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 18:41:23 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.11, 0.31]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 20:43:00 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0068,"memorySaturation":1,"idleTimeMs":221563,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 20:43:00 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.08, 0.28]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 20:55:35 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0094,"memorySaturation":1,"idleTimeMs":78057,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 20:55:35 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.07, 0.27]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 21:09:01 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.053,"memorySaturation":1,"idleTimeMs":92864,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: low epiphany and low idle pressure
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 21:09:01 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.05, 0.25]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 21:14:06 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0283,"memorySaturation":1,"idleTimeMs":76269,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: low epiphany and low idle pressure
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 21:14:06 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.21, 0.41]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 21:30:34 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0402,"memorySaturation":1,"idleTimeMs":12067,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: low epiphany and low idle pressure
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 21:30:34 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.45, 0.65]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 21:46:00 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0061,"memorySaturation":2,"idleTimeMs":170643,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 21:46:00 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.13, 0.33]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 22:00:34 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.011,"memorySaturation":2,"idleTimeMs":551523,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 22:00:34 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.32, 0.52]
+- Intensity: low
+- Health: N/A
+
+## 2026-04-12 22:07:52 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0126,"memorySaturation":2,"idleTimeMs":96245,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: low epiphany and low idle pressure
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-04-12 22:07:52 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.23, 0.43]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-15 19:32:15 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0425,"memorySaturation":2,"idleTimeMs":194016,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 19:32:15 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.11, 0.31]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-15 19:52:15 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.132,"memorySaturation":2,"idleTimeMs":957408,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 20:34:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1081,"memorySaturation":2,"idleTimeMs":1013108,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 20:34:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.36, 0.56]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-15 21:04:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0936,"memorySaturation":2,"idleTimeMs":2813133,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 21:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1262,"memorySaturation":2,"idleTimeMs":4913092,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 21:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.46, 0.66]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-15 22:09:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1111,"memorySaturation":2,"idleTimeMs":6713116,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 22:44:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1356,"memorySaturation":2,"idleTimeMs":8813105,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 22:44:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.26, 0.46]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-15 23:19:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1203,"memorySaturation":2,"idleTimeMs":10913104,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 23:54:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0901,"memorySaturation":2,"idleTimeMs":13013103,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-15 23:54:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.51, 0.71]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 00:29:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0935,"memorySaturation":2,"idleTimeMs":15113100,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 01:04:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1252,"memorySaturation":2,"idleTimeMs":17213097,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 01:04:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.55, 0.75]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 01:34:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1105,"memorySaturation":2,"idleTimeMs":19013099,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 02:09:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1354,"memorySaturation":2,"idleTimeMs":21113097,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 02:09:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.76, 0.96]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 02:44:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1211,"memorySaturation":2,"idleTimeMs":23213097,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 03:19:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0905,"memorySaturation":2,"idleTimeMs":25313095,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 03:19:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.36, 0.56]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 03:54:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0929,"memorySaturation":2,"idleTimeMs":27413094,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 04:24:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0862,"memorySaturation":2,"idleTimeMs":29213095,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 04:24:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.02, 0.22]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 04:59:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1097,"memorySaturation":2,"idleTimeMs":31313086,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 05:34:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1352,"memorySaturation":2,"idleTimeMs":33413084,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 05:34:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.56, 0.76]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 06:09:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1217,"memorySaturation":2,"idleTimeMs":35513083,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 06:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1329,"memorySaturation":2,"idleTimeMs":37313085,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 06:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.22, 0.42]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 07:09:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1358,"memorySaturation":2,"idleTimeMs":39113086,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 07:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1294,"memorySaturation":2,"idleTimeMs":40913091,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 07:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.71, 0.91]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 08:09:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1161,"memorySaturation":2,"idleTimeMs":42713093,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 08:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1008,"memorySaturation":2,"idleTimeMs":44513099,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 08:39:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.05, 0.25]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 09:09:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0894,"memorySaturation":2,"idleTimeMs":46313103,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 09:44:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1199,"memorySaturation":2,"idleTimeMs":48413072,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 09:44:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.53, 0.73]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 10:19:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1356,"memorySaturation":2,"idleTimeMs":50513067,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 10:49:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1333,"memorySaturation":2,"idleTimeMs":52313082,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 10:49:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.63, 0.83]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 11:19:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1225,"memorySaturation":2,"idleTimeMs":54113086,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 11:54:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1346,"memorySaturation":2,"idleTimeMs":56213041,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 11:54:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.22, 0.42]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 12:24:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1348,"memorySaturation":2,"idleTimeMs":58013060,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 12:54:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1257,"memorySaturation":2,"idleTimeMs":59813071,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 12:54:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.61, 0.81]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 13:24:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1105,"memorySaturation":2,"idleTimeMs":61613094,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 13:54:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0955,"memorySaturation":2,"idleTimeMs":63413117,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 13:54:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.03, 0.23]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 14:24:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0868,"memorySaturation":2,"idleTimeMs":65213139,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 14:59:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1132,"memorySaturation":2,"idleTimeMs":67313113,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 14:59:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.50, 0.70]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 15:29:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0977,"memorySaturation":2,"idleTimeMs":69113139,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 16:04:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1302,"memorySaturation":2,"idleTimeMs":71213085,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 16:04:50 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.08, 0.28]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 16:34:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1164,"memorySaturation":2,"idleTimeMs":73013116,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 17:04:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1004,"memorySaturation":2,"idleTimeMs":74813146,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 17:04:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.03, 0.23]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 17:34:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Heartbeat
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Heartbeat: true
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0887,"memorySaturation":2,"idleTimeMs":76613183,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 18:04:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0152,"memorySaturation":2,"idleTimeMs":20592,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: low epiphany and low idle pressure
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 18:04:51 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.06, 0.26]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 18:21:16 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0862,"memorySaturation":2,"idleTimeMs":1004989,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 18:21:16 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.11, 0.31]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 18:34:54 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1009,"memorySaturation":2,"idleTimeMs":1823472,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 18:34:55 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.21, 0.41]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 18:55:38 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0282,"memorySaturation":2,"idleTimeMs":201506,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 18:55:38 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.48, 0.68]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 20:00:38 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0268,"memorySaturation":7,"idleTimeMs":97622,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: low epiphany and low idle pressure
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 20:00:38 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.53, 0.73]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 20:23:27 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: execute:low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.0748,"memorySaturation":9,"idleTimeMs":183279,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: homeostasis stabilize mode or elevated risk
+- Homeostasis mode: stabilize
+- Evaluation trend: stable
+- Ethics trusted: false
+
+## 2026-05-16 20:23:27 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Selective Peano Audit
+**Details**:
+
+- Range: [0.01, 0.21]
+- Intensity: low
+- Health: N/A
+
+## 2026-05-16 20:51:54 [AUTONOMOUS_EVOLUTION]
+
+**Status**: Maintenance Policy Decision
+**Details**:
+
+- Policy ID: AEON_MAINTENANCE_GUARDRAIL_V1
+- Decision: BLOCK
+- Reason Code: MINIMUM_NOT_READY
+- Action Taken: downgrade:medium->low
+- Scope: session:agent:main:main|agent:main
+- Rollback Hint: Set aeon.guardrails.enforcementMode=soft for temporary downgrade-only mode.
+- Inputs: {"epiphanyFactor":0.1204,"memorySaturation":13,"idleTimeMs":952588,"resonanceTrigger":false}
+- Thresholds: {"redlineBreachRisk":0.65,"minimumReady":true,"ethicsTrusted":true,"homeostasisMode":"balanced|explore"}
+- Reason: balanced homeostasis mode
+- Homeostasis mode: balanced
+- Evaluation trend: stable
+- Ethics trusted: false

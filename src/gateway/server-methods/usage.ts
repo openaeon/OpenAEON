@@ -616,17 +616,20 @@ export const usageHandlers: GatewayRequestHandlers = {
       target: CostUsageSummary["totals"],
       source: CostUsageSummary["totals"],
     ) => {
-      target.input += source.input;
-      target.output += source.output;
-      target.cacheRead += source.cacheRead;
-      target.cacheWrite += source.cacheWrite;
-      target.totalTokens += source.totalTokens;
-      target.totalCost += source.totalCost;
-      target.inputCost += source.inputCost;
-      target.outputCost += source.outputCost;
-      target.cacheReadCost += source.cacheReadCost;
-      target.cacheWriteCost += source.cacheWriteCost;
-      target.missingCostEntries += source.missingCostEntries;
+      if (!target || !source) {
+        return;
+      }
+      target.input += source.input ?? 0;
+      target.output += source.output ?? 0;
+      target.cacheRead += source.cacheRead ?? 0;
+      target.cacheWrite += source.cacheWrite ?? 0;
+      target.totalTokens += source.totalTokens ?? 0;
+      target.totalCost += source.totalCost ?? 0;
+      target.inputCost += source.inputCost ?? 0;
+      target.outputCost += source.outputCost ?? 0;
+      target.cacheReadCost += source.cacheReadCost ?? 0;
+      target.cacheWriteCost += source.cacheWriteCost ?? 0;
+      target.missingCostEntries += source.missingCostEntries ?? 0;
     };
 
     for (const merged of limitedEntries) {
@@ -642,17 +645,17 @@ export const usageHandlers: GatewayRequestHandlers = {
       });
 
       if (usage) {
-        aggregateTotals.input += usage.input;
-        aggregateTotals.output += usage.output;
-        aggregateTotals.cacheRead += usage.cacheRead;
-        aggregateTotals.cacheWrite += usage.cacheWrite;
-        aggregateTotals.totalTokens += usage.totalTokens;
-        aggregateTotals.totalCost += usage.totalCost;
-        aggregateTotals.inputCost += usage.inputCost;
-        aggregateTotals.outputCost += usage.outputCost;
-        aggregateTotals.cacheReadCost += usage.cacheReadCost;
-        aggregateTotals.cacheWriteCost += usage.cacheWriteCost;
-        aggregateTotals.missingCostEntries += usage.missingCostEntries;
+        aggregateTotals.input += usage.input ?? 0;
+        aggregateTotals.output += usage.output ?? 0;
+        aggregateTotals.cacheRead += usage.cacheRead ?? 0;
+        aggregateTotals.cacheWrite += usage.cacheWrite ?? 0;
+        aggregateTotals.totalTokens += usage.totalTokens ?? 0;
+        aggregateTotals.totalCost += usage.totalCost ?? 0;
+        aggregateTotals.inputCost += usage.inputCost ?? 0;
+        aggregateTotals.outputCost += usage.outputCost ?? 0;
+        aggregateTotals.cacheReadCost += usage.cacheReadCost ?? 0;
+        aggregateTotals.cacheWriteCost += usage.cacheWriteCost ?? 0;
+        aggregateTotals.missingCostEntries += usage.missingCostEntries ?? 0;
       }
 
       const channel = merged.storeEntry?.channel ?? merged.storeEntry?.origin?.provider;
@@ -844,22 +847,22 @@ export const usageHandlers: GatewayRequestHandlers = {
           .toSorted((a, b) => b.count - a.count),
       },
       byModel: Array.from(byModelMap.values()).toSorted((a, b) => {
-        const costDiff = b.totals.totalCost - a.totals.totalCost;
+        const costDiff = (b.totals?.totalCost ?? 0) - (a.totals?.totalCost ?? 0);
         if (costDiff !== 0) {
           return costDiff;
         }
-        return b.totals.totalTokens - a.totals.totalTokens;
+        return (b.totals?.totalTokens ?? 0) - (a.totals?.totalTokens ?? 0);
       }),
       byProvider: Array.from(byProviderMap.values()).toSorted((a, b) => {
-        const costDiff = b.totals.totalCost - a.totals.totalCost;
+        const costDiff = (b.totals?.totalCost ?? 0) - (a.totals?.totalCost ?? 0);
         if (costDiff !== 0) {
           return costDiff;
         }
-        return b.totals.totalTokens - a.totals.totalTokens;
+        return (b.totals?.totalTokens ?? 0) - (a.totals?.totalTokens ?? 0);
       }),
       byAgent: Array.from(byAgentMap.entries())
         .map(([id, totals]) => ({ agentId: id, totals }))
-        .toSorted((a, b) => b.totals.totalCost - a.totals.totalCost),
+        .toSorted((a, b) => (b.totals?.totalCost ?? 0) - (a.totals?.totalCost ?? 0)),
       ...tail,
     };
 

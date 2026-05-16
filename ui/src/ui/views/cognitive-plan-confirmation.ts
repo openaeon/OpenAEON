@@ -1,8 +1,8 @@
 import { html, nothing } from "lit";
 import type { AppViewState } from "../app-view-state.ts";
 
-export function renderTaskPlanConfirmation(state: AppViewState) {
-  const dialog = state.taskPlanConfirmDialog;
+export function renderCognitivePlanConfirmation(state: AppViewState) {
+  const dialog = state.cognitivePlanConfirmDialog;
   if (!dialog) {
     return nothing;
   }
@@ -29,13 +29,13 @@ export function renderTaskPlanConfirmation(state: AppViewState) {
         <div class="exec-approval-actions">
           <button
             class="btn primary"
-            @click=${() => state.handleTaskPlanConfirmDecision(true)}
+            @click=${() => state.handleCognitivePlanConfirmDecision(true)}
           >
             ${dialog.confirmLabel}
           </button>
           <button
             class="btn"
-            @click=${() => state.handleTaskPlanConfirmDecision(false)}
+            @click=${() => state.handleCognitivePlanConfirmDecision(false)}
           >
             ${dialog.cancelLabel ?? "Cancel"}
           </button>

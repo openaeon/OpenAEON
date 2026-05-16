@@ -4,9 +4,9 @@ import type {
   SubagentStatus,
   SubagentViewModel,
 } from "../../../types.ts";
-import type { TaskPlanSnapshot } from "../../sandbox.ts";
+import type { CognitivePlanSnapshot } from "../../sandbox/types.ts";
 
-type PlanTodo = NonNullable<TaskPlanSnapshot["todos"]>[number];
+type PlanTodo = NonNullable<CognitivePlanSnapshot["todos"]>[number];
 type SessionMatchMode = "owner_first" | "balanced" | "fuzzy";
 
 const PLACEHOLDER_TITLE_PATTERNS = [
@@ -74,7 +74,7 @@ function isPlaceholderText(title: string, detail: string): boolean {
   );
 }
 
-export function isPlaceholderPlanTodo(todo: { title?: string; result?: string }): boolean {
+export function isPlaceholderCognitivePlanTodo(todo: { title?: string; result?: string }): boolean {
   const title = normalize(todo.title);
   const result = normalize(todo.result);
   return isPlaceholderText(title, result);
@@ -90,9 +90,11 @@ export function isPlaceholderSessionRow(row: {
   return isPlaceholderText(label, subject);
 }
 
-export function getVisiblePlanTodos(plan: TaskPlanSnapshot | null | undefined): PlanTodo[] {
+export function getVisibleCognitivePlanTodos(
+  plan: CognitivePlanSnapshot | null | undefined,
+): PlanTodo[] {
   const todos = Array.isArray(plan?.todos) ? plan.todos : [];
-  return todos.filter((todo) => !isPlaceholderPlanTodo(todo));
+  return todos.filter((todo) => !isPlaceholderCognitivePlanTodo(todo));
 }
 
 function resolveTodoStatus(params: {
@@ -110,7 +112,7 @@ function resolveTodoStatus(params: {
   if (blockedSet.has(todo.id)) {
     return "blocked";
   }
-  if (todo.status === "in_progress" && (hasSession || Boolean(childSessionKey))) {
+  if (todo.status === "in_progress" || (hasSession && Boolean(childSessionKey))) {
     return "in_progress";
   }
   if (readySet.has(todo.id)) {
@@ -285,16 +287,16 @@ function calculateTodoDepth(
 }
 
 export function buildSubagentViewModel(params: {
-  taskPlan: TaskPlanSnapshot | null | undefined;
+  cognitivePlan: CognitivePlanSnapshot | null | undefined;
   sandboxChatEvents?: SandboxChatEvents;
   sessions?: GatewaySessionRow[];
   matchMode?: SessionMatchMode;
 }): SubagentViewModel[] {
-  const visibleTodos = getVisiblePlanTodos(params.taskPlan);
+  const visibleTodos = getVisibleCognitivePlanTodos(params.cognitivePlan);
   if (visibleTodos.length === 0) {
     return [];
   }
-  const graph = params.taskPlan?.executionGraph;
+  const graph = params.cognitivePlan?.executionGraph;
   const orderedIds = Array.isArray(graph?.orderedTodoIds) ? graph?.orderedTodoIds : [];
   const orderIndex = new Map<string, number>(orderedIds.map((id, idx) => [id, idx]));
   const readySet = new Set(graph?.readyTodoIds ?? []);
@@ -367,7 +369,7 @@ export function buildSubagentViewModel(params: {
 
   if (shouldDebugSubagentModel()) {
     const fingerprint = JSON.stringify({
-      rawTodoCount: params.taskPlan?.todos?.length ?? 0,
+      rawTodoCount: params.cognitivePlan?.todos?.length ?? 0,
       visibleTodoCount: visibleTodos.length,
       sessionCount: params.sessions?.length ?? 0,
       filteredSessionCount: sessions.length,

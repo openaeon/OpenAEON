@@ -3,7 +3,7 @@ import {
   type GatewayUpdateAvailableEventPayload,
 } from "../../../src/gateway/events.js";
 import { CHAT_SESSIONS_ACTIVE_MINUTES, flushChatQueueForEvent } from "./app-chat.ts";
-import { loadSandboxTaskPlan } from "./controllers/sandbox.ts";
+import { loadSandboxCognitivePlan } from "./controllers/sandbox.ts";
 import { loadCognitiveTask } from "./controllers/cognitive.ts";
 import type { EventLogEntry } from "./app-events.ts";
 import {
@@ -76,20 +76,20 @@ type GatewayHost = {
   assistantAvatar: string | null;
   assistantAgentId: string | null;
   sessionKey: string;
-  sandboxTaskPlan: import("./views/sandbox.ts").TaskPlanSnapshot | null;
-  taskPlanGraphEdges: Array<{
+  sandboxCognitivePlan: import("./views/sandbox.ts").CognitivePlanSnapshot | null;
+  cognitivePlanGraphEdges: Array<{
     edgeId: string;
     from: string;
     to: string;
     relation: string;
     at: number;
   }>;
-  taskPlanGraphLoading: boolean;
-  taskPlanGraphError: string | null;
-  taskPlanGraphNodeId: string;
-  taskPlanGraphRelation: string;
-  taskPlanGraphAutoTrack: boolean;
-  taskPlanFocusTodoId: string | null;
+  cognitivePlanGraphLoading: boolean;
+  cognitivePlanGraphError: string | null;
+  cognitivePlanGraphNodeId: string;
+  cognitivePlanGraphRelation: string;
+  cognitivePlanGraphAutoTrack: boolean;
+  cognitivePlanFocusTodoId: string | null;
   chatRunId: string | null;
   chatSending: boolean;
   chatStream: string | null;
@@ -117,7 +117,7 @@ type GatewayHost = {
   aeonSystemStatus?: AeonStatusResult | null;
 };
 
-type TaskPlanExecutionTriggerPayload = {
+type CognitivePlanExecutionTriggerPayload = {
   sessionKey?: string;
   approvedAt?: number;
   phaseTransition?: {
@@ -164,7 +164,7 @@ type TaskPlanExecutionTriggerPayload = {
   };
 };
 
-type TaskPlanExecutionRecoverPayload = {
+type CognitivePlanExecutionRecoverPayload = {
   sessionKey?: string;
   staleTodoIds?: string[];
   longRunningTodoIds?: string[];
@@ -175,7 +175,7 @@ type TaskPlanExecutionRecoverPayload = {
   at?: number;
 };
 
-type TaskPlanAutopilotStatusPayload = {
+type CognitivePlanAutopilotStatusPayload = {
   sessionKey?: string;
   enabled?: boolean;
   queueDepth?: number;
@@ -186,7 +186,7 @@ type TaskPlanAutopilotStatusPayload = {
   at?: number;
 };
 
-type TaskPlanAutopilotSpawnedPayload = {
+type CognitivePlanAutopilotSpawnedPayload = {
   sessionKey?: string;
   todoId?: string;
   agentId?: string;
@@ -197,7 +197,7 @@ type TaskPlanAutopilotSpawnedPayload = {
   at?: number;
 };
 
-type TaskPlanStageChangedPayload = {
+type CognitivePlanStageChangedPayload = {
   sessionKey?: string;
   action?: "forward" | "rollback" | "retry" | "branch" | "restore";
   changed?: boolean;
@@ -211,33 +211,35 @@ type TaskPlanStageChangedPayload = {
   at?: number;
 };
 
-type TaskPlanCheckpointRestoredPayload = {
+type CognitivePlanCheckpointRestoredPayload = {
   sessionKey?: string;
   checkpointId?: string;
   branchId?: string;
   at?: number;
 };
 
-type TaskPlanVerifierResultPayload = {
+type CognitivePlanVerifierResultPayload = {
   sessionKey?: string;
-  verifier?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["verifierHistory"]>[number];
-  taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-  graphEdges?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]>;
+  verifier?: NonNullable<
+    import("./views/sandbox.ts").CognitivePlanSnapshot["verifierHistory"]
+  >[number];
+  taskRuntime?: import("./views/sandbox.ts").CognitivePlanSnapshot["taskRuntime"];
+  graphEdges?: NonNullable<import("./views/sandbox.ts").CognitivePlanSnapshot["graphEdges"]>;
   at?: number;
 };
 
-type TaskPlanDreamCreatedPayload = {
+type CognitivePlanDreamCreatedPayload = {
   sessionKey?: string;
-  dream?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["dreams"]>[number];
-  taskRuntime?: import("./views/sandbox.ts").TaskPlanSnapshot["taskRuntime"];
-  graphEdges?: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]>;
+  dream?: NonNullable<import("./views/sandbox.ts").CognitivePlanSnapshot["dreams"]>[number];
+  taskRuntime?: import("./views/sandbox.ts").CognitivePlanSnapshot["taskRuntime"];
+  graphEdges?: NonNullable<import("./views/sandbox.ts").CognitivePlanSnapshot["graphEdges"]>;
   at?: number;
 };
 
 function normalizeExecutionGraph(
-  graph: TaskPlanExecutionTriggerPayload["executionGraph"] | undefined,
-  fallback?: import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"],
-): import("./views/sandbox.ts").TaskPlanSnapshot["executionGraph"] | undefined {
+  graph: CognitivePlanExecutionTriggerPayload["executionGraph"] | undefined,
+  fallback?: import("./views/sandbox.ts").CognitivePlanSnapshot["executionGraph"],
+): import("./views/sandbox.ts").CognitivePlanSnapshot["executionGraph"] | undefined {
   if (!graph || Object.keys(graph).length === 0) {
     return fallback;
   }
@@ -256,9 +258,13 @@ function normalizeExecutionGraph(
 }
 
 function mergeGraphEdges(
-  current: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]> | undefined,
-  incoming: NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]> | undefined,
-): NonNullable<import("./views/sandbox.ts").TaskPlanSnapshot["graphEdges"]> {
+  current:
+    | NonNullable<import("./views/sandbox.ts").CognitivePlanSnapshot["graphEdges"]>
+    | undefined,
+  incoming:
+    | NonNullable<import("./views/sandbox.ts").CognitivePlanSnapshot["graphEdges"]>
+    | undefined,
+): NonNullable<import("./views/sandbox.ts").CognitivePlanSnapshot["graphEdges"]> {
   const byId = new Map<
     string,
     { edgeId: string; from: string; to: string; relation: string; at: number }
@@ -277,7 +283,7 @@ function mergeGraphEdges(
 }
 
 function resolveTodoFocusFromGraphNode(
-  plan: import("./views/sandbox.ts").TaskPlanSnapshot | null,
+  plan: import("./views/sandbox.ts").CognitivePlanSnapshot | null,
   nodeId: string,
 ): string | null {
   const isPlaceholderTodo = (todo: { title?: string; result?: string }) => {
@@ -323,39 +329,41 @@ function resolveTodoFocusFromGraphNode(
   return null;
 }
 
-async function refreshTaskPlanGraph(host: GatewayHost, preferredNodeId?: string): Promise<void> {
-  if (!host.client || !host.taskPlanGraphAutoTrack) {
+async function refreshCognitivePlanGraph(
+  host: GatewayHost,
+  preferredNodeId?: string,
+): Promise<void> {
+  if (!host.cognitivePlanGraphAutoTrack) {
     return;
   }
-  const nodeId = (preferredNodeId ?? host.taskPlanGraphNodeId ?? "").trim();
-  const relation = (host.taskPlanGraphRelation ?? "").trim();
-  host.taskPlanGraphLoading = true;
-  host.taskPlanGraphError = null;
+  const nodeId = (preferredNodeId ?? host.cognitivePlanGraphNodeId ?? "").trim();
+  const relation = (host.cognitivePlanGraphRelation ?? "").trim();
+  host.cognitivePlanGraphLoading = true;
+  host.cognitivePlanGraphError = null;
   try {
-    const res = await host.client.request<{
-      ok?: boolean;
-      edges?: Array<{
-        edgeId: string;
-        from: string;
-        to: string;
-        relation: string;
-        at: number;
-      }>;
-    }>("task_plan.graph.query", {
-      sessionKey: host.sessionKey,
-      nodeId: nodeId || undefined,
-      relation: relation || undefined,
-      limit: 80,
+    const sourceEdges = Array.isArray(host.sandboxCognitivePlan?.graphEdges)
+      ? host.sandboxCognitivePlan!.graphEdges
+      : [];
+    host.cognitivePlanGraphEdges = sourceEdges.filter((edge) => {
+      if (nodeId && !edge.from.includes(nodeId) && !edge.to.includes(nodeId)) {
+        return false;
+      }
+      if (relation && edge.relation !== relation) {
+        return false;
+      }
+      return true;
     });
-    host.taskPlanGraphEdges = Array.isArray(res?.edges) ? res.edges : [];
     if (nodeId) {
-      host.taskPlanGraphNodeId = nodeId;
-      host.taskPlanFocusTodoId = resolveTodoFocusFromGraphNode(host.sandboxTaskPlan, nodeId);
+      host.cognitivePlanGraphNodeId = nodeId;
+      host.cognitivePlanFocusTodoId = resolveTodoFocusFromGraphNode(
+        host.sandboxCognitivePlan,
+        nodeId,
+      );
     }
   } catch (err) {
-    host.taskPlanGraphError = `Failed to auto-refresh graph memory: ${String(err)}`;
+    host.cognitivePlanGraphError = `Failed to auto-refresh graph memory: ${String(err)}`;
   } finally {
-    host.taskPlanGraphLoading = false;
+    host.cognitivePlanGraphLoading = false;
   }
 }
 
@@ -598,7 +606,7 @@ function handleChatGatewayEvent(host: GatewayHost, payload: ChatEventPayload | u
       (state === "final" || state === "error") &&
       isSafetyPauseMessage(preview) &&
       !preview.toLowerCase().includes("confirmdangerouscodeedit") &&
-      host.sandboxTaskPlan?.phase === "execution"
+      host.sandboxCognitivePlan?.phase === "execution"
     ) {
       host.executionWatchdog.reason = "safety_pause_detected_auto_resuming";
       host.executionWatchdog.lastProgressAt = Date.now();
@@ -618,7 +626,7 @@ function handleChatGatewayEvent(host: GatewayHost, payload: ChatEventPayload | u
   }
   // Auto-refresh task plan when chat events complete (captures write_todos and subagent completions)
   if (state === "final" || state === "aborted") {
-    void loadSandboxTaskPlan(host as unknown as OPENAEONApp);
+    void loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
   }
 }
 
@@ -639,6 +647,8 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
       host as unknown as Parameters<typeof handleAgentEvent>[0],
       evt.payload as AgentEventPayload | undefined,
     );
+    host.cognitivePlanGraphAutoTrack = true; // Auto-track on agent activity
+    void refreshCognitivePlanGraph(host);
     host.executionWatchdog.lastProgressAt = Date.now();
     return;
   }
@@ -665,6 +675,7 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     evt.event === "cognitive.cognition.dreamed" ||
     evt.event === "cognitive.memory.written"
   ) {
+    void loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
     if (host.tab === "cognitive") {
       void loadCognitiveTask(host as unknown as OPENAEONApp);
     }
@@ -710,270 +721,6 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     return;
   }
 
-  if (evt.event === "task_plan.execution.trigger") {
-    const payload = (evt.payload as TaskPlanExecutionTriggerPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey) {
-      return;
-    }
-    if (host.sandboxTaskPlan) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        phase: payload.phaseTransition?.to ?? "execution",
-        executionGraph: normalizeExecutionGraph(
-          payload.executionGraph,
-          host.sandboxTaskPlan.executionGraph,
-        ),
-      };
-    }
-    const executionPrompt =
-      typeof payload.prompt === "string" && payload.prompt.trim().length > 0
-        ? payload.prompt
-        : "计划已批准。立即进入 execution 阶段，禁止再次规划，按当前 TODO 逐项执行并在每步后汇报结果。";
-    host.executionWatchdog.lastProgressAt = Date.now();
-    if (host.chatSending || Boolean(host.chatStream?.trim())) {
-      host.chatMessage = executionPrompt;
-      host.executionAutoQueued = true;
-      return;
-    }
-    host.executionAutoQueued = false;
-    host.chatMessage = executionPrompt;
-    void host.handleSendChat();
-    return;
-  }
-
-  if (evt.event === "task_plan.execution.recover") {
-    const payload = (evt.payload as TaskPlanExecutionRecoverPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey) {
-      return;
-    }
-    if (host.sandboxTaskPlan) {
-      const previousGraph = host.sandboxTaskPlan.executionGraph;
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        executionGraph: {
-          orderedTodoIds: previousGraph?.orderedTodoIds ?? [],
-          readyTodoIds: payload.readyTodoIds ?? previousGraph?.readyTodoIds ?? [],
-          blockedTodoIds: payload.blockedTodoIds ?? previousGraph?.blockedTodoIds ?? [],
-          inProgressTodoIds: previousGraph?.inProgressTodoIds ?? [],
-          longRunningTodoIds: payload.longRunningTodoIds ?? previousGraph?.longRunningTodoIds ?? [],
-          staleTodoIds: payload.staleTodoIds ?? previousGraph?.staleTodoIds ?? [],
-          blockedBy: previousGraph?.blockedBy ?? {},
-          todoTelemetry: previousGraph?.todoTelemetry ?? {},
-          advisories: payload.advisories ?? previousGraph?.advisories ?? [],
-        },
-      };
-    }
-    const advisory = Array.isArray(payload.advisories) ? payload.advisories[0] : null;
-    host.executionWatchdog = {
-      ...host.executionWatchdog,
-      active: true,
-      degraded: true,
-      reason: advisory ?? "execution_recovery_requested",
-      lastProgressAt: Date.now(),
-    };
-    const recoveryPrompt =
-      typeof payload.prompt === "string" && payload.prompt.trim().length > 0
-        ? payload.prompt
-        : "检测到 execution 存在停滞任务。继续在 execution 阶段推进，优先处理 stale/long-running TODO，并回填每步进展。";
-    if (host.chatSending || Boolean(host.chatStream?.trim())) {
-      host.chatMessage = recoveryPrompt;
-      host.executionAutoQueued = true;
-      return;
-    }
-    host.executionAutoQueued = false;
-    host.chatMessage = recoveryPrompt;
-    void host.handleSendChat();
-    return;
-  }
-
-  if (evt.event === "task_plan.autopilot.status") {
-    const payload = (evt.payload as TaskPlanAutopilotStatusPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey) {
-      return;
-    }
-    if (host.sandboxTaskPlan?.executionGraph) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        executionGraph: {
-          ...host.sandboxTaskPlan.executionGraph,
-          autoDispatch: {
-            enabled: payload.enabled ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.enabled,
-            queueDepth:
-              payload.queueDepth ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.queueDepth,
-            runningCount:
-              payload.runningCount ??
-              host.sandboxTaskPlan.executionGraph.autoDispatch?.runningCount,
-            maxConcurrent:
-              payload.maxConcurrent ??
-              host.sandboxTaskPlan.executionGraph.autoDispatch?.maxConcurrent,
-            frozen: payload.frozen ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.frozen,
-            freezeReason:
-              payload.freezeReason ??
-              host.sandboxTaskPlan.executionGraph.autoDispatch?.freezeReason,
-            lastSpawnAt:
-              payload.at ?? host.sandboxTaskPlan.executionGraph.autoDispatch?.lastSpawnAt,
-          },
-        },
-      };
-    }
-    return;
-  }
-
-  if (evt.event === "task_plan.autopilot.spawned") {
-    const payload = (evt.payload as TaskPlanAutopilotSpawnedPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    const todoId = typeof payload.todoId === "string" ? payload.todoId.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey || !todoId) {
-      return;
-    }
-    const currentPlan = host.sandboxTaskPlan;
-    const graph = currentPlan?.executionGraph;
-    if (currentPlan && graph) {
-      const previous = graph.todoTelemetry ?? {};
-      const current = previous[todoId] ?? {};
-      host.sandboxTaskPlan = {
-        ...currentPlan,
-        executionGraph: {
-          ...graph,
-          todoTelemetry: {
-            ...previous,
-            [todoId]: {
-              ...current,
-              spawn: {
-                spawned: payload.ok === true,
-                spawnAttempts: payload.attempt ?? current.spawn?.spawnAttempts ?? 0,
-                lastSpawnError: payload.ok === true ? undefined : (payload.error ?? "spawn_failed"),
-                childSessionKey: payload.childSessionKey ?? current.spawn?.childSessionKey,
-                lastSpawnAt: payload.at ?? current.spawn?.lastSpawnAt,
-              },
-            },
-          },
-        },
-      };
-    }
-    return;
-  }
-
-  if (evt.event === "task_plan.stage.changed") {
-    const payload = (evt.payload as TaskPlanStageChangedPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey) {
-      return;
-    }
-    if (host.sandboxTaskPlan?.taskRuntime) {
-      const runtime = host.sandboxTaskPlan.taskRuntime;
-      const checkpointsCount =
-        payload.changed === true
-          ? Math.max(0, (runtime.checkpointsCount ?? 0) + 1)
-          : runtime.checkpointsCount;
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        phase: payload.phaseTransition?.to ?? host.sandboxTaskPlan.phase,
-        taskRuntime: {
-          ...runtime,
-          currentBranchId: payload.currentBranchId ?? runtime.currentBranchId,
-          checkpointsCount,
-          latestCheckpointId: payload.checkpointId ?? runtime.latestCheckpointId,
-          latestCheckpointAt: payload.at ?? runtime.latestCheckpointAt,
-        },
-      };
-    }
-    const preferredNodeId = payload.checkpointId ? `checkpoint:${payload.checkpointId}` : undefined;
-    void refreshTaskPlanGraph(host, preferredNodeId);
-    return;
-  }
-
-  if (evt.event === "task_plan.checkpoint.restored") {
-    const payload = (evt.payload as TaskPlanCheckpointRestoredPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey) {
-      return;
-    }
-    if (host.sandboxTaskPlan?.taskRuntime) {
-      const runtime = host.sandboxTaskPlan.taskRuntime;
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        taskRuntime: {
-          ...runtime,
-          currentBranchId: payload.branchId ?? runtime.currentBranchId,
-          checkpointsCount: Math.max(0, (runtime.checkpointsCount ?? 0) + 1),
-          latestCheckpointId: payload.checkpointId ?? runtime.latestCheckpointId,
-          latestCheckpointAt: payload.at ?? runtime.latestCheckpointAt,
-        },
-      };
-    }
-    const preferredNodeId = payload.checkpointId ? `checkpoint:${payload.checkpointId}` : undefined;
-    void refreshTaskPlanGraph(host, preferredNodeId);
-    return;
-  }
-
-  if (evt.event === "task_plan.verifier.result") {
-    const payload = (evt.payload as TaskPlanVerifierResultPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey || !host.sandboxTaskPlan) {
-      return;
-    }
-    const verifier = payload.verifier;
-    const mergedEdges = mergeGraphEdges(host.taskPlanGraphEdges, payload.graphEdges);
-    host.taskPlanGraphEdges = mergedEdges;
-    if (host.sandboxTaskPlan) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        graphEdges: mergeGraphEdges(host.sandboxTaskPlan.graphEdges, payload.graphEdges),
-      };
-    }
-    if (verifier) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        verifierHistory: [...(host.sandboxTaskPlan.verifierHistory ?? []), verifier],
-        taskRuntime: payload.taskRuntime ?? host.sandboxTaskPlan.taskRuntime,
-      };
-    } else if (payload.taskRuntime) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        taskRuntime: payload.taskRuntime,
-      };
-    }
-    const preferredNodeId = verifier ? `stage:${verifier.stageId}` : undefined;
-    void refreshTaskPlanGraph(host, preferredNodeId);
-    return;
-  }
-
-  if (evt.event === "task_plan.dream.created") {
-    const payload = (evt.payload as TaskPlanDreamCreatedPayload | undefined) ?? {};
-    const sessionKey = typeof payload.sessionKey === "string" ? payload.sessionKey.trim() : "";
-    if (!sessionKey || sessionKey !== host.sessionKey || !host.sandboxTaskPlan) {
-      return;
-    }
-    const dream = payload.dream;
-    const mergedEdges = mergeGraphEdges(host.taskPlanGraphEdges, payload.graphEdges);
-    host.taskPlanGraphEdges = mergedEdges;
-    if (host.sandboxTaskPlan) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        graphEdges: mergeGraphEdges(host.sandboxTaskPlan.graphEdges, payload.graphEdges),
-      };
-    }
-    if (dream) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        dreams: [...(host.sandboxTaskPlan.dreams ?? []), dream],
-        taskRuntime: payload.taskRuntime ?? host.sandboxTaskPlan.taskRuntime,
-      };
-    } else if (payload.taskRuntime) {
-      host.sandboxTaskPlan = {
-        ...host.sandboxTaskPlan,
-        taskRuntime: payload.taskRuntime,
-      };
-    }
-    const preferredNodeId = dream ? `dream:${dream.dreamId}` : undefined;
-    void refreshTaskPlanGraph(host, preferredNodeId);
-    return;
-  }
-
   if (evt.event === GATEWAY_EVENT_UPDATE_AVAILABLE) {
     const payload = evt.payload as GatewayUpdateAvailableEventPayload | undefined;
     host.updateAvailable = payload?.updateAvailable ?? null;
@@ -984,7 +731,7 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
     const now = Date.now();
     if (!agentPlanRefreshLast || now - agentPlanRefreshLast > 3000) {
       agentPlanRefreshLast = now;
-      void loadSandboxTaskPlan(host as unknown as OPENAEONApp);
+      void loadSandboxCognitivePlan(host as unknown as OPENAEONApp);
     }
   }
 }

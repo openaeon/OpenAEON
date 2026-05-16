@@ -40,7 +40,7 @@ export type FallbackIndicatorStatus = {
   attempts: string[];
   occurredAt: number;
 };
-import type { TaskPlanSnapshot } from "../views/sandbox.ts";
+import type { CognitivePlanSnapshot } from "../views/sandbox/types.ts";
 
 export type ChatProps = {
   performanceMode?: "performance" | "balanced" | "visual";
@@ -71,8 +71,8 @@ export type ChatProps = {
   sessions: SessionsListResult | null;
   // Focus mode
   focusMode: boolean;
-  // Task Plan (from sandbox state)
-  taskPlan?: TaskPlanSnapshot | null;
+  // Cognitive Plan (from sandbox state)
+  cognitivePlan?: CognitivePlanSnapshot | null;
   executionWatchdog?: {
     active: boolean;
     degraded: boolean;
@@ -96,16 +96,22 @@ export type ChatProps = {
   onRefresh: () => void;
   onToggleFocusMode: () => void;
   onDraftChange: (next: string) => void;
-  onSend: () => void;
+  onSend: (messageOverride?: string, options?: { mode?: string }) => void;
   onAbort?: () => void;
   onQueueRemove: (id: string) => void;
   onNewSession: () => void;
   onOpenSandbox?: () => void;
   onOpenAeon?: () => void;
   onOpenAgents?: () => void;
+  onOpenCognitiveSource?: () => void;
+  onReopenCognitiveMemory?: () => void;
   onSpawnAgentsFromPlan?: () => void;
   autopilotEnabled?: boolean;
   onToggleAutopilot?: (enabled: boolean) => void;
+  autopilotMaxConcurrent?: number;
+  onAutopilotMaxConcurrentChange?: (maxConcurrent: number) => void;
+  onAutopilotDispatchNow?: () => void;
+  onForceStartTodo?: (todoId: string) => void;
   eternalMode?: boolean;
   onToggleEternalMode?: () => void;
   onOpenSidebar?: (content: string) => void;
@@ -123,32 +129,40 @@ export type ChatProps = {
   onRestoreCheckpoint?: (checkpointId: string) => void;
   onVerifierReport?: (status: "passed" | "failed" | "blocked") => void;
   onDistillDream?: () => void;
-  onQueryTaskGraph?: (query: { nodeId?: string; relation?: string }) => void;
-  onClearTaskGraph?: () => void;
-  onTaskGraphNodeIdChange?: (nodeId: string) => void;
-  onTaskGraphRelationChange?: (relation: string) => void;
-  onTaskGraphAutoTrackChange?: (enabled: boolean) => void;
-  onTaskGraphPageChange?: (page: number) => void;
-  onTaskGraphTrailJump?: (nodeId: string, trailIndex: number) => void;
-  onTaskGraphExpandedRelationChange?: (relation: string) => void;
-  taskPlanGraphEdges?: Array<{
+  onQueryCognitivePlanGraph?: (query: { nodeId?: string; relation?: string }) => void;
+  onClearCognitivePlanGraph?: () => void;
+  onCognitivePlanGraphNodeIdChange?: (nodeId: string) => void;
+  onCognitivePlanGraphRelationChange?: (relation: string) => void;
+  onCognitivePlanGraphAutoTrackChange?: (enabled: boolean) => void;
+  onCognitivePlanGraphPageChange?: (page: number) => void;
+  onCognitivePlanGraphTrailJump?: (nodeId: string, trailIndex: number) => void;
+  onCognitivePlanGraphExpandedRelationChange?: (relation: string) => void;
+  cognitivePlanGraphEdges?: Array<{
     edgeId: string;
     from: string;
     to: string;
     relation: string;
     at: number;
   }>;
-  taskPlanGraphLoading?: boolean;
-  taskPlanGraphError?: string | null;
-  taskPlanGraphNodeId?: string;
-  taskPlanGraphRelation?: string;
-  taskPlanGraphAutoTrack?: boolean;
-  taskPlanGraphPage?: number;
-  taskPlanGraphPageSize?: number;
-  taskPlanGraphTrail?: string[];
-  taskPlanGraphExpandedRelation?: string;
-  taskPlanFocusTodoId?: string | null;
-  onTaskPlanFocusTodoChange?: (todoId: string | null) => void;
+  cognitivePlanGraphLoading?: boolean;
+  cognitivePlanGraphError?: string | null;
+  cognitivePlanGraphNodeId?: string;
+  cognitivePlanGraphRelation?: string;
+  cognitivePlanGraphAutoTrack?: boolean;
+  cognitivePlanGraphPage?: number;
+  cognitivePlanGraphPageSize?: number;
+  cognitivePlanGraphTrail?: string[];
+  cognitivePlanGraphExpandedRelation?: string;
+  cognitivePlanGraphSourceBreadcrumb?: string | null;
+  cognitivePlanGraphSourceMemory?:
+    | import("../controllers/cognitive.ts").CognitiveLongTermEntry
+    | null;
+  cognitivePlanGraphSourceContext?:
+    | import("../controllers/cognitive.ts").CognitiveSourceContext
+    | null;
+  cognitivePlanGraphSourceSelectedLine?: number | null;
+  cognitivePlanFocusTodoId?: string | null;
+  onCognitivePlanFocusTodoChange?: (todoId: string | null) => void;
   onRecoverExecution?: () => void;
   onQuickCommand?: (command: ChatQuickCommand) => void;
   // Subagent details for sidebar
@@ -171,6 +185,7 @@ export type ChatProps = {
   epiphanyFactor: number;
   riskScore: number;
   memorySaturation: number;
+  aeonSystemStatus?: import("../types.ts").AeonStatusResult | null;
 };
 
 export type ChatQuickCommand = {
@@ -268,7 +283,7 @@ export function renderChat(props: ChatProps) {
   const subagentViewModel =
     props.subagentViewModel ??
     buildSubagentViewModel({
-      taskPlan: props.taskPlan,
+      cognitivePlan: props.cognitivePlan,
       sandboxChatEvents: props.sandboxChatEvents,
       sessions: props.sandboxSessions,
       matchMode: props.subagentMatchMode,

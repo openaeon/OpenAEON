@@ -1,5 +1,6 @@
 import type { GatewayBrowserClient } from "../gateway.ts";
 import type { CognitiveTaskRecord } from "../types.ts";
+import type { CognitivePlanSnapshot } from "../views/sandbox/types.ts";
 
 export type CognitiveMemoryEntry = {
   id: string;
@@ -53,7 +54,7 @@ export type CognitiveState = {
   cognitiveTaskList: CognitiveTaskRecord[];
   cognitiveSelectedTaskId: string | null;
   cognitiveRuntimeEvents: CognitiveTaskEvent[];
-  cognitiveLegacyPlan: unknown | null;
+  sandboxCognitivePlan?: CognitivePlanSnapshot | null;
   cognitiveMemoryQuery: string;
   cognitiveMemoryTags: string;
   cognitiveMemoryResults: CognitiveMemoryQueryResult | null;
@@ -69,7 +70,7 @@ type CognitiveTaskListResponse = {
 type CognitiveTaskReadResponse = {
   ok: boolean;
   task: CognitiveTaskRecord | null;
-  legacyPlan?: unknown;
+  cognitivePlan?: CognitivePlanSnapshot | null;
   runtime?: {
     events?: CognitiveTaskEvent[];
   };
@@ -123,15 +124,14 @@ async function readSelectedTask(state: CognitiveState, taskId: string): Promise<
   }
   const res = await state.client.request<CognitiveTaskReadResponse>("cognitive.task.read", {
     taskId,
-    includeLegacyPlan: true,
   });
   if (res?.ok) {
     state.cognitiveTaskRecord = res.task;
-    state.cognitiveLegacyPlan = res.legacyPlan ?? null;
+    state.sandboxCognitivePlan = res.cognitivePlan ?? null;
     state.cognitiveRuntimeEvents = Array.isArray(res.runtime?.events) ? res.runtime.events : [];
   } else {
     state.cognitiveTaskRecord = null;
-    state.cognitiveLegacyPlan = null;
+    state.sandboxCognitivePlan = null;
     state.cognitiveRuntimeEvents = [];
   }
 }
@@ -157,7 +157,7 @@ export async function loadCognitiveTask(state: CognitiveState): Promise<void> {
       await readSelectedTask(state, selected.id);
     } else {
       state.cognitiveTaskRecord = null;
-      state.cognitiveLegacyPlan = null;
+      state.sandboxCognitivePlan = null;
       state.cognitiveRuntimeEvents = [];
     }
   } catch (err) {
@@ -221,7 +221,6 @@ export async function transitionCognitiveTask(
   await loadCognitiveTask(state);
   return res?.task ?? null;
 }
-
 export async function dispatchCognitiveTask(
   state: CognitiveState,
 ): Promise<CognitiveTaskRecord | null> {
@@ -232,6 +231,22 @@ export async function dispatchCognitiveTask(
   const res = await state.client.request<{ ok: boolean; task: CognitiveTaskRecord }>(
     "cognitive.runtime.dispatch",
     { taskId },
+  );
+  await loadCognitiveTask(state);
+  return res?.task ?? null;
+}
+
+export async function forceStartCognitiveNode(
+  state: CognitiveState,
+  nodeId: string,
+): Promise<CognitiveTaskRecord | null> {
+  const taskId = state.cognitiveSelectedTaskId ?? state.cognitiveTaskRecord?.id ?? null;
+  if (!state.client || !state.connected || !taskId) {
+    return null;
+  }
+  const res = await state.client.request<{ ok: boolean; task: CognitiveTaskRecord }>(
+    "cognitive.runtime.force_start",
+    { taskId, nodeId },
   );
   await loadCognitiveTask(state);
   return res?.task ?? null;
