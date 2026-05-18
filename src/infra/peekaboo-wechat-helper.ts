@@ -354,7 +354,6 @@ export class PeekabooWeChatHelper {
 
     // 3. Parse each row group into a WeChatContact object
     for (const row of rows) {
-      const sortedByX = [...row].sort((a, b) => a.frame.x - b.frame.x);
       let name = "";
       let time = "";
       let lastMessage = "";
