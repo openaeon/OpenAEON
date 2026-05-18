@@ -59,7 +59,20 @@ const RESET_COMMAND_RE = /^\/(new|reset)(?:\s+([\s\S]*))?$/i;
 
 function resolveSenderIsOwnerFromClient(client: GatewayRequestHandlerOptions["client"]): boolean {
   const scopes = Array.isArray(client?.connect?.scopes) ? client.connect.scopes : [];
-  return scopes.includes(ADMIN_SCOPE);
+  if (scopes.includes(ADMIN_SCOPE)) {
+    return true;
+  }
+  const cfg = loadConfig();
+  const mode = cfg.gateway?.mode;
+  if (
+    (mode === "local" || !mode) &&
+    (client?.connect?.client?.id === "openaeon-control-ui" ||
+      client?.connect?.client?.mode === "webchat" ||
+      client?.connect?.client?.mode === "ui")
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function isGatewayErrorShape(value: unknown): value is { code: string; message: string } {

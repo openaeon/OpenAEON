@@ -379,6 +379,66 @@ describe("gateway agent handler", () => {
     expect(callArgs?.senderIsOwner).toBe(true);
   });
 
+  it("passes senderIsOwner=true for local webchat callers when gateway mode is local", async () => {
+    primeMainAgentRun();
+    mocks.loadConfigReturn = { gateway: { mode: "local" } };
+
+    await invokeAgent(
+      {
+        message: "owner-tools check",
+        sessionKey: "agent:main:main",
+        idempotencyKey: "test-sender-owner-local-webchat",
+      },
+      {
+        client: {
+          connect: {
+            role: "operator",
+            scopes: ["operator.write"],
+            client: { id: "openaeon-control-ui", mode: "webchat" },
+          },
+        } as unknown as AgentHandlerArgs["client"],
+      },
+    );
+
+    await vi.waitFor(() => expect(mocks.agentCommand).toHaveBeenCalled());
+    const callArgs = mocks.agentCommand.mock.calls.at(-1)?.[0] as
+      | { senderIsOwner?: boolean }
+      | undefined;
+    expect(callArgs?.senderIsOwner).toBe(true);
+
+    mocks.loadConfigReturn = {};
+  });
+
+  it("passes senderIsOwner=true for local webchat callers when gateway mode is undefined (default)", async () => {
+    primeMainAgentRun();
+    mocks.loadConfigReturn = { gateway: {} };
+
+    await invokeAgent(
+      {
+        message: "owner-tools check",
+        sessionKey: "agent:main:main",
+        idempotencyKey: "test-sender-owner-undefined-webchat",
+      },
+      {
+        client: {
+          connect: {
+            role: "operator",
+            scopes: ["operator.write"],
+            client: { id: "openaeon-control-ui", mode: "webchat" },
+          },
+        } as unknown as AgentHandlerArgs["client"],
+      },
+    );
+
+    await vi.waitFor(() => expect(mocks.agentCommand).toHaveBeenCalled());
+    const callArgs = mocks.agentCommand.mock.calls.at(-1)?.[0] as
+      | { senderIsOwner?: boolean }
+      | undefined;
+    expect(callArgs?.senderIsOwner).toBe(true);
+
+    mocks.loadConfigReturn = {};
+  });
+
   it("respects explicit bestEffortDeliver=false for main session runs", async () => {
     mocks.agentCommand.mockClear();
     primeMainAgentRun();
