@@ -248,9 +248,60 @@ function looksLikeInternalScratchpad(text: string): boolean {
   );
 }
 
-function sanitizedScratchpadFallback(latestUserText: string, modelId: string): string {
+function sanitizedScratchpadFallback(
+  latestUserText: string,
+  modelId: string,
+  toolCalls?: ToolCall[],
+  availableTools?: Array<{ name: string; description?: string }>,
+): string {
   if (/你.*(哪个|什么).*模型|what\s+model/i.test(latestUserText)) {
     return `我是 OPENAEON 当前配置的 DeepSeek Web 提供方模型（${modelId}）。`;
+  }
+
+  if (toolCalls && toolCalls.length > 0) {
+    const names = toolCalls.map((tc) => tc.name.toLowerCase());
+
+    // Check high-priority hardcoded standard helpers first for maximum UI polishedness
+    if (names.some((n) => n.includes("wechat") || n.includes("peekaboo"))) {
+      return "我需要使用微信自动化工具来处理您的请求。";
+    }
+    if (names.some((n) => n === "browser")) {
+      return "我需要使用浏览器工具来处理您的请求。";
+    }
+    if (names.some((n) => n === "exec")) {
+      return "我需要运行相应的系统命令来处理您的请求。";
+    }
+    if (names.some((n) => ["read", "write", "edit", "list_dir", "grep_search"].includes(n))) {
+      return "我需要读取或修改工作区文件来处理您的请求。";
+    }
+    if (names.some((n) => n.includes("spawn") || n.includes("subagent"))) {
+      return "我需要启动子智能体来协助处理您的请求。";
+    }
+
+    // Dynamic discovery of any other tools / skills / evolved logic
+    const fallbackParts: string[] = [];
+    for (const tc of toolCalls) {
+      const matchedTool = availableTools?.find(
+        (t) => t.name.toLowerCase() === tc.name.toLowerCase(),
+      );
+      if (matchedTool && matchedTool.description) {
+        const cleanDesc = matchedTool.description.split(/[.!?。！？\n]/, 1)[0] || "";
+        fallbackParts.push(`调用系统工具 ${tc.name}（${cleanDesc}）`);
+      } else {
+        fallbackParts.push(`调用系统工具 ${tc.name}`);
+      }
+    }
+    if (fallbackParts.length > 0) {
+      return `我需要执行以下操作来处理您的请求：${fallbackParts.join("，")}。`;
+    }
+
+    const toolNamesStr = toolCalls.map((tc) => tc.name).join("、");
+    return `我需要调用系统工具（${toolNamesStr}）来处理您的请求。`;
+  }
+
+  const userText = latestUserText.toLowerCase();
+  if (userText.includes("wechat") || userText.includes("微信")) {
+    return "我会继续为您处理微信相关的请求。";
   }
   if (/浏览器|browser|打开|\bopen\b/i.test(latestUserText)) {
     return "我需要调用可用的浏览器工具来完成这个请求。";
@@ -272,7 +323,22 @@ function cleanToolArgumentJson(raw: string): string {
   if (cleaned.endsWith("```")) {
     cleaned = cleaned.slice(0, -3);
   }
-  return cleaned.trim();
+  cleaned = cleaned.trim();
+
+  // Try to find the first '{' and last '}' or first '[' and last ']'
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return cleaned.slice(firstBrace, lastBrace + 1);
+  }
+
+  const firstBracket = cleaned.indexOf("[");
+  const lastBracket = cleaned.lastIndexOf("]");
+  if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+    return cleaned.slice(firstBracket, lastBracket + 1);
+  }
+
+  return cleaned;
 }
 
 function normalizeDeepSeekToolCall(params: {
@@ -1251,6 +1317,9 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
         // Filter internal tools from final message as per original logic,
         // but keep them in the stream parts for UI continuity.
         const INTERNAL_TOOLS = new Set(["web_search"]);
+        const actualToolCalls = contentParts.filter(
+          (part) => part && part.type === "toolCall",
+        ) as ToolCall[];
         const finalContent: (TextContent | ThinkingContent | ToolCall)[] = [];
         for (const part of contentParts) {
           if (part.type === "toolCall") {
@@ -1269,7 +1338,12 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
           if (part.type === "text" && looksLikeInternalScratchpad(part.text)) {
             finalContent.push({
               ...part,
-              text: sanitizedScratchpadFallback(latestUserTextForFallback, model.id),
+              text: sanitizedScratchpadFallback(
+                latestUserTextForFallback,
+                model.id,
+                actualToolCalls,
+                tools,
+              ),
             });
             continue;
           }
