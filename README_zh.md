@@ -288,8 +288,13 @@ OpenAEON 使用一种被称为 **Dreaming（睡眠模式）** 的复杂闲置演
 - 演化日志与内存机制：
   - `src/gateway/aeon-evolution-log.test.ts`
   - `src/auto-reply/reply/memory-flush.test.ts`
-- AEON 状态契约覆盖：
   - `src/gateway/server-methods/aeon.test.ts`
+
+### 10) 动态相对坐标微信自动化 (新)
+
+- **动态相对边界定位**：自动追踪并对齐微信主窗口（`AXWindow` 边界 `windowX`、`windowY`），解决视网膜视窗、多监视器副屏和窗口任意拖拽时的点击坐标漂移。
+- **强制原生契约**：严格限定自动化执行仅使用原子 `wechat` 智能体工具，彻底禁用原始键盘与鼠标宏 CLI 降级，保障用户系统的输入安全性。
+- **`peekaboo-wechat` 专属技能手册**：新增了位于 `skills/peekaboo-wechat/SKILL.md` 的专属技能定义，用于指引认知运行时安全、高效地进行微信桌面端交互。
 
 ---
 

@@ -194,10 +194,41 @@ export class PeekabooWeChatHelper {
     const value =
       el.value !== undefined ? el.value : el.label !== undefined ? el.label : el.title || "";
 
+    let frame = el.frame;
+    if (Array.isArray(frame)) {
+      frame = {
+        x: frame[0]?.[0] || 0,
+        y: frame[0]?.[1] || 0,
+        width: frame[1]?.[0] || 0,
+        height: frame[1]?.[1] || 0,
+      };
+    }
+
     return {
       ...el,
       type,
       value: typeof value === "string" ? value.trim() : "",
+      frame,
+    };
+  }
+
+  /**
+   * Helper to retrieve coordinates of the active WeChat window from the parsed UI tree.
+   * Enables relative coordinate lookups to support shifted/secondary monitor window positions.
+   */
+  private static getWindowCoords(ui: any): { windowX: number; windowY: number } {
+    const windowEl = this.findElements(
+      ui,
+      (el) =>
+        (el.role === "AXWindow" ||
+          el.title === "WeChat" ||
+          el.title === "微信" ||
+          el.id === "elem_0") &&
+        el.frame,
+    )[0];
+    return {
+      windowX: windowEl?.frame?.x || 0,
+      windowY: windowEl?.frame?.y || 0,
     };
   }
 
@@ -320,13 +351,18 @@ export class PeekabooWeChatHelper {
     const ui = await this.runPeekaboo(["see", "--app", appName, "--json"]);
     const contacts: WeChatContact[] = [];
     if (!ui) return contacts;
+    const { windowX, windowY } = this.getWindowCoords(ui);
 
-    // 1. Gather all AXStaticText elements located in the sidebar (x < 320)
-    // We ignore top header elements like "搜索" or "WeChat" (y < 80)
+    // 1. Gather all AXStaticText elements located in the sidebar (x < windowX + 320)
+    // We ignore top header elements like "搜索" or "WeChat" (y < windowY + 80)
     const sidebarTexts = this.findElements(
       ui,
       (el) =>
-        el.type === "AXStaticText" && el.value && el.frame && el.frame.x < 320 && el.frame.y > 80,
+        el.type === "AXStaticText" &&
+        el.value &&
+        el.frame &&
+        el.frame.x < windowX + 320 &&
+        el.frame.y > windowY + 80,
     );
 
     // 2. Group these texts by vertical overlap/Y-coordinate.
@@ -414,6 +450,7 @@ export class PeekabooWeChatHelper {
     await this.focusWeChat();
     const appName = await this.getWeChatAppName();
     const ui = await this.runPeekaboo(["see", "--app", appName, "--json"]);
+    const { windowY } = this.getWindowCoords(ui);
 
     // 1. Check if the active window title matches the target contact name, or the active chat header is already correct
     const headerTexts = this.findElements(
@@ -421,7 +458,7 @@ export class PeekabooWeChatHelper {
       (el) =>
         el.type === "AXStaticText" &&
         el.frame &&
-        el.frame.y < 100 && // Header bar is at the top
+        el.frame.y < windowY + 100 && // Header bar is at the top
         el.value &&
         (el.value.startsWith(name) || el.value.includes(name)),
     );
@@ -458,6 +495,7 @@ export class PeekabooWeChatHelper {
     // 5. Look for matching search result in UI elements to click it directly
     try {
       const searchUi = await this.runPeekaboo(["see", "--app", appName, "--json"]);
+      const { windowY: sWindowY } = this.getWindowCoords(searchUi);
 
       // Parse section headers in the search results list to do coordinate-based region matching
       const headers = this.findElements(searchUi, (el) => {
@@ -476,6 +514,7 @@ export class PeekabooWeChatHelper {
           "Chat History",
           "最近在搜",
           "Recent Searches",
+          "常规",
         ].includes(val);
       });
       const sortedHeaders = [...headers].sort((a, b) => a.frame.y - b.frame.y);
@@ -485,7 +524,7 @@ export class PeekabooWeChatHelper {
         const val = el.value.trim();
 
         // Filter out elements too high up (likely the search input or header buttons)
-        if (el.frame.y < 110) return false;
+        if (el.frame.y < sWindowY + 110) return false;
 
         // Must match the target contact or group name
         if (
@@ -598,12 +637,13 @@ export class PeekabooWeChatHelper {
     let currentHeader = "";
     for (let attempt = 0; attempt < 3; attempt++) {
       const verifyUi = await this.runPeekaboo(["see", "--app", appName, "--json"]);
+      const { windowY: vWindowY } = this.getWindowCoords(verifyUi);
       const activeHeaders = this.findElements(
         verifyUi,
         (el) =>
           el.type === "AXStaticText" &&
           el.frame &&
-          el.frame.y < 100 &&
+          el.frame.y < vWindowY + 100 &&
           el.value &&
           el.value.trim().length > 0,
       );
@@ -644,12 +684,14 @@ export class PeekabooWeChatHelper {
 
     if (!ui) return messages;
 
+    const { windowX } = this.getWindowCoords(ui);
+
     // WeChat message bubbles are represented in scrollable lists/cells.
     // Usually, in the messages scroll pane, elements have specific positions.
-    // Let's gather all texts in the conversation pane (typically x > 350 on standard sizes).
+    // Let's gather all texts in the conversation pane (typically x > windowX + 300 on standard sizes).
     const texts = this.findElements(
       ui,
-      (el) => el.type === "AXStaticText" && el.value && el.frame && el.frame.x > 300, // Chat pane lies on the right
+      (el) => el.type === "AXStaticText" && el.value && el.frame && el.frame.x > windowX + 300, // Chat pane lies on the right
     );
 
     // Group elements by vertical position (Y coordinate) or chronological layout.
@@ -675,7 +717,7 @@ export class PeekabooWeChatHelper {
       // Usually, the sender name is a short string, and is followed immediately by the message bubble at a slightly larger Y.
       // If we find an element corresponding to a sender name:
       // Senders are usually on the left of the message bubble (x around 350-400 for others, x around 700+ for self).
-      const isSelf = el.frame.x > 600; // Self messages are positioned on the far right of the screen
+      const isSelf = el.frame.x > windowX + 600; // Self messages are positioned on the far right of the screen
 
       // If this element looks like a message bubble:
       // It is often larger, and self messages don't print the name "Self" next to them in the AX tree,

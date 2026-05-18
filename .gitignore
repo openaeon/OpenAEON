@@ -83,3 +83,10 @@ EVOLUTION_LOG.md
 PLAN.md
 VISION.md
 docs.acp.md
+
+# WeChat Automation Tests and Logs
+src/infra/peekaboo-wechat-helper.test.ts
+src/agents/tools/wechat-tool.test.ts
+wechat_ui_tree.json
+scripts/dump-wechat-ui.ts
+scripts/cognitive-test.mjs

@@ -258,6 +258,27 @@ function sanitizedScratchpadFallback(
     return `我是 OPENAEON 当前配置的 DeepSeek Web 提供方模型（${modelId}）。`;
   }
 
+  // Helper function to format tool fallback
+  const formatToolFallback = (calls: Array<{ name: string }>) => {
+    const fallbackParts: string[] = [];
+    for (const tc of calls) {
+      const matchedTool = availableTools?.find(
+        (t) => t.name.toLowerCase() === tc.name.toLowerCase(),
+      );
+      if (matchedTool && matchedTool.description) {
+        const cleanDesc = matchedTool.description.split(/[.!?。！？\n]/, 1)[0] || "";
+        fallbackParts.push(`调用系统工具 ${tc.name}（${cleanDesc}）`);
+      } else {
+        fallbackParts.push(`调用系统工具 ${tc.name}`);
+      }
+    }
+    if (fallbackParts.length > 0) {
+      return `我需要执行以下操作来处理您的请求：${fallbackParts.join("，")}。`;
+    }
+    const toolNamesStr = calls.map((tc) => tc.name).join("、");
+    return `我需要调用系统工具（${toolNamesStr}）来处理您的请求。`;
+  };
+
   if (toolCalls && toolCalls.length > 0) {
     const names = toolCalls.map((tc) => tc.name.toLowerCase());
 
@@ -278,28 +299,83 @@ function sanitizedScratchpadFallback(
       return "我需要启动子智能体来协助处理您的请求。";
     }
 
-    // Dynamic discovery of any other tools / skills / evolved logic
-    const fallbackParts: string[] = [];
-    for (const tc of toolCalls) {
-      const matchedTool = availableTools?.find(
-        (t) => t.name.toLowerCase() === tc.name.toLowerCase(),
-      );
-      if (matchedTool && matchedTool.description) {
-        const cleanDesc = matchedTool.description.split(/[.!?。！？\n]/, 1)[0] || "";
-        fallbackParts.push(`调用系统工具 ${tc.name}（${cleanDesc}）`);
-      } else {
-        fallbackParts.push(`调用系统工具 ${tc.name}`);
-      }
-    }
-    if (fallbackParts.length > 0) {
-      return `我需要执行以下操作来处理您的请求：${fallbackParts.join("，")}。`;
-    }
-
-    const toolNamesStr = toolCalls.map((tc) => tc.name).join("、");
-    return `我需要调用系统工具（${toolNamesStr}）来处理您的请求。`;
+    return formatToolFallback(toolCalls);
   }
 
+  // When no tool calls were explicitly parsed, dynamically scan user text to discover tool intent
   const userText = latestUserText.toLowerCase();
+
+  if (availableTools && availableTools.length > 0) {
+    const matchedTools: Array<{ name: string; description?: string }> = [];
+
+    for (const tool of availableTools) {
+      const name = tool.name.toLowerCase();
+      // Match exact tool name or word boundaries
+      const nameRegex = new RegExp(`\\b${name}\\b|${name}`, "i");
+
+      // Also match WeChat/微信 specific alias
+      const isWeChat = name.includes("wechat") || name.includes("weixin");
+      const wechatMatch = isWeChat && (userText.includes("wechat") || userText.includes("微信"));
+
+      if (nameRegex.test(userText) || wechatMatch) {
+        matchedTools.push(tool);
+        continue;
+      }
+
+      // Check description keywords
+      if (tool.description) {
+        const desc = tool.description.toLowerCase();
+        const keywords = [
+          "search",
+          "browser",
+          "exec",
+          "run",
+          "file",
+          "read",
+          "write",
+          "edit",
+          "matrix",
+          "slack",
+          "discord",
+          "telegram",
+          "imessage",
+          "signal",
+          "teams",
+          "msteams",
+          "voice",
+          "call",
+          "audio",
+          "screenshot",
+          "window",
+        ];
+        for (const kw of keywords) {
+          if (desc.includes(kw) && userText.includes(kw)) {
+            matchedTools.push(tool);
+            break;
+          }
+        }
+      }
+    }
+
+    if (matchedTools.length > 0) {
+      // WeChat priority for UI polishedness
+      if (
+        matchedTools.some(
+          (t) => t.name.toLowerCase().includes("wechat") || t.name.toLowerCase().includes("weixin"),
+        )
+      ) {
+        return "我会继续为您处理微信相关的请求。";
+      }
+      // Browser priority
+      if (matchedTools.some((t) => t.name.toLowerCase() === "browser")) {
+        return "我需要调用可用的浏览器工具来完成这个请求。";
+      }
+
+      return formatToolFallback(matchedTools);
+    }
+  }
+
+  // Hardcoded fallback logic for standard types
   if (userText.includes("wechat") || userText.includes("微信")) {
     return "我会继续为您处理微信相关的请求。";
   }
@@ -347,9 +423,21 @@ function normalizeDeepSeekToolCall(params: {
   availableToolNames: Set<string>;
 }): { name: string; args: Record<string, unknown> } {
   const args = isObjectRecord(params.args) ? params.args : { raw: params.args };
-  if (params.availableToolNames.has(params.name)) {
-    return { name: params.name, args };
+  const trimmedName = params.name.trim();
+
+  // Find a case-insensitive match in availableToolNames
+  let matchedName = "";
+  for (const name of params.availableToolNames) {
+    if (name.toLowerCase() === trimmedName.toLowerCase()) {
+      matchedName = name;
+      break;
+    }
   }
+
+  if (matchedName) {
+    return { name: matchedName, args };
+  }
+
   const aliasMap: Record<string, string> = {
     bash: "exec",
     execute_command: "exec",
@@ -358,18 +446,38 @@ function normalizeDeepSeekToolCall(params: {
     str_replace: "edit",
     write_file: "write",
   };
-  const aliasedName = aliasMap[params.name.trim().toLowerCase()];
-  if (aliasedName && params.availableToolNames.has(aliasedName)) {
-    return { name: aliasedName, args };
-  }
-  if (params.name.startsWith("browser_") && params.availableToolNames.has("browser")) {
-    const action = params.name.slice("browser_".length);
-    const browserArgs = { ...args };
-    if (!("action" in browserArgs) && action) {
-      browserArgs.action = action;
+  const aliasedName = aliasMap[trimmedName.toLowerCase()];
+  if (aliasedName) {
+    let aliasedMatchedName = "";
+    for (const name of params.availableToolNames) {
+      if (name.toLowerCase() === aliasedName.toLowerCase()) {
+        aliasedMatchedName = name;
+        break;
+      }
     }
-    return { name: "browser", args: browserArgs };
+    if (aliasedMatchedName) {
+      return { name: aliasedMatchedName, args };
+    }
   }
+
+  if (trimmedName.toLowerCase().startsWith("browser_")) {
+    let browserName = "";
+    for (const name of params.availableToolNames) {
+      if (name.toLowerCase() === "browser") {
+        browserName = name;
+        break;
+      }
+    }
+    if (browserName) {
+      const action = trimmedName.slice("browser_".length);
+      const browserArgs = { ...args };
+      if (!("action" in browserArgs) && action) {
+        browserArgs.action = action;
+      }
+      return { name: browserName, args: browserArgs };
+    }
+  }
+
   return { name: params.name, args };
 }
 
@@ -390,10 +498,23 @@ function extractDeepSeekJsonToolCalls(text: string): Array<{
     return [];
   }
 
-  const rawCalls = isObjectRecord(parsed)
-    ? parsed.tool_calls || parsed.toolCalls || parsed.tools
-    : undefined;
-  if (!Array.isArray(rawCalls)) {
+  let rawCalls: unknown[] = [];
+  if (Array.isArray(parsed)) {
+    rawCalls = parsed;
+  } else if (isObjectRecord(parsed)) {
+    if (Array.isArray(parsed.tool_calls)) rawCalls = parsed.tool_calls;
+    else if (Array.isArray(parsed.toolCalls)) rawCalls = parsed.toolCalls;
+    else if (Array.isArray(parsed.tools)) rawCalls = parsed.tools;
+    else if (
+      typeof parsed.name === "string" ||
+      typeof (parsed.function as Record<string, unknown>)?.name === "string"
+    ) {
+      // It's a single bare tool call object
+      rawCalls = [parsed];
+    }
+  }
+
+  if (!Array.isArray(rawCalls) || rawCalls.length === 0) {
     return [];
   }
 
@@ -767,6 +888,7 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
         let currentToolName = "";
         let currentToolIndex = 0;
         let tagBuffer = "";
+        let lastFragmentType: "thinking" | "text" | undefined = undefined;
         const finishCurrentToolCall = () => {
           const key = `tool_${currentToolIndex}`;
           const index = indexMap.get(key);
@@ -781,15 +903,40 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
           } catch {
             parsedArgs = { raw: argStr };
           }
+
+          let nameFromArgs = "";
+          let finalArgs = parsedArgs;
+          if (isObjectRecord(parsedArgs)) {
+            const possibleNames = [
+              parsedArgs.name,
+              parsedArgs.tool,
+              parsedArgs.tool_name,
+              parsedArgs.toolName,
+              parsedArgs.action,
+            ];
+            for (const pn of possibleNames) {
+              if (typeof pn === "string" && pn.trim()) {
+                nameFromArgs = pn.trim();
+                break;
+              }
+            }
+            const nestedArgs =
+              parsedArgs.arguments ?? parsedArgs.params ?? parsedArgs.parameters ?? parsedArgs.args;
+            if (isObjectRecord(nestedArgs)) {
+              finalArgs = nestedArgs;
+            }
+          }
+
           const normalized = normalizeDeepSeekToolCall({
-            name: part.name || currentToolName,
-            args: parsedArgs,
+            name: part.name || currentToolName || nameFromArgs,
+            args: finalArgs,
             availableToolNames,
           });
           part.name = normalized.name;
           part.arguments = normalized.args as ToolCall["arguments"];
           if (accumulatedToolCalls[currentToolIndex]) {
             accumulatedToolCalls[currentToolIndex].name = normalized.name;
+            accumulatedToolCalls[currentToolIndex].arguments = JSON.stringify(normalized.args);
           }
           stream.push({
             type: "toolcall_end",
@@ -944,9 +1091,9 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
             const thinkEndMatch = tagBuffer.match(/<\/(?:think(?:ing)?|thought)\b[^<>]*>/i);
             const finalStartMatch = tagBuffer.match(/<final\b[^<>]*>/i);
             const finalEndMatch = tagBuffer.match(/<\/final\b[^<>]*>/i);
-            const toolCallStartMatch = tagBuffer.match(/<tool_call\s+([^>]+)>/i);
+            const toolCallStartMatch = tagBuffer.match(/<tool_call\b([^>]*)>/i);
             const toolCallEndMatch = tagBuffer.match(/<\/tool_call\b[^<>]*>/i);
-            const toolInvokeStartMatch = tagBuffer.match(/<tool_invoke\s+([^>]+)>/i);
+            const toolInvokeStartMatch = tagBuffer.match(/<tool_invoke\b([^>]*)>/i);
             const toolInvokeEndMatch = tagBuffer.match(/<\/tool_invoke\b[^<>]*>/i);
             const internalStartMatch = tagBuffer.match(
               /<(?:update_shared_context|updated_shared_context|task_result)\b[^<>]*>/i,
@@ -961,7 +1108,7 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
               /^(?:think(?:ing)?|thought)\b[^<>]*>|\n(?:think(?:ing)?|thought)\b[^<>]*>/i,
             );
             const malformedToolCallStartMatch = tagBuffer.match(
-              /(?:^|[\s.])(?:tool_call)\s+([^>]+)>/i,
+              /(?:^|[\s.])(?:tool_call)\b([^>]*)>/i,
             );
 
             let toolIdFromAttrsStr = "";
@@ -1090,6 +1237,13 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
               } else if (first.type === "reply_marker") {
                 currentMode = "text";
               } else if (first.type === "tool_call_start") {
+                if (indexMap.has(`tool_${currentToolIndex}`)) {
+                  console.log(
+                    `[DeepseekWebStream] Auto-finishing unclosed tool call at index ${currentToolIndex} before starting a new one`,
+                  );
+                  finishCurrentToolCall();
+                  currentToolIndex++;
+                }
                 if (currentMode !== "tool_call") {
                   console.log(
                     `[DeepseekWebStream] Force transitioning to tool_call mode for tag at ${first.idx}`,
@@ -1100,9 +1254,11 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
                 const toolId = first.id || `call_${Date.now()}_${currentToolIndex}`;
                 emitDelta("toolcall", "", toolId); // Trigger start event with specific ID
               } else if (first.type === "tool_call_end") {
-                finishCurrentToolCall();
+                if (indexMap.has(`tool_${currentToolIndex}`)) {
+                  finishCurrentToolCall();
+                  currentToolIndex++;
+                }
                 currentMode = "text";
-                currentToolIndex++;
                 currentToolName = "";
               } else if (first.type === "internal_start") {
                 currentMode = "internal";
@@ -1163,8 +1319,6 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
 
             try {
               const data = JSON.parse(dataStr);
-              // Verbose logging for debugging
-              // console.log(`[DeepseekWebStream] SSE Data: ${dataStr}`);
 
               // Capture session/message continuity
               const nextParentId = extractParentMessageId(data);
@@ -1175,21 +1329,31 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
                 parentMessageMap.set(sessionKey, nextParentId);
               }
 
-              // Verbose logging for non-trivial data
-              if (data.v || data.content || data.type === "thinking" || data.type === "text") {
-                // console.log(`[DeepseekWebStream] Chunk type=${data.type} p=${data.p} len=${(data.v || data.content || "").length}`);
-              }
-
               // 1. Path update or explicit type for reasoning
               if (
                 (data.p?.includes("reasoning") || data.type === "thinking") &&
                 typeof data.v === "string"
               ) {
+                lastFragmentType = "thinking";
                 pushDelta(data.v, "thinking");
                 return;
               }
               if (data.type === "thinking" && typeof data.content === "string") {
+                lastFragmentType = "thinking";
                 pushDelta(data.content, "thinking");
+                return;
+              }
+
+              // 1.5 Stateful path update for compressed fragments stream
+              if (
+                (data.p === "response/fragments/-1/content" || !data.p) &&
+                typeof data.v === "string"
+              ) {
+                if (lastFragmentType === "thinking") {
+                  pushDelta(data.v, "thinking");
+                } else {
+                  pushDelta(data.v);
+                }
                 return;
               }
 
@@ -1198,10 +1362,15 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
                 typeof data.v === "string" &&
                 (!data.p || data.p.includes("content") || data.p.includes("choices"))
               ) {
-                pushDelta(data.v);
+                if (!data.p && lastFragmentType === "thinking") {
+                  pushDelta(data.v, "thinking");
+                } else {
+                  pushDelta(data.v);
+                }
                 return;
               }
               if (data.type === "text" && typeof data.content === "string") {
+                lastFragmentType = "text";
                 pushDelta(data.content);
                 return;
               }
@@ -1224,14 +1393,26 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
                 return;
               }
 
-              // 3. Nested fragments (init)
-              const fragments = data.v?.response?.fragments;
-              if (Array.isArray(fragments)) {
-                for (const frag of fragments) {
-                  if (frag.type === "THINKING" || frag.type === "reasoning") {
-                    pushDelta(frag.content || "", "thinking");
-                  } else if (frag.content) {
-                    pushDelta(frag.content);
+              // 3. Nested fragments (init or updates)
+              const frags = Array.isArray(data.v)
+                ? data.v
+                : Array.isArray(data.v?.response?.fragments)
+                  ? data.v.response.fragments
+                  : undefined;
+              if (frags) {
+                for (const frag of frags) {
+                  if (typeof frag === "object" && frag !== null) {
+                    const type = String(frag.type || "").toUpperCase();
+                    const content = frag.content || frag.v || "";
+                    if (typeof content === "string" && content) {
+                      if (type === "THINK" || type === "THINKING" || type === "REASONING") {
+                        lastFragmentType = "thinking";
+                        pushDelta(content, "thinking");
+                      } else {
+                        lastFragmentType = "text";
+                        pushDelta(content);
+                      }
+                    }
                   }
                 }
                 return;
@@ -1241,9 +1422,11 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
               const choice = data.choices?.[0];
               if (choice) {
                 if (choice.delta?.reasoning_content) {
+                  lastFragmentType = "thinking";
                   pushDelta(choice.delta.reasoning_content, "thinking");
                 }
                 if (choice.delta?.content) {
+                  lastFragmentType = "text";
                   pushDelta(choice.delta.content);
                 }
               }

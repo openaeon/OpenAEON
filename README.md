@@ -272,8 +272,13 @@ The following capabilities are now implemented in the current OpenAEON stack and
 - Evolution logging and Memory:
   - `src/gateway/aeon-evolution-log.test.ts`
   - `src/auto-reply/reply/memory-flush.test.ts`
-- AEON status contract:
   - `src/gateway/server-methods/aeon.test.ts`
+
+### 10) Dynamic Relative Coordinate WeChat Automation (New)
+
+- **Relative Bounding Boxes**: Automatically tracks active WeChat window (`AXWindow` bounds `windowX`, `windowY`) to resolve coordinate drift on Retinas, multi-monitors, and dynamic layouts.
+- **Strict Native Contract**: Restricts automation execution strictly to the atomic `wechat` agent tool, with raw keyboard/mouse CLI fallback completely disabled to ensure system input integrity.
+- **`peekaboo-wechat` Skill Playbook**: Introduced a brand-new, robust skill playbook under `skills/peekaboo-wechat/SKILL.md` to safely steer the cognitive runtime during WeChat client automation.
 
 ---
 
