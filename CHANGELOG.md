@@ -2,6 +2,14 @@
 
 Docs: https://docs.openaeon.ai
 
+## 2026.5.19
+
+### Changes
+
+- WeChat: implement dynamic relative coordinate geometry calculation for sidebar buttons, message inputs, chat avatars, and scroll areas to prevent resolution-dependent drift on Retina screens, external displays, or drag-and-drop actions.
+- Peekaboo: add the peekaboo-wechat skill with strict atomic tools, forbidding fallback to keyboard/mouse CLI macro simulation.
+- Web client (webds): optimize stream rendering by filtering nested chunk signals and high-frequency stream events.
+
 ## 2026.5.17
 
 ### Changes
