@@ -125,11 +125,14 @@ vi.mock("../agents/openaeon-tools.js", () => {
     },
   ];
 
+  const createTools = (ctx: Record<string, unknown>) => {
+    lastCreateOpenClawToolsContext = ctx;
+    return tools;
+  };
+
   return {
-    createOpenClawTools: (ctx: Record<string, unknown>) => {
-      lastCreateOpenClawToolsContext = ctx;
-      return tools;
-    },
+    createOPENAEONTools: createTools,
+    createOpenClawTools: createTools,
   };
 });
 
@@ -431,6 +434,22 @@ describe("POST /tools/invoke", () => {
 
     const res = await invokeToolAuthed({
       tool: "gateway",
+      sessionKey: "main",
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("denies desktop tool via HTTP gateway", async () => {
+    cfg = {
+      agents: {
+        list: [{ id: "main", default: true, tools: { allow: ["desktop"] } }],
+      },
+    };
+
+    const res = await invokeToolAuthed({
+      tool: "desktop",
+      args: { action: "status" },
       sessionKey: "main",
     });
 

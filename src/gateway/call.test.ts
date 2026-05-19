@@ -14,11 +14,15 @@ let lastClientOptions: {
   scopes?: string[];
   onHelloOk?: () => void | Promise<void>;
   onClose?: (code: number, reason: string) => void;
+  onConnectError?: (err: Error) => void;
 } | null = null;
-type StartMode = "hello" | "close" | "silent";
+type StartMode = "hello" | "close" | "silent" | "connect-error";
 let startMode: StartMode = "hello";
 let closeCode = 1006;
 let closeReason = "";
+let connectError: Error = Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:18789"), {
+  code: "ECONNREFUSED",
+});
 
 vi.mock("./client.js", () => ({
   describeGatewayCloseCode: (code: number) => {
@@ -38,6 +42,7 @@ vi.mock("./client.js", () => ({
       scopes?: string[];
       onHelloOk?: () => void | Promise<void>;
       onClose?: (code: number, reason: string) => void;
+      onConnectError?: (err: Error) => void;
     }) {
       lastClientOptions = opts;
     }
@@ -49,6 +54,8 @@ vi.mock("./client.js", () => ({
         void lastClientOptions?.onHelloOk?.();
       } else if (startMode === "close") {
         lastClientOptions?.onClose?.(closeCode, closeReason);
+      } else if (startMode === "connect-error") {
+        lastClientOptions?.onConnectError?.(connectError);
       }
     }
     stop() {}
@@ -67,6 +74,9 @@ function resetGatewayCallMocks() {
   startMode = "hello";
   closeCode = 1006;
   closeReason = "";
+  connectError = Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:18789"), {
+    code: "ECONNREFUSED",
+  });
 }
 
 function setGatewayNetworkDefaults(port = 18789) {
@@ -315,7 +325,7 @@ describe("buildGatewayConnectionDetails", () => {
     expect((thrown as Error).message).toContain("plaintext ws://");
     expect((thrown as Error).message).toContain("wss://");
     expect((thrown as Error).message).toContain("Tailscale Serve/Funnel");
-    expect((thrown as Error).message).toContain("openclaw doctor --fix");
+    expect((thrown as Error).message).toContain("openaeon doctor --fix");
   });
 
   it("allows ws:// for loopback addresses in local mode", () => {
@@ -353,6 +363,23 @@ describe("callGateway error details", () => {
     expect(err?.message).toContain("Gateway target: ws://127.0.0.1:18789");
     expect(err?.message).toContain("Source: local loopback");
     expect(err?.message).toContain("Bind: loopback");
+  });
+
+  it("surfaces connect errors with a startup hint for local gateways", async () => {
+    startMode = "connect-error";
+    setLocalLoopbackGatewayConfig();
+
+    let err: Error | null = null;
+    try {
+      await callGateway({ method: "health" });
+    } catch (caught) {
+      err = caught as Error;
+    }
+
+    expect(err?.message).toContain("gateway connect failed: connect ECONNREFUSED 127.0.0.1:18789");
+    expect(err?.message).toContain("Gateway target: ws://127.0.0.1:18789");
+    expect(err?.message).toContain("Hint: local Gateway is not reachable.");
+    expect(err?.message).toContain("openaeon gateway run");
   });
 
   it("includes connection details on timeout", async () => {

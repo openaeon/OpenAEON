@@ -13,6 +13,7 @@ import {
   collectExplicitAllowlist,
   mergeAlsoAllowPolicy,
   resolveToolProfilePolicy,
+  normalizeToolName,
 } from "../agents/tool-policy.js";
 import { ToolInputError } from "../agents/tools/common.js";
 import { loadConfig } from "../config/config.js";
@@ -213,8 +214,14 @@ export async function handleToolsInvokeHttpRequest(
     getHeader(req, "x-openaeon-message-channel") ?? "",
   );
   const accountId = getHeader(req, "x-openaeon-account-id")?.trim() || undefined;
-  const agentTo = getHeader(req, "x-openaeon-message-to")?.trim() || undefined;
-  const agentThreadId = getHeader(req, "x-openaeon-thread-id")?.trim() || undefined;
+  const agentTo =
+    getHeader(req, "x-openaeon-message-to")?.trim() ||
+    getHeader(req, "x-openclaw-message-to")?.trim() ||
+    undefined;
+  const agentThreadId =
+    getHeader(req, "x-openaeon-thread-id")?.trim() ||
+    getHeader(req, "x-openclaw-thread-id")?.trim() ||
+    undefined;
 
   const {
     agentId,
@@ -292,7 +299,7 @@ export async function handleToolsInvokeHttpRequest(
   const gatewayToolsCfg = cfg.gateway?.tools;
   const allowOverride = cfg.tools?.allowDangerousToolsOverride;
   const defaultGatewayDeny: string[] = allowOverride
-    ? DEFAULT_GATEWAY_HTTP_TOOL_DENY.filter((name) => name === "gateway")
+    ? DEFAULT_GATEWAY_HTTP_TOOL_DENY.filter((name) => name === "gateway" || name === "desktop")
     : DEFAULT_GATEWAY_HTTP_TOOL_DENY.filter((name) => !gatewayToolsCfg?.allow?.includes(name));
   const gatewayDenyNames = defaultGatewayDeny.concat(
     Array.isArray(gatewayToolsCfg?.deny) ? gatewayToolsCfg.deny : [],
@@ -300,7 +307,8 @@ export async function handleToolsInvokeHttpRequest(
   const gatewayDenySet = new Set(gatewayDenyNames);
   const gatewayFiltered = subagentFiltered.filter((t) => !gatewayDenySet.has(t.name));
 
-  const tool = gatewayFiltered.find((t) => t.name === toolName);
+  const normalizedInputName = normalizeToolName(toolName);
+  const tool = gatewayFiltered.find((t) => normalizeToolName(t.name) === normalizedInputName);
   if (!tool) {
     sendJson(res, 404, {
       ok: false,

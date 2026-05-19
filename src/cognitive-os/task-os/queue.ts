@@ -138,7 +138,10 @@ export async function reconcileTaskQueue(
 
         // AGGRESSIVE: Deadlock breaking if node has been blocked too long
         if (COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.ENABLED) {
-          const updatedAt = node.metadata?.updatedAt ?? node.updatedAt ?? 0;
+          const updatedAt =
+            node.metadata && typeof node.metadata.updatedAt === "number"
+              ? node.metadata.updatedAt
+              : 0;
           if (
             updatedAt > 0 &&
             now - updatedAt > COGNITIVE_POLICY.AGGRESSIVE_AUTOPILOT.MAX_BLOCK_DURATION_MS

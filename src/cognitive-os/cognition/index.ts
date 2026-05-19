@@ -5,3 +5,5 @@ export * from "./invariant-engine.js";
 export * from "./strategy-optimizer.js";
 export * from "./service.js";
 export * from "./system-projection.js";
+export * from "./context-builder.js";
+export * from "./progressive-context.js";

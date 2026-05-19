@@ -77,14 +77,12 @@ describe("cognitive controller", () => {
     const taskA = buildTask({ id: "task-a", sessionKey: "other" });
     const taskB = buildTask({ id: "task-b", sessionKey: "main" });
 
-    request
-      .mockResolvedValueOnce({ ok: true, tasks: [taskA, taskB] })
-      .mockResolvedValueOnce({
-        ok: true,
-        task: taskB,
-        cognitivePlan: { description: "input", todos: [] },
-        runtime: { events: [{ id: "e1" }] },
-      });
+    request.mockResolvedValueOnce({ ok: true, tasks: [taskA, taskB] }).mockResolvedValueOnce({
+      ok: true,
+      task: taskB,
+      cognitivePlan: { description: "input", todos: [] },
+      runtime: { events: [{ id: "e1" }] },
+    });
 
     await loadCognitiveTask(state);
 

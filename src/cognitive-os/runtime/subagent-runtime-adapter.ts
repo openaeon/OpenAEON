@@ -1,5 +1,10 @@
 import type { AgentRole } from "../contracts/types.js";
 import { spawnSubagentDirect } from "../../agents/subagent-spawn.js";
+import {
+  buildDelegationPolicyPrompt,
+  resolveCognitiveDelegationPolicy,
+  type CognitiveDelegationPolicy,
+} from "./delegation-policy.js";
 
 export type CognitiveSubagentDispatchInput = {
   taskId: string;
@@ -11,6 +16,7 @@ export type CognitiveSubagentDispatchInput = {
   prompt: string;
   acceptanceCriteria: string[];
   timeoutMs: number;
+  delegationPolicy?: Partial<CognitiveDelegationPolicy>;
 };
 
 export type CognitiveSubagentDispatchResult = {
@@ -31,6 +37,10 @@ const ROLE_GUIDANCE: Record<AgentRole, string> = {
 export async function dispatchCognitiveNodeToSubagent(
   input: CognitiveSubagentDispatchInput,
 ): Promise<CognitiveSubagentDispatchResult> {
+  const policy = resolveCognitiveDelegationPolicy({
+    ...input.delegationPolicy,
+    role: input.role,
+  });
   const task = [
     `You are ${input.role}. ${ROLE_GUIDANCE[input.role]}`,
     "You are also a local orchestrator for this cognitive node, not only a leaf worker.",
@@ -50,6 +60,8 @@ export async function dispatchCognitiveNodeToSubagent(
     "- Iterate autonomously: reflect on blockers, update your plan, spawn/steer helpers if useful, then integrate their results before finishing.",
     "- Descendant sub-agents auto-announce back to you. Wait for relevant descendant results before your final response, without polling loops.",
     "- When spawning descendants, pass `sharedContext.parentCognitiveTask` rather than `sharedContext.cognitiveTask`; the original `cognitiveTask` link is reserved for your final writeback to the parent runtime.",
+    "",
+    buildDelegationPolicyPrompt(policy),
     "",
     "Return concise evidence, changed files or artifacts, blockers, and whether the criteria passed.",
   ].join("\n");
@@ -76,6 +88,7 @@ export async function dispatchCognitiveNodeToSubagent(
           },
           cognitiveDelegation: {
             canDelegate: true,
+            policy,
             descendantsUseContextKey: "parentCognitiveTask",
             finalWritebackOwner: input.runId,
           },

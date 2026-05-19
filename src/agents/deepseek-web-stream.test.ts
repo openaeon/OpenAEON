@@ -609,4 +609,59 @@ describe("createDeepseekWebStreamFn", () => {
     expect(text).toContain("调用系统工具 evolved_weather_tool");
     expect(text).toContain("Query real-time weather information for a specific city");
   });
+
+  it("parses attribute-free XML tool calls and extracts name/arguments from nested JSON", async () => {
+    mocks.chatCompletions.mockResolvedValue(
+      createSseStream([
+        'data: {"type":"text","content":"I need to send a WeChat message. <tool_call>"}',
+        'data: {"type":"text","content":"{\\"name\\":\\"wechat\\",\\"arguments\\":{\\"action\\":\\"send_text\\",\\"to\\":\\"OpenClaw 3群\\",\\"text\\":\\"Hello WeChat!\\"}}"}',
+        'data: {"type":"text","content":"</tool_call>"}',
+        "data: [DONE]",
+      ]),
+    );
+
+    const streamFn = createDeepseekWebStreamFn("cookie=value");
+    const events = await collect(
+      streamFn(
+        { id: "deepseek-reasoner", api: "deepseek-web", provider: "deepseek-web" } as never,
+        {
+          sessionId: "deepseek-web-test-attribute-free-tag",
+          messages: [{ role: "user", content: "Send hello to WeChat" }],
+          tools: [
+            {
+              name: "wechat",
+              description: "Control WeChat.",
+              parameters: {
+                type: "object",
+                properties: {
+                  action: { type: "string" },
+                  to: { type: "string" },
+                  text: { type: "string" },
+                },
+                required: ["action", "to", "text"],
+              },
+            },
+          ],
+        } as never,
+        {} as never,
+      ) as AsyncIterable<unknown>,
+    );
+
+    const done = events.find((event) => (event as { type?: string }).type === "done") as
+      | {
+          reason?: string;
+          message?: {
+            content?: { type?: string; id?: string; name?: string; arguments?: unknown }[];
+          };
+        }
+      | undefined;
+    expect(done?.reason).toBe("toolUse");
+    expect(done?.message?.content).toContainEqual(
+      expect.objectContaining({
+        type: "toolCall",
+        name: "wechat",
+        arguments: { action: "send_text", to: "OpenClaw 3群", text: "Hello WeChat!" },
+      }),
+    );
+  });
 });

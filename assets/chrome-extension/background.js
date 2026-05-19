@@ -943,7 +943,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-
 // MV3 keepalive via chrome.alarms — more reliable than setInterval across
 // service worker restarts. Checks relay health and refreshes badges.
 chrome.alarms.create("relay-keepalive", { periodInMinutes: 0.5 });
@@ -1008,36 +1007,44 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Collect attached tab metadata asynchronously, then respond.
     const connectedEntries = Array.from(tabs.entries()).filter(([, t]) => t.state === "connected");
     const tabInfoPromises = connectedEntries.map(([chromeTabId]) =>
-      chrome.tabs.get(chromeTabId).then((tabInfo) => ({
-        chromeTabId,
-        id: tabs.get(chromeTabId)?.sessionId ?? String(chromeTabId),
-        title: tabInfo.title || "Tab",
-        url: tabInfo.url || "",
-        favicon: tabInfo.favIconUrl || "",
-      })).catch(() => ({
-        chromeTabId,
-        id: tabs.get(chromeTabId)?.sessionId ?? String(chromeTabId),
-        title: "Tab",
-        url: "",
-        favicon: "",
-      }))
+      chrome.tabs
+        .get(chromeTabId)
+        .then((tabInfo) => ({
+          chromeTabId,
+          id: tabs.get(chromeTabId)?.sessionId ?? String(chromeTabId),
+          title: tabInfo.title || "Tab",
+          url: tabInfo.url || "",
+          favicon: tabInfo.favIconUrl || "",
+        }))
+        .catch(() => ({
+          chromeTabId,
+          id: tabs.get(chromeTabId)?.sessionId ?? String(chromeTabId),
+          title: "Tab",
+          url: "",
+          favicon: "",
+        })),
     );
 
-    chrome.tabs.query({ active: true, currentWindow: true }).then(async ([activeTab]) => {
-      const attachedTabs = await Promise.all(tabInfoPromises);
-      const currentTabEntry = activeTab
-        ? { attached: tabs.get(activeTab.id)?.state === "connected" }
-        : { attached: false };
+    chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then(async ([activeTab]) => {
+        const attachedTabs = await Promise.all(tabInfoPromises);
+        const currentTabEntry = activeTab
+          ? { attached: tabs.get(activeTab.id)?.state === "connected" }
+          : { attached: false };
 
-      sendResponse({
-        relayConnected: relayWs && relayWs.readyState === WebSocket.OPEN,
-        relayConnecting: relayWs && relayWs.readyState === WebSocket.CONNECTING,
-        tabAttached: currentTabEntry.attached,
-        lastError: lastRelayError || null,
-        currentTab: currentTabEntry,
-        attachedTabs,
-      });
-    }).catch(() => sendResponse({ relayConnected: false, relayConnecting: false, attachedTabs: [] }));
+        sendResponse({
+          relayConnected: relayWs && relayWs.readyState === WebSocket.OPEN,
+          relayConnecting: relayWs && relayWs.readyState === WebSocket.CONNECTING,
+          tabAttached: currentTabEntry.attached,
+          lastError: lastRelayError || null,
+          currentTab: currentTabEntry,
+          attachedTabs,
+        });
+      })
+      .catch(() =>
+        sendResponse({ relayConnected: false, relayConnecting: false, attachedTabs: [] }),
+      );
     return true; // async sendResponse
   }
 
@@ -1075,7 +1082,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const contentType = String(res.headers.get("content-type") || "");
         let json = null;
         if (contentType.includes("application/json")) {
-          try { json = await res.json(); } catch { json = null; }
+          try {
+            json = await res.json();
+          } catch {
+            json = null;
+          }
         }
         sendResponse({ status: res.status, ok: res.ok, contentType, json });
       })

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { getCognitiveSqliteStore } from "../store/sqlite-store.js";
 
 export type CognitiveEvent = {
   id: string;
@@ -13,6 +14,7 @@ export type CognitiveEvent = {
 
 const EVENT_STORE: CognitiveEvent[] = [];
 let EVENT_STORE_FILE: string | null = null;
+let EVENT_STORE_WORKSPACE: string | null = null;
 
 function defaultEventFile(workspaceDir: string): string {
   return path.join(workspaceDir, ".openaeon", "cognitive", "events", "events.jsonl");
@@ -22,6 +24,7 @@ export function configureCognitiveEventStore(workspaceDir: string): void {
   const nextFile = defaultEventFile(workspaceDir);
   if (EVENT_STORE_FILE === nextFile) return;
   EVENT_STORE_FILE = nextFile;
+  EVENT_STORE_WORKSPACE = workspaceDir;
   EVENT_STORE.length = 0;
 
   try {
@@ -61,6 +64,13 @@ export function publishCognitiveEvent(params: Omit<CognitiveEvent, "id" | "at">)
       fs.appendFileSync(EVENT_STORE_FILE, `${JSON.stringify(event)}\n`, "utf-8");
     } catch {
       // Best-effort persistence. Runtime should not fail on telemetry writes.
+    }
+  }
+  if (EVENT_STORE_WORKSPACE) {
+    try {
+      getCognitiveSqliteStore(EVENT_STORE_WORKSPACE)?.indexEvent(event);
+    } catch {
+      // SQLite is a query index, not the source of truth. JSONL remains authoritative.
     }
   }
   return event;

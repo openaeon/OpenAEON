@@ -409,10 +409,11 @@ export function createBrowserTool(opts?: {
             return result;
           }
           if (msg.includes("not found. Available profiles:")) {
-            console.warn(`[BrowserTool] Auto-failover to openaeon due to invalid profile '${p}' (${msg})`);
+            console.warn(
+              `[BrowserTool] Auto-failover to openaeon due to invalid profile '${p}' (${msg})`,
+            );
             const result = await fn("openaeon");
-            const hint =
-              `\n> [NOTE: Automatic failover to 'openaeon' profile occurred because the requested profile '${p}' was not found. Staying with profile='openaeon' for subsequent calls.]\n`;
+            const hint = `\n> [NOTE: Automatic failover to 'openaeon' profile occurred because the requested profile '${p}' was not found. Staying with profile='openaeon' for subsequent calls.]\n`;
             if (
               result &&
               typeof result === "object" &&

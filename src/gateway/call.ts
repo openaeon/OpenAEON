@@ -299,6 +299,26 @@ function formatGatewayTimeoutError(
   return `gateway timeout after ${timeoutMs}ms\n${connectionDetails.message}`;
 }
 
+function formatGatewayConnectError(
+  err: unknown,
+  connectionDetails: GatewayConnectionDetails,
+): string {
+  const message = err instanceof Error ? err.message || String(err) : String(err);
+  let isLoopbackTarget = false;
+  try {
+    const parsed = new URL(connectionDetails.url);
+    isLoopbackTarget = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
+  } catch {
+    // Keep best-effort formatting only.
+  }
+
+  const hint = isLoopbackTarget
+    ? "Hint: local Gateway is not reachable. Start it with `openaeon gateway run` or launch the OPENAEON app gateway."
+    : "Hint: verify the remote Gateway is running, reachable, and using the expected auth/TLS settings.";
+
+  return `gateway connect failed: ${message}\n${connectionDetails.message}\n${hint}`;
+}
+
 async function executeGatewayRequestWithScopes<T>(params: {
   opts: CallGatewayBaseOptions;
   scopes: OperatorScope[];
@@ -365,6 +385,14 @@ async function executeGatewayRequestWithScopes<T>(params: {
         ignoreClose = true;
         client.stop();
         stop(new Error(formatGatewayCloseError(code, reason, params.connectionDetails)));
+      },
+      onConnectError: (err) => {
+        if (settled || ignoreClose) {
+          return;
+        }
+        ignoreClose = true;
+        client.stop();
+        stop(new Error(formatGatewayConnectError(err, params.connectionDetails)));
       },
     });
 

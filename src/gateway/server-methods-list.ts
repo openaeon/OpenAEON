@@ -112,6 +112,7 @@ const BASE_METHODS = [
   "cognitive.runtime.status",
   "cognitive.task.replay",
   "cognitive.task.trajectory",
+  "cognitive.store.search",
   "cognitive.cognition.reflect",
   "cognitive.cognition.dream.run",
   "cognitive.memory.write",

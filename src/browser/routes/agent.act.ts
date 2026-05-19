@@ -549,7 +549,11 @@ export function registerBrowserAgentActRoutes(
                   )
                   .filter((f): f is BrowserFormField => f !== null);
                 if (!fields.length) {
-                  results.push({ ok: false, kind, error: "fields array is required for fill action" });
+                  results.push({
+                    ok: false,
+                    kind,
+                    error: "fields array is required for fill action",
+                  });
                   failedAt = i;
                   break;
                 }

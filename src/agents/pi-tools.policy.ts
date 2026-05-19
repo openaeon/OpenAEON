@@ -21,15 +21,29 @@ function makeToolPolicyMatcher(policy: SandboxToolPolicy) {
     raw: expandToolGroups(policy.allow ?? []),
     normalize: normalizeToolName,
   });
+  const canonicalMap: Record<string, string> = {
+    write_file: "write",
+    replace_in_file: "edit",
+    str_replace: "edit",
+    execute_command: "exec",
+    browser_open: "browser",
+  };
   return (name: string) => {
     const normalized = normalizeToolName(name);
     if (matchesAnyGlobPattern(normalized, deny)) {
+      return false;
+    }
+    const canonical = canonicalMap[normalized];
+    if (canonical && matchesAnyGlobPattern(canonical, deny)) {
       return false;
     }
     if (allow.length === 0) {
       return true;
     }
     if (matchesAnyGlobPattern(normalized, allow)) {
+      return true;
+    }
+    if (canonical && matchesAnyGlobPattern(canonical, allow)) {
       return true;
     }
     if (normalized === "apply_patch" && matchesAnyGlobPattern("exec", allow)) {

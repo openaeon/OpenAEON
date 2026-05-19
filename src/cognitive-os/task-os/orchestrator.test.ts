@@ -4,7 +4,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { TaskOrchestrator } from "./orchestrator.js";
 import { readTaskRecord, writeTaskRecord } from "./store.js";
-import { dispatchAgentTask } from "../runtime/dispatcher.js";
+import { CognitiveAgentLoop } from "../runtime/agent-loop.js";
 import { dispatchCognitiveNodeToSubagent } from "../runtime/subagent-runtime-adapter.js";
 import { CognitiveTaskRecord } from "./types.js";
 
@@ -14,7 +14,11 @@ vi.mock("./store.js", () => ({
   listTaskRecords: vi.fn(),
   taskLockFile: vi.fn(() => "/tmp/lock"),
 }));
-vi.mock("../runtime/dispatcher.js");
+vi.mock("../runtime/agent-loop.js", () => ({
+  CognitiveAgentLoop: vi.fn(function MockCognitiveAgentLoop(this: { run: unknown }) {
+    this.run = vi.fn();
+  }),
+}));
 vi.mock("../runtime/subagent-runtime-adapter.js", () => ({
   dispatchCognitiveNodeToSubagent: vi.fn(),
 }));
@@ -23,6 +27,7 @@ vi.mock("../../infra/file-lock.js", () => ({
 }));
 
 describe("TaskOrchestrator (Fractal & Parallel)", () => {
+  const mockAgentLoopRun = vi.fn();
   let workspace: string;
   let orchestrator: TaskOrchestrator;
 
@@ -60,10 +65,35 @@ describe("TaskOrchestrator (Fractal & Parallel)", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAgentLoopRun.mockReset();
+    vi.mocked(CognitiveAgentLoop).mockImplementation(function MockCognitiveAgentLoop(this: {
+      run: unknown;
+    }) {
+      this.run = mockAgentLoopRun;
+    } as unknown as typeof CognitiveAgentLoop);
     workspace = path.join(os.tmpdir(), `aeon-test-${crypto.randomUUID()}`);
     orchestrator = new TaskOrchestrator(workspace);
     vi.mocked(dispatchCognitiveNodeToSubagent).mockResolvedValue({ accepted: false });
   });
+
+  function mockAgentLoopDispatch(output: string, score = 0.9) {
+    mockAgentLoopRun.mockResolvedValue({
+      source: "cognitive_dispatch",
+      memorySynced: true,
+      dispatch: {
+        winner: {
+          output,
+          score,
+          provider: "gpt",
+          model: "v1",
+          latencyMs: 10,
+          reason: "test",
+        },
+        candidates: [],
+        degraded: false,
+      },
+    });
+  }
 
   it("submits directly into execute through legal autopilot transitions", async () => {
     const state = useStatefulRecord();
@@ -138,26 +168,15 @@ describe("TaskOrchestrator (Fractal & Parallel)", () => {
     };
 
     vi.mocked(readTaskRecord).mockResolvedValue(mockRecord);
-    vi.mocked(dispatchAgentTask).mockResolvedValue({
-      winner: {
-        output: "done",
-        score: 0.9,
-        provider: "gpt",
-        model: "v1",
-        latencyMs: 10,
-        reason: "test",
-      },
-      candidates: [],
-      degraded: false,
-    });
+    mockAgentLoopDispatch("done");
 
     const results = await orchestrator.executeReadyNodes("task-1");
 
     // node-1 and node-2 should be dispatched
     expect(results.length).toBe(2);
-    expect(dispatchAgentTask).toHaveBeenCalledTimes(2);
-    expect(dispatchAgentTask).toHaveBeenCalledWith(expect.objectContaining({ nodeId: "node-1" }));
-    expect(dispatchAgentTask).toHaveBeenCalledWith(expect.objectContaining({ nodeId: "node-2" }));
+    expect(mockAgentLoopRun).toHaveBeenCalledTimes(2);
+    expect(mockAgentLoopRun).toHaveBeenCalledWith(expect.objectContaining({ nodeId: "node-1" }));
+    expect(mockAgentLoopRun).toHaveBeenCalledWith(expect.objectContaining({ nodeId: "node-2" }));
   });
 
   it("should delegate ready nodes to subagents when accepted", async () => {
@@ -212,7 +231,7 @@ describe("TaskOrchestrator (Fractal & Parallel)", () => {
 
     await orchestrator.executeReadyNodes("task-subagent");
 
-    expect(dispatchAgentTask).not.toHaveBeenCalled();
+    expect(mockAgentLoopRun).not.toHaveBeenCalled();
     const saved = vi
       .mocked(writeTaskRecord)
       .mock.calls.map((call) => call[1])
@@ -259,18 +278,7 @@ describe("TaskOrchestrator (Fractal & Parallel)", () => {
     };
 
     vi.mocked(readTaskRecord).mockResolvedValue(mockRecord);
-    vi.mocked(dispatchAgentTask).mockResolvedValue({
-      winner: {
-        output: "I need more steps. [ACTION: DECOMPOSE] 1. First; 2. Second",
-        score: 0.9,
-        provider: "gpt",
-        model: "v1",
-        latencyMs: 10,
-        reason: "test",
-      },
-      candidates: [],
-      degraded: false,
-    });
+    mockAgentLoopDispatch("I need more steps. [ACTION: DECOMPOSE] 1. First; 2. Second");
 
     await orchestrator.executeReadyNodes("task-2");
 
@@ -350,18 +358,7 @@ describe("TaskOrchestrator (Fractal & Parallel)", () => {
         },
       });
       const state = useStatefulRecord(record);
-      vi.mocked(dispatchAgentTask).mockResolvedValue({
-        winner: {
-          output: "not enough evidence",
-          score: 0.1,
-          provider: "gpt",
-          model: "v1",
-          latencyMs: 10,
-          reason: "test",
-        },
-        candidates: [],
-        degraded: false,
-      });
+      mockAgentLoopDispatch("not enough evidence", 0.1);
 
       await orchestrator.executeReadyNodes("retry-1");
 
@@ -455,22 +452,11 @@ describe("TaskOrchestrator (Fractal & Parallel)", () => {
         },
       });
       const state = useStatefulRecord(record);
-      vi.mocked(dispatchAgentTask).mockResolvedValue({
-        winner: {
-          output: "done",
-          score: 0.9,
-          provider: "gpt",
-          model: "v1",
-          latencyMs: 10,
-          reason: "test",
-        },
-        candidates: [],
-        degraded: false,
-      });
+      mockAgentLoopDispatch("done");
 
       await orchestrator.forceStartNode("force-1", "node-1");
 
-      expect(dispatchAgentTask).toHaveBeenCalledWith(expect.objectContaining({ nodeId: "node-1" }));
+      expect(mockAgentLoopRun).toHaveBeenCalledWith(expect.objectContaining({ nodeId: "node-1" }));
       expect(state.current?.tree.nodes["node-1"].status).toBe("done");
     });
 

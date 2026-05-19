@@ -351,6 +351,22 @@ describe("cognitive task lifecycle", () => {
     expect(trajectoryPayload?.trajectory?.taskId).toBe(taskId);
     expect(Array.isArray(trajectoryPayload?.trajectory?.conversations)).toBe(true);
 
+    await cognitiveHandlers["cognitive.store.search"]({
+      params: { query: "Lifecycle", limit: 10 },
+      respond,
+      context,
+      req: {
+        type: "req",
+        id: "cognitive-store-search-test",
+        method: "cognitive.store.search",
+      },
+    } as never);
+    const storeSearchPayload = respond.mock.calls.at(-1)?.[1] as
+      | { ok?: boolean; rows?: Array<{ taskId?: string | null }> }
+      | undefined;
+    expect(storeSearchPayload?.ok).toBe(true);
+    expect(storeSearchPayload?.rows?.some((row) => row.taskId === taskId)).toBe(true);
+
     await cognitiveHandlers["cognitive.task.transition"]({
       params: { taskId, to: "VERIFY", reason: "test:enter_verify_for_dream" },
       respond,

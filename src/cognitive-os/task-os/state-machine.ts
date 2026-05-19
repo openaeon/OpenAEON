@@ -4,7 +4,7 @@ import type { CognitiveTaskPhase } from "../contracts/types.js";
 const ALLOWED_TRANSITIONS: Record<CognitiveTaskPhase, CognitiveTaskPhase[]> = {
   INIT: ["PLAN", "FAILED"],
   PLAN: ["EXECUTE", "FAILED", "ROLLED_BACK"],
-  EXECUTE: ["VERIFY", "PLAN", "FAILED", "ROLLED_BACK"],
+  EXECUTE: ["VERIFY", "PLAN", "FAILED", "ROLLED_BACK", "REFLECT"],
   VERIFY: ["REFLECT", "PLAN", "EXECUTE", "FAILED", "ROLLED_BACK"],
   REFLECT: ["DONE", "PLAN", "EXECUTE", "FAILED"],
   DONE: [],

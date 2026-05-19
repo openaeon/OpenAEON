@@ -9,6 +9,7 @@ import { createBrowserTool } from "./tools/browser-tool.js";
 import { createCanvasTool } from "./tools/canvas-tool.js";
 import type { AnyAgentTool } from "./tools/common.js";
 import { createCronTool } from "./tools/cron-tool.js";
+import { createDesktopTool } from "./tools/desktop-tool.js";
 import { createGatewayTool } from "./tools/gateway-tool.js";
 import { createImageTool } from "./tools/image-tool.js";
 import { createMessageTool } from "./tools/message-tool.js";
@@ -23,6 +24,7 @@ import { createSkillsDefineTool } from "./tools/skills-define-tool.js";
 import { createSubagentsTool } from "./tools/subagents-tool.js";
 import { createTtsTool } from "./tools/tts-tool.js";
 import { createWebFetchTool, createWebSearchTool } from "./tools/web-tools.js";
+import { createWeChatTool } from "./tools/wechat-tool.js";
 import { createEvolutionTool } from "./tools/evolution-tool.js";
 import { createLogicRefinementTool } from "./tools/logic-refinement.js";
 import { createMetaCognitionTool } from "./tools/meta-cognition-tool.js";
@@ -126,6 +128,8 @@ export function createOPENAEONTools(options?: {
       allowHostControl: options?.allowHostBrowserControl,
     }),
     createCanvasTool({ config: options?.config }),
+    createDesktopTool(),
+    createWeChatTool(),
     createNodesTool({
       agentSessionKey: options?.agentSessionKey,
       agentChannel: options?.agentChannel,

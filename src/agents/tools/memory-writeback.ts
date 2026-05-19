@@ -13,7 +13,7 @@ const log = createSubsystemLogger("evolution");
 
 export async function autoDistillSessionToMemory(
   sourceSessionKey: string,
-  options?: { workspaceDir?: string }
+  options?: { workspaceDir?: string },
 ): Promise<void> {
   try {
     // 1. Fetch recent history
@@ -25,12 +25,16 @@ export async function autoDistillSessionToMemory(
     if (messages.length === 0) return;
 
     // 2. Format a concise transcript
-    const transcriptLines = messages.map((m: any) => {
-      if (m.role === "user") return `User: ${m.content}`;
-      if (m.role === "assistant") return `Assistant: ${extractAssistantText(m) || m.content}`;
-      if (m.role === "toolResult" || m.role === "tool") return `ToolResult: (omitted for brevity)`;
-      return "";
-    }).filter(Boolean).join("\n");
+    const transcriptLines = messages
+      .map((m: any) => {
+        if (m.role === "user") return `User: ${m.content}`;
+        if (m.role === "assistant") return `Assistant: ${extractAssistantText(m) || m.content}`;
+        if (m.role === "toolResult" || m.role === "tool")
+          return `ToolResult: (omitted for brevity)`;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
 
     if (transcriptLines.length < 50) return;
 
@@ -57,19 +61,20 @@ ${transcriptLines.slice(-4000)}
 
     if (!result) return;
 
-    const axioms = result.split("\n").filter(line => /\[AXIOM\]/i.test(line));
+    const axioms = result.split("\n").filter((line) => /\[AXIOM\]/i.test(line));
     if (axioms.length === 0) return;
 
     // 4. Append to MEMORY.md
     const cfg = loadConfig();
-    const workspaceRoot = options?.workspaceDir || resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
+    const workspaceRoot =
+      options?.workspaceDir || resolveWorkspaceRoot(cfg.agents?.defaults?.workspace);
     const memoryPath = path.join(workspaceRoot, "MEMORY.md");
 
     const newEntries = [
       "",
       `## Auto-Distilled from session ${sourceSessionKey} at ${new Date().toISOString()}`,
       ...axioms,
-      ""
+      "",
     ].join("\n");
 
     try {
@@ -81,10 +86,9 @@ ${transcriptLines.slice(-4000)}
     }
 
     // 5. Trigger LOGIC_GATES compaction
-    await distillMemory({ workspaceDir: workspaceRoot }).catch(err => 
-      log.error(`Failed to trigger distillMemory: ${err}`)
+    await distillMemory({ workspaceDir: workspaceRoot }).catch((err) =>
+      log.error(`Failed to trigger distillMemory: ${err}`),
     );
-
   } catch (err: unknown) {
     log.error(`Auto-distillation crashed: ${err instanceof Error ? err.message : String(err)}`);
   }

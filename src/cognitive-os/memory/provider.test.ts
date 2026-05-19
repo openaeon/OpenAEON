@@ -34,9 +34,32 @@ describe("CognitiveMemoryService provider lifecycle", () => {
       task: "Review implementation",
       result: "Review passed.",
     });
+    await service.onSessionEnd({
+      taskId: "task-1",
+      runId: "run-3",
+      sessionKey: "main",
+      messages: [{ role: "user", content: "done" }],
+    });
+    await service.onMemoryWrite({
+      taskId: "task-1",
+      runId: "run-4",
+      action: "add",
+      target: "evolution",
+      content: "Prefer loop run indexing before UI projection.",
+    });
 
     const entries = await service.queryEvolution({ taskId: "task-1", limit: 10 });
-    expect(entries.map((entry) => entry.runId)).toEqual(expect.arrayContaining(["run-1", "run-2"]));
+    expect(entries.map((entry) => entry.runId)).toEqual(
+      expect.arrayContaining(["run-1", "run-2", "run-3", "run-4"]),
+    );
     expect(entries.some((entry) => entry.tags.includes("delegation"))).toBe(true);
+    expect(
+      await service.onPreCompress({ taskId: "task-1", messages: [{ role: "user" }] }),
+    ).toContain("Preserve Cognitive memory cues");
+    await service.queuePrefetch({ taskId: "task-1", query: "loop indexing" });
+    expect(service.getToolSchemas()).toEqual([]);
+    expect(
+      await service.handleToolCall({ toolName: "memory", args: {}, taskId: "task-1" }),
+    ).toContain("does not expose tool");
   });
 });

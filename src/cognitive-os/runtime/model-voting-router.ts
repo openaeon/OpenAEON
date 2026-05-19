@@ -7,12 +7,10 @@ import type {
 import crypto from "node:crypto";
 import { runAgentStep } from "../../agents/tools/agent-step.js";
 import { callGateway } from "../../gateway/call.js";
-
-function modelForProvider(provider: ModelProvider): string {
-  if (provider === "gpt") return "gpt-5.4";
-  if (provider === "claude") return "claude-opus-4.1";
-  return "gemini-2.5-pro";
-}
+import {
+  defaultModelForProvider,
+  resolveCognitiveProviderRuntime,
+} from "./provider-runtime-resolver.js";
 
 function scoreCandidate(params: {
   output: string;
@@ -78,9 +76,10 @@ async function runProviderCandidate(
 
   try {
     const sessionKey = `cognitive-router:${provider}:${req.taskId}:${req.nodeId}:${crypto.randomUUID()}`;
+    const runtime = resolveCognitiveProviderRuntime({ provider, fallbackProviders: req.providers });
     await callGateway({
       method: "sessions.patch",
-      params: { key: sessionKey, model: modelForProvider(provider) },
+      params: { key: sessionKey, model: runtime.model },
       timeoutMs: 8_000,
     });
     output =
@@ -111,7 +110,7 @@ async function runProviderCandidate(
   const score = failed ? 0 : scored.score;
   return {
     provider,
-    model: modelForProvider(provider),
+    model: resolveCognitiveProviderRuntime({ provider }).model,
     output,
     score,
     reason: failed ? "provider_execution_failed" : scored.reason,
@@ -145,7 +144,7 @@ export async function dispatchWithParallelVoting(
       } catch (err) {
         return {
           provider,
-          model: modelForProvider(provider),
+          model: defaultModelForProvider(provider),
           output: "",
           score: 0,
           reason: "provider_error",
@@ -160,7 +159,7 @@ export async function dispatchWithParallelVoting(
   const sorted = [...candidates].toSorted((a, b) => b.score - a.score);
   const winner = sorted[0] ?? {
     provider: "gpt",
-    model: modelForProvider("gpt"),
+    model: defaultModelForProvider("gpt"),
     output: "no candidate available",
     score: 0,
     reason: "empty_candidates",

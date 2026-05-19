@@ -50,7 +50,7 @@ function renderSubagentCard(
               ? html`
                 <button
                   class="subagent-card__action-btn subagent-card__action-btn--force"
-                  title="${t("chat.forceStart", "Force Start")}"
+                  title="Force Start"
                   @click=${(e: Event) => {
                     e.stopPropagation();
                     if (entry.todoId) options.onForceStart?.(entry.todoId);
@@ -258,7 +258,7 @@ export function renderSubagentSidebar(props: ChatLayoutProps, controls?: Sidebar
   const parallelPressure = Math.max(0, queueDepth - availableSlots);
   const parallelHint =
     parallelPressure > 0
-      ? t("chat.backlogHint", { count: parallelPressure })
+      ? t("chat.backlogHint", { count: String(parallelPressure) })
       : t("chat.parallelHealthy");
   const autopilotLabel = autoDispatch?.frozen
     ? `Frozen · ${autoDispatch.freezeReason ?? "policy"}`

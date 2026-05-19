@@ -13,10 +13,7 @@
         "aeon.execution.lookup.pipelineType",
         "aeon.status.telemetry.v4.evidence.provenance"
       ],
-      "tests": [
-        "src/gateway/aeon-state.test.ts",
-        "src/gateway/server-methods/aeon.test.ts"
-      ]
+      "tests": ["src/gateway/aeon-state.test.ts", "src/gateway/server-methods/aeon.test.ts"]
     },
     {
       "id": "claim.strict-curve-index",
@@ -26,13 +23,8 @@
         "aeon.status.telemetry.v4.curve.curveOrder",
         "aeon.status.telemetry.v4.curve.projectionSeed"
       ],
-      "logs": [
-        "aeon.status.telemetry.v4.curve"
-      ],
-      "tests": [
-        "src/utils/peano.test.ts",
-        "src/gateway/server-methods/aeon.test.ts"
-      ]
+      "logs": ["aeon.status.telemetry.v4.curve"],
+      "tests": ["src/utils/peano.test.ts", "src/gateway/server-methods/aeon.test.ts"]
     },
     {
       "id": "claim.autospawn-synthesis-chain",
@@ -57,13 +49,8 @@
         "aeon.status.telemetry.v4.evidence.deconfliction.llmCoverage",
         "aeon.status.telemetry.v4.evidence.deconfliction.fallbackRate"
       ],
-      "logs": [
-        "aeon.execution.lookup.pipelineType=deconfliction",
-        "aeon.execution.lookup.summary"
-      ],
-      "tests": [
-        "src/agents/tools/logic-refinement.test.ts"
-      ]
+      "logs": ["aeon.execution.lookup.pipelineType=deconfliction", "aeon.execution.lookup.summary"],
+      "tests": ["src/agents/tools/logic-refinement.test.ts"]
     },
     {
       "id": "claim.singularity-staged-pipeline",
@@ -76,9 +63,7 @@
         "aeon.execution.lookup.pipelineType=singularity",
         "aeon.execution.lookup.reasonCode=SINGULARITY_PIPELINE_FAILED"
       ],
-      "tests": [
-        "src/gateway/server-evolution.test.ts"
-      ]
+      "tests": ["src/gateway/server-evolution.test.ts"]
     },
     {
       "id": "claim.reflect-architecture-diagnostics",
@@ -87,13 +72,8 @@
         "aeon.status.telemetry.v4.evidence.conflict.moduleSpread",
         "aeon.status.telemetry.v4.inference.mode"
       ],
-      "logs": [
-        "aeon.execution.lookup.pipelineType=deconfliction",
-        "aeon.execution.lookup.summary"
-      ],
-      "tests": [
-        "src/agents/tools/logic-refinement.test.ts"
-      ]
+      "logs": ["aeon.execution.lookup.pipelineType=deconfliction", "aeon.execution.lookup.summary"],
+      "tests": ["src/agents/tools/logic-refinement.test.ts"]
     }
   ]
 }

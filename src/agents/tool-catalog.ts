@@ -233,6 +233,14 @@ const CORE_TOOL_DEFINITIONS: CoreToolDefinition[] = [
     profiles: [],
     includeInOPENAEONGroup: true,
   },
+  {
+    id: "wechat",
+    label: "wechat",
+    description: "Atomic macOS WeChat client automation",
+    sectionId: "automation",
+    profiles: ["coding", "messaging"],
+    includeInOPENAEONGroup: true,
+  },
 ];
 
 const CORE_TOOL_BY_ID = new Map<string, CoreToolDefinition>(

@@ -26,18 +26,12 @@ function detectWeixinLinked(): boolean {
     const path = require("node:path") as typeof import("node:path");
 
     const stateDir =
-      process.env.OPENAEON_STATE_DIR?.trim() ||
-      `${process.env.HOME ?? "~"}/.openaeon`;
+      process.env.OPENAEON_STATE_DIR?.trim() || `${process.env.HOME ?? "~"}/.openaeon`;
     const accountsDir = path.join(stateDir, "tencent-weixin", "accounts");
 
     if (!fs.existsSync(accountsDir)) {
       // Also check legacy single-account credentials file.
-      const legacyCreds = path.join(
-        stateDir,
-        "credentials",
-        "tencent-weixin",
-        "credentials.json",
-      );
+      const legacyCreds = path.join(stateDir, "credentials", "tencent-weixin", "credentials.json");
       if (fs.existsSync(legacyCreds)) {
         const data = JSON.parse(fs.readFileSync(legacyCreds, "utf-8")) as {
           token?: string;
@@ -50,9 +44,9 @@ function detectWeixinLinked(): boolean {
     for (const file of fs.readdirSync(accountsDir)) {
       if (!file.endsWith(".json")) continue;
       try {
-        const data = JSON.parse(
-          fs.readFileSync(path.join(accountsDir, file), "utf-8"),
-        ) as { token?: string };
+        const data = JSON.parse(fs.readFileSync(path.join(accountsDir, file), "utf-8")) as {
+          token?: string;
+        };
         if (data.token?.trim()) return true;
       } catch {
         // skip malformed files
@@ -82,9 +76,7 @@ export const weixinOnboardingAdapter: ChannelOnboardingAdapter = {
     return {
       channel: channel as unknown as ChannelOnboardingAdapter["channel"],
       configured: linked,
-      statusLines: [
-        `WeChat (tencent-weixin): ${linked ? "linked ✅" : "not linked"}`,
-      ],
+      statusLines: [`WeChat (tencent-weixin): ${linked ? "linked ✅" : "not linked"}`],
       selectionHint: linked ? "linked" : "not linked",
       quickstartScore: linked ? 6 : 7,
     };

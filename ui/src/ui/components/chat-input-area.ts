@@ -11,7 +11,7 @@ type QuickCommandSpec = {
   template: string;
 };
 
-type ChatComposeMode = "message" | "task" | "dispatch";
+type ChatComposeMode = "message" | "task" | "dispatch" | "agent";
 
 const COMPOSE_MODES: Array<{
   id: ChatComposeMode;
@@ -41,6 +41,14 @@ const COMPOSE_MODES: Array<{
     hint: "Send work to the agent runtime.",
     placeholder:
       "Dispatch DevAgent / QAAgent / OpsAgent with constraints and acceptance criteria...",
+  },
+  {
+    id: "agent",
+    label: "Agent",
+    icon: icons.brain,
+    hint: "Delegate this as a parallel subagent mission.",
+    placeholder:
+      "Describe the subagent mission, blocker, or handoff you want to run in parallel...",
   },
 ];
 
@@ -799,7 +807,7 @@ export class ChatInputArea extends LitElement {
               @click=${() => this.emitSend()}
               type="button"
             >
-              ${icons.send} <span>${this.currentMode === "task" ? "Submit Task" : this.currentMode === "dispatch" ? "Dispatch" : "Send"}</span>
+              ${icons.send} <span>${this.currentMode === "task" ? "Submit Task" : this.currentMode === "dispatch" ? "Dispatch" : this.currentMode === "agent" ? "Delegate Agent" : "Send"}</span>
             </button>
           </div>
         </div>

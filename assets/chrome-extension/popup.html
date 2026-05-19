@@ -1,275 +1,401 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenAEON Browser Relay</title>
-  <style>
-    /* ── Design Tokens ─────────────────────────────────────── */
-    :root {
-      --bg: #0e0e14;
-      --surface: rgba(255,255,255,0.04);
-      --surface-hover: rgba(255,255,255,0.08);
-      --border: rgba(255,255,255,0.08);
-      --text: #e8e8f0;
-      --text-muted: #8888aa;
-      --orange: #ff8c00;
-      --orange-dim: rgba(255,140,0,0.15);
-      --green: #4cde8c;
-      --red: #ff5a5a;
-      --yellow: #ffe066;
-      --radius: 10px;
-      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      width: 340px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 13px;
-      -webkit-font-smoothing: antialiased;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAEON Browser Relay</title>
+    <style>
+      /* ── Design Tokens ─────────────────────────────────────── */
+      :root {
+        --bg: #0e0e14;
+        --surface: rgba(255, 255, 255, 0.04);
+        --surface-hover: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #e8e8f0;
+        --text-muted: #8888aa;
+        --orange: #ff8c00;
+        --orange-dim: rgba(255, 140, 0, 0.15);
+        --green: #4cde8c;
+        --red: #ff5a5a;
+        --yellow: #ffe066;
+        --radius: 10px;
+        --font: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 340px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+      }
 
-    /* ── Header ─────────────────────────────────────────────── */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .header img { width: 24px; height: 24px; border-radius: 6px; }
-    .header h1 { font-size: 14px; font-weight: 600; letter-spacing: -0.3px; flex: 1; }
+      /* ── Header ─────────────────────────────────────────────── */
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .header img {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+      }
+      .header h1 {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+        flex: 1;
+      }
 
-    /* ── Relay Status Bar ───────────────────────────────────── */
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--text-muted);
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-    .dot.online { background: var(--green); animation: pulse 2s infinite; }
-    .dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
-    .dot.error { background: var(--red); }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-    .status-text { flex: 1; font-size: 12px; color: var(--text-muted); }
-    .status-text strong { color: var(--text); }
-    .latency {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-      min-width: 44px;
-      text-align: right;
-    }
-    .latency.fast { color: var(--green); }
-    .latency.slow { color: var(--yellow); }
+      /* ── Relay Status Bar ───────────────────────────────────── */
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+      .dot.online {
+        background: var(--green);
+        animation: pulse 2s infinite;
+      }
+      .dot.connecting {
+        background: var(--yellow);
+        animation: pulse 1s infinite;
+      }
+      .dot.error {
+        background: var(--red);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .status-text {
+        flex: 1;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .status-text strong {
+        color: var(--text);
+      }
+      .latency {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+        min-width: 44px;
+        text-align: right;
+      }
+      .latency.fast {
+        color: var(--green);
+      }
+      .latency.slow {
+        color: var(--yellow);
+      }
 
-    /* ── Error Banner ───────────────────────────────────────── */
-    .error-banner {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      background: rgba(255,90,90,0.08);
-      border-bottom: 1px solid rgba(255,90,90,0.15);
-      color: var(--red);
-      font-size: 11.5px;
-    }
-    .error-banner.visible { display: flex; }
-    .error-banner .retry-btn {
-      margin-left: auto;
-      padding: 2px 8px;
-      border: 1px solid var(--red);
-      border-radius: 5px;
-      background: transparent;
-      color: var(--red);
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .error-banner .retry-btn:hover { background: rgba(255,90,90,0.12); }
-    .countdown { color: var(--text-muted); font-size: 11px; }
+      /* ── Error Banner ───────────────────────────────────────── */
+      .error-banner {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: rgba(255, 90, 90, 0.08);
+        border-bottom: 1px solid rgba(255, 90, 90, 0.15);
+        color: var(--red);
+        font-size: 11.5px;
+      }
+      .error-banner.visible {
+        display: flex;
+      }
+      .error-banner .retry-btn {
+        margin-left: auto;
+        padding: 2px 8px;
+        border: 1px solid var(--red);
+        border-radius: 5px;
+        background: transparent;
+        color: var(--red);
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .error-banner .retry-btn:hover {
+        background: rgba(255, 90, 90, 0.12);
+      }
+      .countdown {
+        color: var(--text-muted);
+        font-size: 11px;
+      }
 
-    /* ── Current Tab ────────────────────────────────────────── */
-    .current-tab {
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .section-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .tab-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .tab-favicon { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
-    .tab-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-    .tab-url { font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+      /* ── Current Tab ────────────────────────────────────────── */
+      .current-tab {
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .section-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      .tab-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .tab-favicon {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+      .tab-title {
+        font-size: 12px;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+      }
+      .tab-url {
+        font-size: 10.5px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
 
-    /* ── Primary Action Button ──────────────────────────────── */
-    .action-area { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-    .attach-btn {
-      width: 100%;
-      padding: 9px 14px;
-      border-radius: var(--radius);
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: var(--font);
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-    }
-    .attach-btn.attach {
-      background: linear-gradient(135deg, var(--orange), #e07800);
-      color: #fff;
-    }
-    .attach-btn.attach:hover { filter: brightness(1.1); transform: translateY(-1px); }
-    .attach-btn.detach {
-      background: var(--surface);
-      color: var(--red);
-      border: 1px solid rgba(255,90,90,0.3);
-    }
-    .attach-btn.detach:hover { background: rgba(255,90,90,0.1); }
-    .attach-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; filter: none; }
+      /* ── Primary Action Button ──────────────────────────────── */
+      .action-area {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .attach-btn {
+        width: 100%;
+        padding: 9px 14px;
+        border-radius: var(--radius);
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: var(--font);
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+      }
+      .attach-btn.attach {
+        background: linear-gradient(135deg, var(--orange), #e07800);
+        color: #fff;
+      }
+      .attach-btn.attach:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+      .attach-btn.detach {
+        background: var(--surface);
+        color: var(--red);
+        border: 1px solid rgba(255, 90, 90, 0.3);
+      }
+      .attach-btn.detach:hover {
+        background: rgba(255, 90, 90, 0.1);
+      }
+      .attach-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+        filter: none;
+      }
 
-    /* ── Attached Tabs List ─────────────────────────────────── */
-    .tabs-section { padding: 10px 16px; }
-    .tabs-list { list-style: none; display: flex; flex-direction: column; gap: 5px; max-height: 180px; overflow-y: auto; }
-    .tabs-list::-webkit-scrollbar { width: 4px; }
-    .tabs-list::-webkit-scrollbar-track { background: transparent; }
-    .tabs-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    .tab-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      border-radius: 7px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-    .tab-item:hover { background: var(--surface-hover); }
-    .tab-item .tab-info { flex: 1; min-width: 0; }
-    .tab-item .tab-name { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tab-item .tab-id { font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-    .detach-tab-btn {
-      flex-shrink: 0;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 14px;
-      line-height: 1;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: color 0.15s, background 0.15s;
-    }
-    .detach-tab-btn:hover { color: var(--red); background: rgba(255,90,90,0.1); }
-    .empty-state { font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px 0; }
+      /* ── Attached Tabs List ─────────────────────────────────── */
+      .tabs-section {
+        padding: 10px 16px;
+      }
+      .tabs-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+      .tabs-list::-webkit-scrollbar {
+        width: 4px;
+      }
+      .tabs-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .tabs-list::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+      .tab-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 7px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        transition: background 0.15s;
+      }
+      .tab-item:hover {
+        background: var(--surface-hover);
+      }
+      .tab-item .tab-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .tab-item .tab-name {
+        font-size: 11.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tab-item .tab-id {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .detach-tab-btn {
+        flex-shrink: 0;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition:
+          color 0.15s,
+          background 0.15s;
+      }
+      .detach-tab-btn:hover {
+        color: var(--red);
+        background: rgba(255, 90, 90, 0.1);
+      }
+      .empty-state {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 12px 0;
+      }
 
-    /* ── Footer ─────────────────────────────────────────────── */
-    .footer {
-      display: flex;
-      gap: 0;
-      border-top: 1px solid var(--border);
-    }
-    .footer a {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      padding: 9px;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 11px;
-      transition: color 0.15s, background 0.15s;
-      border-right: 1px solid var(--border);
-    }
-    .footer a:last-child { border-right: none; }
-    .footer a:hover { color: var(--text); background: var(--surface-hover); }
-  </style>
-</head>
-<body>
+      /* ── Footer ─────────────────────────────────────────────── */
+      .footer {
+        display: flex;
+        gap: 0;
+        border-top: 1px solid var(--border);
+      }
+      .footer a {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 9px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 11px;
+        transition:
+          color 0.15s,
+          background 0.15s;
+        border-right: 1px solid var(--border);
+      }
+      .footer a:last-child {
+        border-right: none;
+      }
+      .footer a:hover {
+        color: var(--text);
+        background: var(--surface-hover);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <img src="icons/icon48.png" alt="" id="header-icon" />
+      <h1>OpenAEON Browser Relay</h1>
+    </header>
 
-  <!-- Header -->
-  <header class="header">
-    <img src="icons/icon48.png" alt="" id="header-icon" />
-    <h1>OpenAEON Browser Relay</h1>
-  </header>
-
-  <!-- Relay status bar -->
-  <div class="status-bar">
-    <div class="dot" id="relay-dot"></div>
-    <div class="status-text">
-      Relay: <strong id="relay-status-text">checking…</strong>
+    <!-- Relay status bar -->
+    <div class="status-bar">
+      <div class="dot" id="relay-dot"></div>
+      <div class="status-text">Relay: <strong id="relay-status-text">checking…</strong></div>
+      <div class="latency" id="latency-display"></div>
     </div>
-    <div class="latency" id="latency-display"></div>
-  </div>
 
-  <!-- Error banner -->
-  <div class="error-banner" id="error-banner">
-    <span id="error-msg">Relay offline</span>
-    <span class="countdown" id="countdown"></span>
-    <button class="retry-btn" id="retry-btn">Retry</button>
-  </div>
+    <!-- Error banner -->
+    <div class="error-banner" id="error-banner">
+      <span id="error-msg">Relay offline</span>
+      <span class="countdown" id="countdown"></span>
+      <button class="retry-btn" id="retry-btn">Retry</button>
+    </div>
 
-  <!-- Current tab info -->
-  <div class="current-tab" id="current-tab-section">
-    <div class="section-label">Current Tab</div>
-    <div class="tab-row">
-      <img class="tab-favicon" id="current-tab-favicon" src="" alt="" onerror="this.style.display='none'" />
-      <div style="flex:1;min-width:0">
-        <div class="tab-title" id="current-tab-title">—</div>
-        <div class="tab-url" id="current-tab-url"></div>
+    <!-- Current tab info -->
+    <div class="current-tab" id="current-tab-section">
+      <div class="section-label">Current Tab</div>
+      <div class="tab-row">
+        <img
+          class="tab-favicon"
+          id="current-tab-favicon"
+          src=""
+          alt=""
+          onerror="this.style.display = 'none'"
+        />
+        <div style="flex: 1; min-width: 0">
+          <div class="tab-title" id="current-tab-title">—</div>
+          <div class="tab-url" id="current-tab-url"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Primary action -->
-  <div class="action-area">
-    <button class="attach-btn attach" id="attach-btn" disabled>
-      <span id="attach-btn-icon">⚡</span>
-      <span id="attach-btn-text">Attach to OpenAEON</span>
-    </button>
-  </div>
+    <!-- Primary action -->
+    <div class="action-area">
+      <button class="attach-btn attach" id="attach-btn" disabled>
+        <span id="attach-btn-icon">⚡</span>
+        <span id="attach-btn-text">Attach to OpenAEON</span>
+      </button>
+    </div>
 
-  <!-- Attached tabs list -->
-  <div class="tabs-section">
-    <div class="section-label">Controlled Tabs (<span id="tab-count">0</span>)</div>
-    <ul class="tabs-list" id="tabs-list">
-      <li class="empty-state" id="empty-state">No tabs attached yet</li>
-    </ul>
-  </div>
+    <!-- Attached tabs list -->
+    <div class="tabs-section">
+      <div class="section-label">Controlled Tabs (<span id="tab-count">0</span>)</div>
+      <ul class="tabs-list" id="tabs-list">
+        <li class="empty-state" id="empty-state">No tabs attached yet</li>
+      </ul>
+    </div>
 
-  <!-- Footer links -->
-  <footer class="footer">
-    <a href="#" id="settings-link">⚙ Settings</a>
-    <a href="https://docs.openaeon.ai/channels/browser-relay" target="_blank">📖 Docs</a>
-  </footer>
+    <!-- Footer links -->
+    <footer class="footer">
+      <a href="#" id="settings-link">⚙ Settings</a>
+      <a href="https://docs.openaeon.ai/channels/browser-relay" target="_blank">📖 Docs</a>
+    </footer>
 
-  <script src="popup.js"></script>
-</body>
+    <script src="popup.js"></script>
+  </body>
 </html>

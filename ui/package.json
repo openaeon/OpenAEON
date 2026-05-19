@@ -6,7 +6,10 @@
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "test": "vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "ui:build": "vite build",
+    "ui:dev": "vite",
+    "ui:test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@lit-labs/signals": "^0.2.0",

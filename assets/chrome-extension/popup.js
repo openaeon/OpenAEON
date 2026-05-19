@@ -4,28 +4,28 @@
 // ──────────────────────────────────────────────
 // Element references
 // ──────────────────────────────────────────────
-const relayDot        = document.getElementById("relay-dot");
+const relayDot = document.getElementById("relay-dot");
 const relayStatusText = document.getElementById("relay-status-text");
-const latencyDisplay  = document.getElementById("latency-display");
-const errorBanner     = document.getElementById("error-banner");
-const errorMsg        = document.getElementById("error-msg");
-const countdownEl     = document.getElementById("countdown");
-const retryBtn        = document.getElementById("retry-btn");
-const attachBtn       = document.getElementById("attach-btn");
-const attachBtnIcon   = document.getElementById("attach-btn-icon");
-const attachBtnText   = document.getElementById("attach-btn-text");
-const currentFavicon  = document.getElementById("current-tab-favicon");
-const currentTitle    = document.getElementById("current-tab-title");
-const currentUrl      = document.getElementById("current-tab-url");
-const tabsList        = document.getElementById("tabs-list");
-const tabCount        = document.getElementById("tab-count");
-const emptyState      = document.getElementById("empty-state");
-const settingsLink    = document.getElementById("settings-link");
+const latencyDisplay = document.getElementById("latency-display");
+const errorBanner = document.getElementById("error-banner");
+const errorMsg = document.getElementById("error-msg");
+const countdownEl = document.getElementById("countdown");
+const retryBtn = document.getElementById("retry-btn");
+const attachBtn = document.getElementById("attach-btn");
+const attachBtnIcon = document.getElementById("attach-btn-icon");
+const attachBtnText = document.getElementById("attach-btn-text");
+const currentFavicon = document.getElementById("current-tab-favicon");
+const currentTitle = document.getElementById("current-tab-title");
+const currentUrl = document.getElementById("current-tab-url");
+const tabsList = document.getElementById("tabs-list");
+const tabCount = document.getElementById("tab-count");
+const emptyState = document.getElementById("empty-state");
+const settingsLink = document.getElementById("settings-link");
 
 // ──────────────────────────────────────────────
 // State
 // ──────────────────────────────────────────────
-let currentTabId  = null;  // Chrome tab ID of the active tab
+let currentTabId = null; // Chrome tab ID of the active tab
 let retryCountdown = null; // setInterval handle
 let retrySecondsLeft = 0;
 
@@ -147,11 +147,7 @@ function renderTabsList(attachedTabs, currentChromeTabId) {
     nameEl.textContent = truncate(tab.title || formatDomain(tab.url), 40);
     const idEl = document.createElement("div");
     idEl.className = "tab-id";
-    idEl.textContent = tab.id
-      ? tab.id.length > 24
-        ? tab.id.slice(0, 24) + "…"
-        : tab.id
-      : "";
+    idEl.textContent = tab.id ? (tab.id.length > 24 ? tab.id.slice(0, 24) + "…" : tab.id) : "";
     infoDiv.appendChild(nameEl);
     infoDiv.appendChild(idEl);
     li.appendChild(infoDiv);

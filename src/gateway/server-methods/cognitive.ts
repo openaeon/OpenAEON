@@ -10,6 +10,7 @@ import { assertNoPathAliasEscape } from "../../infra/path-alias-guards.js";
 import { isNotFoundPathError } from "../../infra/path-guards.js";
 import { queryCognitiveEvents } from "../../cognitive-os/observability/event-bus.js";
 import { buildCognitiveTrajectory } from "../../cognitive-os/observability/trajectory.js";
+import { getCognitiveSqliteStore } from "../../cognitive-os/store/sqlite-store.js";
 import type { GatewayRequestHandlers } from "./types.js";
 
 async function resolveSourceFilePath(workspaceDir: string, requestPath: string): Promise<string> {
@@ -458,7 +459,22 @@ export const cognitiveHandlers: GatewayRequestHandlers = {
       payload: entry.payload,
     }));
     const trajectory = buildCognitiveTrajectory({ task, events });
+    getCognitiveSqliteStore(context.workspaceDir)?.indexTrajectory(trajectory);
     respond(true, { ok: true, trajectory }, undefined);
+  },
+
+  "cognitive.store.search": async ({ params, respond, context }) => {
+    const query = typeof params.query === "string" ? params.query.trim() : "";
+    const limit = typeof params.limit === "number" ? params.limit : 20;
+    if (!query) {
+      respond(false, undefined, {
+        code: "COGNITIVE_STORE_INVALID_REQUEST",
+        message: "query is required",
+      });
+      return;
+    }
+    const rows = getCognitiveSqliteStore(context.workspaceDir)?.search(query, limit) ?? [];
+    respond(true, { ok: true, rows }, undefined);
   },
 
   "cognitive.cognition.reflect": async ({ params, respond, context }) => {

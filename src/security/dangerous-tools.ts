@@ -15,6 +15,8 @@ export const DEFAULT_GATEWAY_HTTP_TOOL_DENY = [
   "cron",
   // Gateway control plane — prevents gateway reconfiguration via HTTP
   "gateway",
+  // Local desktop automation — can click/type/control the operator's macOS GUI
+  "desktop",
   // Interactive setup — requires terminal QR scan, hangs on HTTP
   "whatsapp_login",
 ] as const;
@@ -30,6 +32,7 @@ export const DANGEROUS_ACP_TOOL_NAMES = [
   "sessions_spawn",
   "sessions_send",
   "gateway",
+  "desktop",
   "fs_write",
   "fs_delete",
   "fs_move",
@@ -46,7 +49,7 @@ export function isDangerousAcpTool(name: string, allowOverride?: boolean): boole
   if (allowOverride) {
     // Even with override, we keep 'gateway' as dangerous because it controls the configuration itself.
     // 'sessions_send' is also kept because it can hijack other sessions.
-    return name === "gateway" || name === "sessions_send";
+    return name === "gateway" || name === "sessions_send" || name === "desktop";
   }
   return DANGEROUS_ACP_TOOLS.has(name);
 }

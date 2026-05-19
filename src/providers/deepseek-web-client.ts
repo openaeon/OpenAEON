@@ -51,10 +51,217 @@ interface DeepSeekPowResponse {
   challenge?: DeepSeekPowChallenge;
 }
 
-interface DeepSeekChatSessionResponse {
+interface DeepSeekChatSessionBizData extends Partial<DeepSeekChatSession> {
+  chat_session?: Partial<DeepSeekChatSession>;
+  ttl_seconds?: number;
+}
+
+interface DeepSeekChatSessionResponse extends DeepSeekChatSessionBizData {
+  code?: number;
+  msg?: string;
   data?: {
-    biz_data?: DeepSeekChatSession;
+    biz_code?: number;
+    biz_msg?: string;
+    biz_data?: DeepSeekChatSessionBizData;
+  } & DeepSeekChatSessionBizData;
+}
+
+interface DeepSeekClientSettingsResponse {
+  code?: number;
+  data?: {
+    biz_code?: number;
+    biz_data?: {
+      settings?: Record<string, { value?: unknown }>;
+      version?: number;
+    };
   };
+}
+
+interface DeepSeekRemoteModelConfig {
+  model_type?: string;
+  name?: string;
+  description?: string;
+  enabled?: boolean;
+  switchable?: boolean;
+  is_default?: boolean;
+  input_character_limit?: number;
+  search_feature?: unknown;
+  file_feature?: {
+    token_limit?: number;
+    token_limit_with_thinking?: number;
+    vision?: boolean;
+  } | null;
+}
+
+type DeepSeekWebModelType = "default" | "expert" | "vision";
+
+export function resolveDeepSeekWebModelType(model?: string): DeepSeekWebModelType {
+  const normalized = (model || "").toLowerCase();
+  if (normalized.includes("vision")) {
+    return "vision";
+  }
+  return normalized.includes("expert") ? "expert" : "default";
+}
+
+export function resolveDeepSeekWebThinkingEnabled(model?: string): boolean {
+  const normalized = (model || "").toLowerCase();
+  return (
+    normalized.includes("reasoner") ||
+    normalized.includes("thinking") ||
+    normalized.includes("deep-think") ||
+    normalized.includes("r1")
+  );
+}
+
+export function resolveDeepSeekWebSearchEnabled(model?: string, explicit?: boolean): boolean {
+  if (typeof explicit === "boolean") {
+    return explicit;
+  }
+  const normalized = (model || "").toLowerCase();
+  return normalized.endsWith("-search") || normalized.includes("-search-");
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function sanitizeDeepSeekModelType(modelType: string): string {
+  const normalized = modelType
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return normalized || "default";
+}
+
+function deepSeekModelIdForType(modelType: string): string {
+  switch (modelType) {
+    case "default":
+      return "deepseek-chat";
+    case "expert":
+      return "deepseek-chat-expert";
+    case "vision":
+      return "deepseek-vision";
+    default:
+      return `deepseek-${sanitizeDeepSeekModelType(modelType)}`;
+  }
+}
+
+function deepSeekReasonerModelIdForType(modelType: string): string {
+  switch (modelType) {
+    case "default":
+      return "deepseek-reasoner";
+    case "expert":
+      return "deepseek-reasoner-expert";
+    case "vision":
+      return "deepseek-reasoner-vision";
+    default:
+      return `deepseek-reasoner-${sanitizeDeepSeekModelType(modelType)}`;
+  }
+}
+
+function toDeepSeekRemoteModelConfig(value: unknown): DeepSeekRemoteModelConfig | null {
+  if (!isObjectRecord(value)) {
+    return null;
+  }
+  const modelType = typeof value.model_type === "string" ? value.model_type : undefined;
+  if (!modelType) {
+    return null;
+  }
+  return value as unknown as DeepSeekRemoteModelConfig;
+}
+
+function unwrapDeepSeekSettings(settings: Record<string, { value?: unknown }> | undefined) {
+  const unwrapped: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(settings || {})) {
+    unwrapped[key] = isObjectRecord(entry) && "value" in entry ? entry.value : entry;
+  }
+  return unwrapped;
+}
+
+function createDeepSeekWebModel(config: {
+  id: string;
+  name: string;
+  reasoning: boolean;
+  input?: Array<"text" | "image">;
+  contextWindow?: number;
+}): ModelDefinitionConfig {
+  return {
+    id: config.id,
+    name: config.name,
+    reasoning: config.reasoning,
+    input: config.input || ["text", "image"],
+    cost: {
+      input: 0,
+      output: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+    },
+    contextWindow: config.contextWindow || 64000,
+    maxTokens: 4096,
+  };
+}
+
+function buildDeepSeekModelsFromRemoteConfigs(
+  configs: DeepSeekRemoteModelConfig[],
+): ModelDefinitionConfig[] {
+  const baseEntries: Array<{
+    model: ModelDefinitionConfig;
+    searchSupported: boolean;
+  }> = [];
+  const seen = new Set<string>();
+  for (const config of configs) {
+    if (config.enabled === false || config.switchable === false || !config.model_type) {
+      continue;
+    }
+    const modelType = config.model_type;
+    const baseId = deepSeekModelIdForType(modelType);
+    if (seen.has(baseId)) {
+      continue;
+    }
+    seen.add(baseId);
+    const baseName = config.name || `DeepSeek ${modelType}`;
+    const contextWindow =
+      config.input_character_limit ||
+      config.file_feature?.token_limit ||
+      config.file_feature?.token_limit_with_thinking ||
+      64000;
+    const input: Array<"text" | "image"> = config.file_feature ? ["text", "image"] : ["text"];
+    const searchSupported = config.search_feature !== null;
+    baseEntries.push({
+      model: createDeepSeekWebModel({
+        id: baseId,
+        name: baseName,
+        reasoning: false,
+        input,
+        contextWindow,
+      }),
+      searchSupported,
+    });
+    baseEntries.push({
+      model: createDeepSeekWebModel({
+        id: deepSeekReasonerModelIdForType(modelType),
+        name: `${baseName} + Deep Thinking`,
+        reasoning: true,
+        input,
+        contextWindow: config.file_feature?.token_limit_with_thinking || contextWindow,
+      }),
+      searchSupported,
+    });
+  }
+
+  const models = baseEntries.map((entry) => entry.model);
+  for (const { model, searchSupported } of baseEntries) {
+    if (!searchSupported) {
+      continue;
+    }
+    models.push({
+      ...model,
+      id: `${model.id}-search`,
+      name: `${model.name} (Search)`,
+    });
+  }
+  return models;
 }
 
 export class DeepSeekWebClient {
@@ -85,21 +292,31 @@ export class DeepSeekWebClient {
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
   }
 
-  private async fetchHeaders() {
-    return {
+  private getDeviceId(): string {
+    if (!this.deviceId) {
+      this.deviceId = crypto.randomUUID();
+    }
+    return this.deviceId;
+  }
+
+  private async fetchHeaders(options?: { jsonContentType?: boolean }) {
+    const headers: Record<string, string> = {
       Cookie: this.cookie,
       "User-Agent": this.userAgent,
-      "Content-Type": "application/json",
       Accept: "*/*",
       ...(this.bearer ? { Authorization: `Bearer ${this.bearer}` } : {}),
       Referer: "https://chat.deepseek.com/",
       Origin: "https://chat.deepseek.com",
       "x-client-platform": "web",
-      "x-client-version": "1.7.0",
-      "x-app-version": "20241129.1",
+      "x-client-version": "2.0.0",
+      "x-app-version": "2.0.0",
       "x-client-locale": "zh_CN",
       "x-client-timezone-offset": "28800",
     };
+    if (options?.jsonContentType !== false) {
+      headers["Content-Type"] = "application/json";
+    }
+    return headers;
   }
 
   async init() {
@@ -109,7 +326,7 @@ export class DeepSeekWebClient {
         const res = await fetch(
           "https://chat.deepseek.com/api/v0/client/settings?did=&scope=banner",
           {
-            headers: await this.fetchHeaders(),
+            headers: await this.fetchHeaders({ jsonContentType: false }),
           },
         );
         if (res.ok) {
@@ -121,6 +338,23 @@ export class DeepSeekWebClient {
         console.warn("[DeepSeekWebClient] Failed to fetch settings:", error);
       }
     }
+  }
+
+  async fetchClientSettings(scope: string): Promise<Record<string, unknown> | null> {
+    const url = new URL("https://chat.deepseek.com/api/v0/client/settings");
+    url.searchParams.set("did", this.getDeviceId());
+    url.searchParams.set("scope", scope);
+    const res = await fetch(url, {
+      headers: await this.fetchHeaders({ jsonContentType: false }),
+    });
+    if (!res.ok) {
+      return null;
+    }
+    const json = (await res.json()) as DeepSeekClientSettingsResponse;
+    if (json.code !== 0 || json.data?.biz_code !== 0) {
+      return null;
+    }
+    return unwrapDeepSeekSettings(json.data.biz_data?.settings);
   }
 
   async createPowChallenge(targetPath: string): Promise<DeepSeekPowChallenge> {
@@ -253,7 +487,7 @@ export class DeepSeekWebClient {
     const res = await fetch(`https://chat.deepseek.com${targetPath}`, {
       method: "POST",
       headers: await this.fetchHeaders(),
-      body: JSON.stringify({}),
+      body: JSON.stringify({ character_id: null }),
     });
 
     if (!res.ok) {
@@ -263,12 +497,43 @@ export class DeepSeekWebClient {
     }
 
     const data = (await res.json()) as DeepSeekChatSessionResponse;
-    const sessionId = data.data?.biz_data?.id || data.data?.biz_data?.chat_session_id || "";
+
+    // Check for API-level errors even if HTTP status is 200 OK
+    if (data.code !== 0 && data.code !== undefined) {
+      throw new Error(
+        `Failed to create chat session: ${data.msg || "Unknown error"} (code: ${data.code})`,
+      );
+    }
+    if (data.data && data.data.biz_code !== 0 && data.data.biz_code !== undefined) {
+      throw new Error(
+        `Failed to create chat session: ${
+          data.data.biz_msg || "Unknown error"
+        } (biz_code: ${data.data.biz_code})`,
+      );
+    }
+
+    const bizData = data.data?.biz_data || data.data || data;
+    const chatSession = bizData?.chat_session || bizData;
+    const sessionId =
+      chatSession?.id ||
+      chatSession?.chat_session_id ||
+      bizData?.id ||
+      bizData?.chat_session_id ||
+      "";
+
+    if (!sessionId) {
+      console.error(
+        `[DeepSeekWebClient] Failed to extract chat session ID from response:`,
+        JSON.stringify(data),
+      );
+      throw new Error(`Failed to extract chat_session_id from response: ${JSON.stringify(data)}`);
+    }
+
     console.log(`[DeepSeekWebClient] Chat session created: ${sessionId}`);
     return {
-      biz_id: data.data?.biz_data?.biz_id || "",
-      title: data.data?.biz_data?.title || "",
-      ...data.data?.biz_data,
+      biz_id: bizData?.biz_id || chatSession?.biz_id || "",
+      title: bizData?.title || chatSession?.title || "",
+      ...bizData,
       chat_session_id: sessionId,
     };
   }
@@ -313,12 +578,11 @@ export class DeepSeekWebClient {
       body: JSON.stringify({
         chat_session_id: params.sessionId,
         parent_message_id: params.parentMessageId ?? null,
+        model_type: resolveDeepSeekWebModelType(params.model),
         prompt: params.message,
         ref_file_ids: params.fileIds || [],
-        thinking_enabled: !(
-          params.model === "deepseek-chat" && !params.model?.includes("reasoning")
-        ), // Default to true unless specifically chat-only
-        search_enabled: params.searchEnabled ?? true,
+        thinking_enabled: resolveDeepSeekWebThinkingEnabled(params.model),
+        search_enabled: resolveDeepSeekWebSearchEnabled(params.model, params.searchEnabled),
         preempt: params.preempt ?? false,
       }),
       signal: params.signal,
@@ -351,14 +615,17 @@ export class DeepSeekWebClient {
     const formData = new (globalThis as unknown as { FormData: new () => FormData }).FormData();
     formData.append(
       "file",
-      new (globalThis as unknown as { Blob: new (p: unknown[]) => Blob }).Blob([fileData]),
+      new (
+        globalThis as unknown as { Blob: new (p: unknown[], opts?: BlobPropertyBag) => Blob }
+      ).Blob([fileData]),
       fileName,
     );
+    const headers = await this.fetchHeaders({ jsonContentType: false });
 
     const res = await fetch(`https://chat.deepseek.com${targetPath}`, {
       method: "POST",
       headers: {
-        ...(await this.fetchHeaders()),
+        ...headers,
         "x-ds-pow-response": powResponse,
         "x-file-size": fileData.length.toString(),
       },
@@ -378,7 +645,7 @@ export class DeepSeekWebClient {
       const pollRes = await fetch(
         `https://chat.deepseek.com/api/v0/file/fetch_files?file_ids=${fileId}`,
         {
-          headers: await this.fetchHeaders(),
+          headers: await this.fetchHeaders({ jsonContentType: false }),
         },
       );
       if (pollRes.ok) {
@@ -399,10 +666,36 @@ export class DeepSeekWebClient {
   }
 
   async discoverModels(): Promise<ModelDefinitionConfig[]> {
+    const settings = await this.fetchClientSettings("model").catch((error) => {
+      console.warn("[DeepSeekWebClient] Failed to fetch model settings:", error);
+      return null;
+    });
+    const remoteModelConfigs = Array.isArray(settings?.model_configs)
+      ? settings.model_configs.map(toDeepSeekRemoteModelConfig).filter((model) => model !== null)
+      : [];
+    const discoveredModels = buildDeepSeekModelsFromRemoteConfigs(remoteModelConfigs);
+    if (discoveredModels.length > 0) {
+      return discoveredModels;
+    }
+
     const baseModels: ModelDefinitionConfig[] = [
       {
         id: "deepseek-chat",
-        name: "DeepSeek V3",
+        name: "DeepSeek Fast Mode",
+        reasoning: false,
+        input: ["text", "image"],
+        cost: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+        },
+        contextWindow: 64000,
+        maxTokens: 4096,
+      },
+      {
+        id: "deepseek-chat-expert",
+        name: "DeepSeek Expert Mode",
         reasoning: false,
         input: ["text"],
         cost: {
@@ -416,9 +709,51 @@ export class DeepSeekWebClient {
       },
       {
         id: "deepseek-reasoner",
-        name: "DeepSeek R1",
+        name: "DeepSeek Fast Mode + Deep Thinking",
+        reasoning: true,
+        input: ["text", "image"],
+        maxTokens: 4096,
+        cost: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+        },
+        contextWindow: 64000,
+      },
+      {
+        id: "deepseek-reasoner-expert",
+        name: "DeepSeek Expert Mode + Deep Thinking",
         reasoning: true,
         input: ["text"],
+        maxTokens: 4096,
+        cost: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+        },
+        contextWindow: 64000,
+      },
+      {
+        id: "deepseek-vision",
+        name: "DeepSeek Vision Mode",
+        reasoning: false,
+        input: ["text", "image"],
+        maxTokens: 4096,
+        cost: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+        },
+        contextWindow: 64000,
+      },
+      {
+        id: "deepseek-reasoner-vision",
+        name: "DeepSeek Vision Mode + Deep Thinking",
+        reasoning: true,
+        input: ["text", "image"],
         maxTokens: 4096,
         cost: {
           input: 0,

@@ -20,7 +20,7 @@ import {
   queryCognitiveEvents,
 } from "../observability/event-bus.js";
 import { replayRun } from "../observability/replay.js";
-import { dispatchAgentTask } from "../runtime/dispatcher.js";
+import { CognitiveAgentLoop } from "../runtime/agent-loop.js";
 import { dispatchCognitiveNodeToSubagent } from "../runtime/subagent-runtime-adapter.js";
 import { applyTransition } from "./state-machine.js";
 import { listTaskRecords, readTaskRecord, taskLockFile, writeTaskRecord } from "./store.js";
@@ -634,7 +634,8 @@ export class TaskOrchestrator {
         });
       }
 
-      const dispatchResult = await dispatchAgentTask({
+      const agentLoop = new CognitiveAgentLoop(this.workspaceDir);
+      const loopResult = await agentLoop.run({
         taskId,
         nodeId,
         role: node.ownerRole ?? "DevAgent",
@@ -642,7 +643,10 @@ export class TaskOrchestrator {
         providers: COGNITIVE_POLICY.DEFAULT_PROVIDERS,
         timeoutMs: COGNITIVE_POLICY.DEFAULT_AGENT_TIMEOUT,
         context: await buildHilbertSortedContext(this.workspaceDir),
+        sessionKey: workingRecord.sessionKey,
+        source: "cognitive_dispatch",
       });
+      const dispatchResult = loopResult.dispatch;
 
       const output = dispatchResult.winner.output;
       const success = dispatchResult.winner.score >= COGNITIVE_POLICY.MIN_SUCCESS_SCORE;

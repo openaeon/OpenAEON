@@ -233,8 +233,9 @@ describe("chat view", () => {
     const shadow = await getChatShadowAsync(container);
     const sidebar = shadow?.querySelector(".chat-sidebar");
     expect(sidebar).not.toBeNull();
-    expect(shadow?.textContent).toContain("DevAgent");
-    expect(shadow?.textContent).toContain("QAAgent");
+    expect(shadow?.textContent).toContain("Parallel Agent Orchestration");
+    expect(shadow?.textContent).toContain("Agent");
+    expect(shadow?.textContent).toContain("Task 1");
   });
 
   it("shows Cognitive memory traces in the runtime dock", async () => {
@@ -522,6 +523,43 @@ describe("chat view", () => {
     submitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
 
     expect(onSend).toHaveBeenCalledWith("ship the runtime dock", { mode: "task" });
+  });
+
+  it("exposes agent delegation as a first-class composer mode", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const onSend = vi.fn();
+    render(
+      renderChat(
+        createProps({
+          draft: "audit the failing runtime path",
+          onSend,
+        }),
+      ),
+      container,
+    );
+
+    const shadow = await getChatShadowAsync(container);
+    const input = shadow?.querySelector("chat-input-area") as
+      | ({
+          renderRoot?: ShadowRoot;
+          shadowRoot: ShadowRoot | null;
+          updateComplete?: Promise<boolean>;
+        } & Element)
+      | null;
+    await input?.updateComplete;
+    const inputRoot = input?.renderRoot ?? input?.shadowRoot;
+    const agentButton = Array.from(inputRoot?.querySelectorAll("button") ?? []).find((button) =>
+      button.textContent?.includes("Agent"),
+    );
+    agentButton?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+    await input?.updateComplete;
+    const delegateButton = Array.from(inputRoot?.querySelectorAll("button") ?? []).find((button) =>
+      button.textContent?.includes("Delegate Agent"),
+    );
+    delegateButton?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+
+    expect(onSend).toHaveBeenCalledWith("audit the failing runtime path", { mode: "agent" });
   });
 
   it("shows a new session button when aborting is unavailable", async () => {

@@ -62,17 +62,102 @@ function mergePropertySchemas(existing: unknown, incoming: unknown): unknown {
   return existing;
 }
 
+function tryFlattenLiteralUnion(variants: unknown[]): { type: string; enum: unknown[] } | null {
+  if (variants.length === 0) {
+    return null;
+  }
+  const allValues: unknown[] = [];
+  let commonType: string | null = null;
+
+  for (const variant of variants) {
+    if (!variant || typeof variant !== "object") {
+      return null;
+    }
+    const v = variant as Record<string, unknown>;
+
+    let literalValue: unknown;
+    if ("const" in v) {
+      literalValue = v.const;
+    } else if (Array.isArray(v.enum) && v.enum.length === 1) {
+      literalValue = v.enum[0];
+    } else {
+      return null;
+    }
+
+    const variantType = typeof v.type === "string" ? v.type : null;
+    if (!variantType) {
+      return null;
+    }
+    if (commonType === null) {
+      commonType = variantType;
+    } else if (commonType !== variantType) {
+      return null;
+    }
+    allValues.push(literalValue);
+  }
+
+  if (commonType && allValues.length > 0) {
+    return { type: commonType, enum: allValues };
+  }
+  return null;
+}
+
+function flattenSchemaUnions(schema: unknown): unknown {
+  if (!schema || typeof schema !== "object") {
+    return schema;
+  }
+  if (Array.isArray(schema)) {
+    return schema.map(flattenSchemaUnions);
+  }
+
+  const obj = { ...(schema as Record<string, unknown>) };
+
+  if (obj.properties && typeof obj.properties === "object") {
+    const props = { ...(obj.properties as Record<string, unknown>) };
+    for (const [key, value] of Object.entries(props)) {
+      props[key] = flattenSchemaUnions(value);
+    }
+    obj.properties = props;
+  }
+
+  if (obj.items) {
+    if (Array.isArray(obj.items)) {
+      obj.items = obj.items.map(flattenSchemaUnions);
+    } else {
+      obj.items = flattenSchemaUnions(obj.items);
+    }
+  }
+
+  const variantKey = Array.isArray(obj.anyOf) ? "anyOf" : Array.isArray(obj.oneOf) ? "oneOf" : null;
+
+  if (variantKey) {
+    const variants = (obj[variantKey] as unknown[]).map(flattenSchemaUnions);
+    const flattened = tryFlattenLiteralUnion(variants);
+    if (flattened) {
+      delete obj[variantKey];
+      obj.type = flattened.type;
+      obj.enum = flattened.enum;
+    } else {
+      obj[variantKey] = variants;
+    }
+  }
+
+  return obj;
+}
+
 export function normalizeToolParameters(
   tool: AnyAgentTool,
   options?: { modelProvider?: string },
 ): AnyAgentTool {
-  const schema =
+  const rawSchema =
     tool.parameters && typeof tool.parameters === "object"
       ? (tool.parameters as Record<string, unknown>)
       : undefined;
-  if (!schema) {
+  if (!rawSchema) {
     return tool;
   }
+
+  const schema = flattenSchemaUnions(rawSchema) as Record<string, unknown>;
 
   // Provider quirks:
   // - Gemini rejects several JSON Schema keywords, so we scrub those.

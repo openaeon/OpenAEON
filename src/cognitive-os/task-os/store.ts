@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { CognitiveTaskRecord } from "./types.js";
+import { getCognitiveSqliteStore } from "../store/sqlite-store.js";
 
 function taskFile(baseDir: string, taskId: string): string {
   return path.join(baseDir, `${taskId}.json`);
@@ -25,6 +26,8 @@ export async function readTaskRecord(
 export async function writeTaskRecord(baseDir: string, record: CognitiveTaskRecord): Promise<void> {
   await fs.mkdir(baseDir, { recursive: true });
   await fs.writeFile(taskFile(baseDir, record.id), JSON.stringify(record, null, 2), "utf-8");
+  const workspaceDir = path.dirname(path.dirname(path.dirname(baseDir)));
+  getCognitiveSqliteStore(workspaceDir)?.indexTask(record);
 }
 
 export async function listTaskRecords(baseDir: string, limit = 50): Promise<CognitiveTaskRecord[]> {

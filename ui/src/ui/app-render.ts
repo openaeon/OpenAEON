@@ -482,6 +482,26 @@ export function renderApp(state: AppViewState) {
     })();
   };
   const handleWorkbenchSend = (message?: string, options?: { mode?: string }) => {
+    if (options?.mode === "agent") {
+      const text = (message ?? state.chatMessage).trim();
+      if (!text) {
+        state.lastError = "Agent delegation needs a mission prompt.";
+        return;
+      }
+      const ownerId = normalizeSubagentId(
+        state.sandboxCognitivePlan?.todos?.find((todo) => todo.status === "in_progress")
+          ?.ownerAgent ?? "",
+        "agent-delegate",
+      );
+      state.chatMessage = "";
+      state.chatAttachments = [];
+      void state.handleSendChat(`/subagents spawn ${ownerId} ${text}`, {
+        restoreDraft: true,
+        mode: "agent",
+      });
+      return;
+    }
+
     if (options?.mode !== "task" && options?.mode !== "dispatch") {
       return state.handleSendChat(message, options);
     }

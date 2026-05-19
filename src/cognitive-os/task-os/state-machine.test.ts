@@ -6,6 +6,7 @@ describe("cognitive task state machine", () => {
     expect(canTransition("INIT", "PLAN")).toBe(true);
     expect(canTransition("PLAN", "EXECUTE")).toBe(true);
     expect(canTransition("EXECUTE", "VERIFY")).toBe(true);
+    expect(canTransition("EXECUTE", "REFLECT")).toBe(true);
     expect(canTransition("VERIFY", "REFLECT")).toBe(true);
     expect(canTransition("REFLECT", "DONE")).toBe(true);
   });

@@ -502,6 +502,27 @@ export function createOPENAEONCodingTools(options?: {
       iterationDepth: options?.iterationDepth,
     }),
   ];
+
+  // Expose duplicate/alias tools so models (like Claude) can see and call them directly
+  const aliasMappings: Array<{ alias: string; canonical: string }> = [
+    { alias: "write_file", canonical: "write" },
+    { alias: "replace_in_file", canonical: "edit" },
+    { alias: "str_replace", canonical: "edit" },
+    { alias: "execute_command", canonical: "exec" },
+    { alias: "browser_open", canonical: "browser" },
+  ];
+
+  for (const { alias, canonical } of aliasMappings) {
+    const canonicalTool = tools.find((t) => t.name === canonical);
+    if (canonicalTool) {
+      tools.push({
+        ...canonicalTool,
+        name: alias,
+        label: alias,
+      });
+    }
+  }
+
   const toolsForMessageProvider = applyMessageProviderToolPolicy(tools, options?.messageProvider);
   // Security: treat unknown/undefined as unauthorized (opt-in, not opt-out)
   const senderIsOwner = options?.senderIsOwner === true;

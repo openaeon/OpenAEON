@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { calculatePeanoIndex, alignPointsTopologically } from "../../utils/peano.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
+import { discoverProgressiveContextHints } from "./progressive-context.js";
 
 const log = createSubsystemLogger("cognition");
 
@@ -62,8 +63,12 @@ export async function buildHilbertSortedContext(
     // Sort by Peano Index (Topological grouping)
     // This clusters related concepts together in the prompt
     const sorted = pieces.sort((a, b) => a.peanoIndex - b.peanoIndex).slice(0, limit);
+    const hints = await discoverProgressiveContextHints({ workspaceDir, maxHints: 3 });
 
-    return sorted.map((p) => p.content);
+    return [
+      ...hints.map((hint) => `[Context: ${hint.path}]\n${hint.content}`),
+      ...sorted.map((p) => p.content),
+    ].slice(0, limit);
   } catch (err) {
     log.error("Failed to build Hilbert context", { error: String(err) });
     return [];
