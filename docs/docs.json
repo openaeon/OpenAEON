@@ -2011,6 +2011,27 @@
                 "pages": ["zh-CN/start/hubs", "zh-CN/start/docs-directory", "zh-CN/AGENTS"]
               }
             ]
+          },
+          {
+            "tab": "业务 Agent 插件",
+            "groups": [
+              {
+                "group": "FCACore 业务 Agent 插件",
+                "icon": "blocks",
+                "pages": [
+                  "zh-CN/fcacore-agent-plugins/index",
+                  "zh-CN/fcacore-agent-plugins/getting-started",
+                  "zh-CN/fcacore-agent-plugins/plugin-runtime",
+                  "zh-CN/fcacore-agent-plugins/agent-skill-manifest",
+                  "zh-CN/fcacore-agent-plugins/tool-integration",
+                  "zh-CN/fcacore-agent-plugins/governance-testing",
+                  "zh-CN/fcacore-agent-plugins/realtime-websocket",
+                  "zh-CN/fcacore-agent-plugins/desktop-browser",
+                  "zh-CN/fcacore-agent-plugins/toolpack",
+                  "zh-CN/fcacore-agent-plugins/nfe-capabilities"
+                ]
+              }
+            ]
           }
         ]
       },

@@ -1,0 +1,103 @@
+---
+title: "桌面与浏览器"
+description: "在业务 API、Browser 和 Computer Use 之间选择正确执行入口。"
+icon: "monitor-cog"
+---
+
+## 路由原则
+
+| 目标 | 执行入口 |
+| --- | --- |
+| 有稳定企业 API | ToolPack、插件工具或 MCP |
+| FCACore 内置浏览器网页 | `Browser*` |
+| macOS 原生应用 | `ComputerUsePlugin` 与规范化 Computer Use 工具 |
+| 用户明确要求操作已有外部 Chrome 窗口 | 专用外部浏览器桥 |
+
+优先顺序：
+
+```text
+Business API / ToolPack
+-> Browser DOM/CDP
+-> macOS Accessibility
+-> explicit pointer fallback
+```
+
+## 规范化桌面工具
+
+| 类别 | 工具 | 权限 |
+| --- | --- | --- |
+| 发现 | `ComputerUsePlugin`、`list_apps` | 按动作判断 / ReadOnly |
+| 观察 | `get_app_state` | ReadOnly |
+| 元素动作 | `click`、`perform_secondary_action` | WorkspaceWrite |
+| 表单 | `set_value`、`select_text` | WorkspaceWrite |
+| 导航 | `scroll`、`drag` | WorkspaceWrite |
+| 输入 | `press_key`、`type_text` | WorkspaceWrite |
+
+插件不应自行实现原始鼠标键盘驱动。
+
+<Info>
+  读取动作使用 `ReadOnly`；点击、输入、滚动和拖动属于 `WorkspaceWrite`，并按当前 AgentPermissionPolicy 决定是否审批。
+</Info>
+
+## 执行循环
+
+```text
+list_apps（目标不明确时）
+-> get_app_state
+-> 使用最新 state_id/generation_id 或可验证语义目标
+-> 执行一个动作
+-> fresh get_app_state
+-> verify
+```
+
+不要缓存 UI 节点跨窗口更新使用。键盘输入要求目标应用位于前台并携带验证条件；坐标 fallback 遵循宿主审批策略。
+
+<Warning>
+  工具返回“动作已投递”不代表业务目标完成。必须重新读取应用状态并验证预期结果。
+</Warning>
+
+示例：
+
+- `examples/desktop-tools/fcacore-plugin.fragment.json`
+- `examples/desktop-tools/observe-act-verify.workflow.json`
+
+工作流中的 `$steps.*` 是编排器数据引用，执行前必须替换成上一步的真实返回值。
+
+## 高级 Computer Use
+
+规范化工具无法覆盖定位、审计或复杂计划时，可通过 `ComputerUsePlugin` 路由：
+
+- 观察定位：`computer_use.snapshot`、`observe_state`、`find_node`、`window_list`；
+- 动作：`press_node`、`click`、`double_click`、`right_click`、`set_value`、`type_text`、`hotkey`、`scroll`、`drag`、`focus_app`；
+- 等待验证：`wait_for`、`verify`；
+- 计划执行：`execute_plan`、`dry_run_controlled_task`、`execute_controlled_task`；
+- 审计恢复：`list_runs`、`get_run`、`get_run_steps`、`get_trace`、`clear_old_runs`；
+- 浏览器虚拟控制桥：`browser_click`、`browser_set_value`。
+
+`clipboard` 可能处理敏感数据，只在业务确实需要且策略允许时使用。
+
+## 浏览器工具
+
+普通网页流程保持在同一个 Agent Browser 会话：
+
+```text
+BrowserOpen
+-> BrowserSnapshot / BrowserGet
+-> BrowserClick / BrowserFill / BrowserPress / BrowserScroll
+-> BrowserSnapshot / BrowserGet
+-> verify
+```
+
+还可使用 `BrowserFind`、`BrowserWait`、`BrowserTab`、`BrowserScreenshot`、`BrowserUpload` 和网络请求观测工具。不要在网页流程中无故切换到 Computer Use。
+
+## macOS 权限
+
+桌面执行可能需要：
+
+- Accessibility；
+- Screen Recording；
+- Automation；
+- Input Monitoring；
+- Full Disk Access。
+
+是否需要具体权限取决于动作和后端。业务插件必须保持权限声明、工具白名单和实际操作一致。

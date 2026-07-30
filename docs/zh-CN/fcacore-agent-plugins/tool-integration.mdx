@@ -1,0 +1,113 @@
+---
+title: "工具与协议接入"
+description: "选择并实现 CLI、HTTP、MCP 和 WebSocket 业务工具前门。"
+icon: "plug"
+---
+
+## 选择规则
+
+| 场景 | 推荐方案 |
+| --- | --- |
+| 已有 FCACore capability | 复用 ToolPack |
+| 10 个以上相关动作、共享认证和版本 | 新建 ToolPack |
+| 插件专用的少量动作 | 插件命令工具 |
+| 服务原生支持 MCP | 配置 MCP |
+| 实时订阅或共享连接状态 | 常驻 MCP/sidecar |
+| 确定性数据转换 | Skill script |
+
+## CLI 合同
+
+```text
+AEON_TOOL_INPUT(JSON) 或 stdin
+-> 固定进程
+-> stdout 单个 JSON
+-> stderr 日志
+-> 非零退出码表示失败
+```
+
+规则：
+
+- 不使用字符串拼接 shell 参数；
+- stdout 不输出调试文本；
+- 设置超时和返回体上限；
+- 不回显环境变量和凭据；
+- 写操作不接受模型自报的审批状态。
+
+## HTTP 合同
+
+对 Agent 暴露业务动作：
+
+```text
+customer_lookup({ customer_id })
+```
+
+不要暴露：
+
+```text
+http_request({ url, method, headers, body })
+```
+
+<Warning>
+  任意 URL、Header 和 Body 会把网络边界交给模型，无法形成稳定的权限与审计合同。
+</Warning>
+
+Adapter 必须处理基础地址、认证、超时、非 2xx 错误、返回体上限和敏感日志。写请求还需要幂等键、审批作用域和写后回读。
+
+## MCP 合同
+
+插件通过 `.codex-plugin/plugin.json` 引用：
+
+```json
+{
+  "mcpServers": "./.mcp.json"
+}
+```
+
+本地 stdio MCP：
+
+```json
+{
+  "mcpServers": {
+    "business-mcp": {
+      "command": "node",
+      "args": ["./adapters/mcp-server.mjs"]
+    }
+  }
+}
+```
+
+FCACore 会把以 `./` 开头的 stdio 参数解析到插件根目录。MCP Server 至少实现：
+
+- `initialize`
+- `ping`
+- `tools/list`
+- `tools/call`
+
+工具输入必须声明 JSON Schema。业务失败返回 `isError: true` 和结构化错误。
+
+## WebSocket 合同
+
+一次性 request/response 可使用 `request_id` 关联响应。持续订阅必须放进常驻 MCP 或 sidecar，不能依赖每次调用重新启动的插件命令。
+
+生产连接使用 `wss://`。重连可以恢复只读订阅，但不能自动重放未确认写操作。完整实现见[实时 WebSocket](/zh-CN/fcacore-agent-plugins/realtime-websocket)。
+
+## 错误合同
+
+```json
+{
+  "code": "AUTH_REQUIRED",
+  "message": "业务系统登录态失效",
+  "retryable": false,
+  "details": null
+}
+```
+
+统一任务状态：
+
+| 状态 | 含义 |
+| --- | --- |
+| `completed` | 已达到验收条件 |
+| `input_required` | 缺少用户必须确认的输入 |
+| `approval_required` | 草稿完成，等待宿主审批 |
+| `blocked` | 外部依赖、权限或业务状态阻断 |
+| `failed` | 已执行但协议或业务动作失败 |

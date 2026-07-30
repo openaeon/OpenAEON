@@ -1,0 +1,103 @@
+---
+title: "实时 WebSocket"
+sidebarTitle: "WebSocket"
+description: "通过常驻 MCP 管理业务 WebSocket 的订阅、心跳、重连和事件游标。"
+icon: "radio"
+---
+
+## 为什么使用常驻 MCP
+
+插件命令工具每次调用启动一个短生命周期进程，无法可靠保存连接、订阅、心跳和事件游标。
+
+<Info>
+  MCP 的 WebSocket transport 负责 Agent 与 MCP Server 通信；业务 WebSocket 是 Adapter 与企业系统之间的协议，两者需要明确区分。
+</Info>
+
+模板使用：
+
+```text
+Agent
+-> MCP tool
+-> adapters/mcp-server.mjs
+-> RealtimeWsBridge
+-> Business WebSocket
+-> bounded event queue
+-> cursor poll
+```
+
+相关实现：
+
+- `adapters/realtime-ws-bridge.mjs`
+- `adapters/mcp-server.mjs`
+- `tests/plugin-kit.test.mjs`
+
+## 工具面
+
+| 工具 | 作用 | 业务副作用 |
+| --- | --- | --- |
+| `example_realtime_status` | 查看连接、队列、订阅和错误 | 无 |
+| `example_realtime_connect` | 建立常驻连接 | 无 |
+| `example_realtime_subscribe` | 订阅只读事件主题 | 无 |
+| `example_realtime_poll` | 按 cursor 非破坏性读取事件 | 无 |
+| `example_realtime_unsubscribe` | 取消订阅 | 无 |
+| `example_realtime_disconnect` | 断开并停止自动重连 | 无 |
+
+## 配置
+
+```bash
+export BUSINESS_WS_URL='wss://business.example.com/events'
+export BUSINESS_WS_TOKEN='由凭据中心注入'
+node adapters/mcp-server.mjs
+```
+
+模板只允许 localhost 使用 `ws://`，其他地址必须使用 `wss://`。
+
+## 连接行为
+
+Bridge 负责：
+
+- 鉴权消息；
+- 心跳；
+- 指数退避重连；
+- 重连后恢复只读订阅；
+- 有界内存队列；
+- 单调递增 cursor；
+- 协议错误状态。
+
+`poll` 不删除消息，消费者通过 `next_cursor` 继续读取。队列达到上限时淘汰最早事件，因此生产系统还应根据业务量设置合理上限或接入持久化事件存储。
+
+## 协议适配
+
+不同业务系统只需要替换 Bridge 内部的鉴权、订阅和事件映射，对 Agent 保持稳定工具面。
+
+不要增加“任意 topic \+ 任意 payload 发送”工具。需要写入时定义独立业务工具和窄 Schema，继续走：
+
+```text
+facts -> draft -> approval -> execute -> verify
+```
+
+断线不能自动重放未确认写入。
+
+<Warning>
+  自动重放写消息可能造成重复建单、重复扣款或重复外发。断线后必须重新读取事实并重新确认写入状态。
+</Warning>
+
+## MCP WS 与业务 WS
+
+```text
+MCP over WS = Agent 到 MCP Server 的传输
+Business WS  = Adapter 到企业系统的业务协议
+```
+
+两者不是同一协议。即使 MCP 使用 WS transport，业务事件仍需 Adapter 翻译。
+
+## 上线检查
+
+- MCP/sidecar 进程确实常驻；
+- 事件包含 cursor、接收时间、topic 和 subscription ID；
+- 队列容量和慢消费者策略明确；
+- Token 不进入日志和工具结果；
+- 生产连接启用 TLS；
+- 重启后的订阅恢复语义明确；
+- 写消息不自动重放；
+- 测试使用假 WebSocket，不连接生产系统。

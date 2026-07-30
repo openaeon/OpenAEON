@@ -1,0 +1,130 @@
+---
+title: "ToolPack 开发规范"
+sidebarTitle: "ToolPack"
+description: "设计可授权、可审批、可审计的企业业务 capability 和能力集。"
+icon: "package"
+---
+
+ToolPack 用于承载一个企业业务域内可授权、可审批、可审计的能力集合。大量共享认证的业务接口不应散落为插件命令。
+
+## 目录合同
+
+```text
+toolpack/
+├── manifest.json
+├── bin/
+│   ├── <platform>/tool
+│   └── <platform>/login
+├── schemas/
+├── capability-sets/
+├── workflows/
+└── agent.toml
+```
+
+`agent.toml` 是可选项。业务执行入口仍由 Manifest 决定。
+
+## Capability 合同
+
+每项能力至少声明：
+
+- `id`
+- `business_name`
+- `description`
+- `category`
+- `access_level`
+- `risk_level`
+- `approval_required`
+- `input_schema`
+- `output_schema`
+- `business_preconditions`
+- `empty_result_meaning`
+- `contract`
+- `examples`
+- `error_codes`
+
+不要把 URL 直接变成 capability。先定义业务动作、输入输出、前置条件、空结果语义、风险和回读方式。
+
+## 进程协议
+
+stdin：
+
+```json
+{
+  "request_id": "req-001",
+  "capability_id": "example.query_record",
+  "input": {
+    "record_id": "DEMO-001"
+  },
+  "context": {
+    "source": "EnterpriseTool"
+  }
+}
+```
+
+stdout：
+
+```json
+{
+  "request_id": "req-001",
+  "success": true,
+  "capability_id": "example.query_record",
+  "data": {},
+  "message": "completed"
+}
+```
+
+stdout 只输出协议 JSON，日志写 stderr。
+
+## Capability Set
+
+Agent 插件依赖业务场景能力集，不直接依赖整个 ToolPack：
+
+```json
+{
+  "id": "example.record-change/v1",
+  "capabilities": [
+    "example.health",
+    "example.query_record",
+    "example.execute_approved_change"
+  ],
+  "operations": ["record_change"],
+  "verificationCapabilities": ["example.query_record"]
+}
+```
+
+插件依赖合同：
+
+```json
+{
+  "schemaVersion": "fcacore.toolpack-requirements/v2",
+  "toolpack": "example-business",
+  "versionRange": ">=1.0.0 <2.0.0",
+  "requiredCapabilitySets": ["example.record-change/v1"],
+  "requiredCapabilities": [
+    "example.health",
+    "example.query_record",
+    "example.execute_approved_change"
+  ],
+  "requiredOperations": ["record_change"]
+}
+```
+
+`requiredCapabilities` 保存能力集解析快照，防止能力集升级后静默扩大权限。
+
+## NFE
+
+当前 NFE 入口：
+
+- 目录：`toolpacks/nfe-logistics`；
+- Agent 前门：`EnterpriseTool`；
+- 执行入口：`manifest.json` 的 `entry.command`；
+- 登录入口：`auth.login_command`；
+- 能力清单：[NFE 能力参考](/zh-CN/fcacore-agent-plugins/nfe-capabilities)。
+
+校验：
+
+```bash
+node toolpacks/nfe-logistics/scripts/validate-toolpack.mjs
+```
+
+NFE 参考由模板命令 `npm run generate:nfe-reference` 生成。

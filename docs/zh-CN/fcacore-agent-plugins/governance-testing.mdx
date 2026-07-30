@@ -1,0 +1,101 @@
+---
+title: "治理、测试与发布"
+sidebarTitle: "治理与发布"
+description: "落实写操作审批、证据合同、最低测试集和插件发布检查。"
+icon: "shield-check"
+---
+
+## 写操作生命周期
+
+```text
+session/health
+-> facts
+-> readiness
+-> preflight
+-> draft
+-> approval
+-> execute
+-> verify
+```
+
+审批至少绑定：
+
+- operation；
+- target ID；
+- payload hash；
+- actor；
+- expiry；
+- 单次使用令牌。
+
+模型不能生成 `approved_by` 或伪造 approval ID。宿主验证审批后把受信状态注入执行上下文。
+
+执行器必须校验幂等键、拒绝未知 operation、限制目标环境、记录 request ID、返回真实业务 ID，并支持独立回读。
+
+<Warning>
+  不要根据模型文本、请求字段或客户端自报状态判断“已经审批”。审批只能来自宿主验证后的受信执行上下文。
+</Warning>
+
+## 证据合同
+
+交付证据至少包含：
+
+- 来源类型；
+- 工具或 capability；
+- request ID；
+- 读取时间；
+- 目标记录 ID；
+- 是否产生副作用；
+- 写后回读结果。
+
+工具发现、计划文本和“请求已发送”都不是业务成功证据。
+
+## 最低测试集
+
+1. Manifest 名称、版本和路径；
+2. Skill 典型触发和不应触发场景；
+3. 参数缺失和未知字段；
+4. 候选不唯一；
+5. 登录失效；
+6. HTTP/WS/MCP 超时；
+7. 空结果；
+8. 写操作无审批；
+9. 审批作用域不匹配；
+10. 幂等重复；
+11. 执行后回读不匹配；
+12. 凭据扫描。
+
+模板测试不得连接生产系统或产生外部写入。
+
+<Danger>
+  自动化测试禁止使用生产凭据，也禁止调用真实建单、扣款、发信或其他不可逆接口。
+</Danger>
+
+## 校验命令
+
+```bash
+npm run check
+
+python3 /Users/opnclaw/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
+python3 /Users/opnclaw/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/<skill-id>
+```
+
+NFE ToolPack：
+
+```bash
+node ../../toolpacks/nfe-logistics/scripts/validate-toolpack.mjs
+```
+
+## 发布检查
+
+- [ ] 插件目录和双 Manifest 名称一致。
+- [ ] 双 Manifest 使用相同语义化版本。
+- [ ] 只声明真实存在的 Agent、Skill、MCP 和工具。
+- [ ] Agent 的职责、排除项、交付物和移交可验收。
+- [ ] Skill description 覆盖真实触发表达。
+- [ ] 工具 Schema 不接受无关字段。
+- [ ] 没有任意 URL、任意命令和任意 operation。
+- [ ] 凭据没有进入代码、Manifest、日志和返回值。
+- [ ] 写操作经过草稿、审批、幂等执行和回读。
+- [ ] Agent 只依赖最小 Capability Set。
+- [ ] 正向、空结果、认证失败和审批失败测试通过。
+- [ ] 模板和官方校验通过。

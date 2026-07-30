@@ -1,0 +1,92 @@
+---
+title: "插件运行架构"
+sidebarTitle: "运行架构"
+description: "理解 FCACore 业务插件的五层合同、执行前门、发现流程和运行时目录。"
+icon: "workflow"
+---
+
+## 核心边界
+
+业务插件由五层合同组成：
+
+| 层 | 回答的问题 | 主要位置 |
+| --- | --- | --- |
+| Agent | 谁负责，负责什么结果，何时移交 | `agents/*.md` |
+| Skill | 这类任务按什么步骤完成 | `skills/<id>/` |
+| Tool | 一次调用接收什么参数、返回什么结果 | Manifest、MCP 或 ToolPack |
+| ToolPack | 一组业务能力如何授权、审批和审计 | `toolpacks/<id>/` |
+| Transport | 工具怎样连接外部系统 | HTTP、CLI、MCP、WebSocket |
+
+Agent 不应知道接口 URL、Cookie、心跳间隔或 shell 参数。它只选择稳定业务动作，例如查询客户、准备建单草稿或回读订单状态。
+
+## 运行因果
+
+```text
+用户目标
+-> Agent 校验职责
+-> Skill 收集事实并判断缺项
+-> 选择唯一执行前门
+-> JSON Schema 校验参数
+-> Adapter/ToolPack 调用外部系统
+-> 返回结构化事实或错误
+-> 写操作经过审批
+-> 独立只读回读
+-> Agent 交付证据
+```
+
+发现工具不等于完成业务动作。只有真实 HTTP、CLI、MCP、WebSocket、Browser、Computer Use 或 ToolPack 返回才能成为执行证据。
+
+## 执行前门
+
+| 条件 | 前门 |
+| --- | --- |
+| 已存在业务 ToolPack capability | `EnterpriseTool` |
+| 插件只有 1–3 个专用轻量动作 | `.fcacore-plugin` 的 `pluginCapabilities.tools` |
+| 外部服务原生提供 MCP | `.mcp.json` |
+| 需要常驻连接、订阅或共享状态 | 常驻 MCP Server 或 sidecar |
+| 操作 FCACore 内置浏览器 | `Browser*` |
+| 操作非浏览器桌面应用 | `ComputerUsePlugin` 和规范化 Computer Use 工具 |
+| 只做确定性转换 | Skill `scripts/` |
+
+同一个写操作只保留一个正式执行器，否则审批、幂等和审计无法确定最终边界。
+
+## 发现与执行
+
+插件安装后：
+
+```text
+双 Manifest 校验
+-> Agent 进入专家模板
+-> Skill 进入 Skill inventory
+-> pluginCapabilities.tools 进入能力计划
+-> .mcp.json 进入 MCP 配置
+-> 用户创建并激活 Agent
+-> 权限和审批策略在调用时生效
+```
+
+ToolPack 还有独立生命周期：
+
+```text
+install
+-> register
+-> credential/login
+-> live probe
+-> publish
+-> EnterpriseTool 可调用
+```
+
+## 运行时目录
+
+专家插件默认安装到：
+
+```text
+$FCACORE_HOME/experts/plugins/<plugin-id>/
+```
+
+未设置 `FCACORE_HOME` 时使用：
+
+```text
+~/.FCACore/experts/plugins/<plugin-id>/
+```
+
+插件命令通过 `FCACORE_PLUGIN_ROOT` 定位安装后的资源。不得依赖开发仓库的绝对路径。

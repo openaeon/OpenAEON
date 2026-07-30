@@ -1,0 +1,281 @@
+---
+title: "NFE ToolPack 能力参考"
+sidebarTitle: "NFE 能力参考"
+description: "由 NFE Manifest 自动生成的 capability 分类、风险、审批和合同完整度清单。"
+icon: "list-tree"
+---
+
+> 此页面由 `npm run generate:nfe-reference` 根据 `toolpacks/nfe-logistics/manifest.json` 生成，请勿手工维护能力行。
+
+- ToolPack：`nfe-logistics`
+- 版本：`1.3.0`
+- Manifest：`toolpack.manifest/v1`
+- Capability 数量：`111`
+- 统一执行前门：`EnterpriseTool`
+- 入口：`bin/macos-arm64/nfe-tool-wrapper`
+- 登录器：`bin/macos-arm64/nfe-login-wrapper`
+
+## 使用原则
+
+1. 先用 ToolSearch 或业务 Skill 找到 capability，再通过 EnterpriseTool 调用。
+2. `read_only` 能力读取事实；写入只能进入已审批执行器。
+3. 发现结果不是执行证据；写入后必须调用只读能力回读。
+4. 输入必须通过对应 JSON Schema，未声明字段不得传递。
+
+## 当前合同完整度
+
+| 字段 | 缺失能力数 |
+| --- | --: |
+| `contract` | 110 |
+| `examples` | 109 |
+| `error_codes` | 110 |
+| `business_preconditions` | 108 |
+| `empty_result_meaning` | 108 |
+
+这些数字是治理待办，不表示 capability 当前不可调用。新能力不得继续复制缺失合同的旧形态。
+
+## 分类索引
+
+| 分类 | 数量 |
+| --- | --: |
+| 班列 | 1 |
+| 财务 | 15 |
+| 舱位 | 3 |
+| 单证 | 1 |
+| 订单 | 17 |
+| 风控 | 3 |
+| 基础数据 | 23 |
+| 经营统计 | 2 |
+| 设备追踪 | 3 |
+| 通知公告 | 1 |
+| 托书建单 | 10 |
+| 系统安全 | 2 |
+| 业务操作 | 4 |
+| 业务操作系统 | 4 |
+| 业务聚合 | 6 |
+| 运营管理 | 3 |
+| Atom | 3 |
+| Auth | 1 |
+| Catalog | 2 |
+| Order | 1 |
+| Page | 6 |
+
+## 班列
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_train_numbers` | 查询班列号列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询可选班列号，用于订单履约、班列发运和运踪匹配。 |
+
+## 财务
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_bill_detail` | 查询账单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_bill_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据账单唯一标识 ID 获取账单的详细应收/应付金额、币种、费项、发票及核销状态明细数据。 |
+| `nfe.query_bill_receivables` | 查询应收账单 | `read_only` | `low` | 否 | `schemas/nfe.query_finance_ar.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按日期范围获取已经向托运人或客户方正式开出并确认对账的应收客户对账单列表。 |
+| `nfe.query_booking_fees` | 查询订单全量费用明细 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_fees.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据整型订单 ID 查询订单下的全量收支费用、应收应付、汇率及利润核算明细列表数据。 |
+| `nfe.query_booking_profit` | 查询订单利润核算 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_profit.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 和费用公司查询订单利润核算结果，用于亏损、微利和报价复盘。 |
+| `nfe.query_booking_revenue_stat` | 查询订单收入统计 | `read_only` | `low` | 否 | `schemas/nfe.booking_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 查询订单收入统计，用于核对应收、利润和报价闭环。 |
+| `nfe.query_charge_item_tree` | 查询费用项目树 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询费用项目树，用于报价、应收、应付和费用归类。 |
+| `nfe.query_client_tax_info` | 查询客户税务开票信息 | `read_only` | `low` | 否 | `schemas/nfe.client_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据客户 ID 查询客户税务和开票信息，用于开票前核对。 |
+| `nfe.query_fee_approve_count` | 查询费用审批数量 | `read_only` | `low` | 否 | `schemas/nfe.booking_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 查询费用审批数量，用于判断费用是否存在未完成审批。 |
+| `nfe.query_finance_ap` | 查询应付费用 | `read_only` | `low` | 否 | `schemas/nfe.query_finance_ar.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按日期范围统计并查询应向供应商、铁路局支付的多币种应付款项明细流水表。 |
+| `nfe.query_finance_ar` | 查询应收费用 | `read_only` | `low` | 否 | `schemas/nfe.query_finance_ar.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按日期范围统计并查询业务系统中的账单应收明细，用于财务核对与收入分析。 |
+| `nfe.query_invoice_payable` | 查询应付发票 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询收到并登记入账的来自外部运力、堆场、港区服务供应商的进项发票总表。 |
+| `nfe.query_invoice_receivable` | 查询应收发票 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询已经向客户正式开具的销项增值税发票记录或回执登记信息列表。 |
+| `nfe.query_nearby_month_rate` | 查询附近月份汇率 | `read_only` | `low` | 否 | `schemas/nfe.query_nearby_month_rate.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按费用日期查询附近月份汇率，用于应收应付和报价币种换算。 |
+| `nfe.query_pay_apply` | 查询我的支付申请 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取当前员工或运营小组发起的所有对外付款审批流程与支付执行单列表。 |
+| `nfe.query_virtual_booking_profit` | 查询虚拟订单利润信息 | `read_only` | `low` | 否 | `schemas/nfe.booking_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 查询虚拟订单利润信息，用于集拼、虚拟订单和利润拆分分析。 |
+
+## 舱位
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_fcl_space` | 查询整箱舱位 | `read_only` | `low` | 否 | `schemas/nfe.query_fcl_space.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询铁路运输的整箱(FCL)舱位余量、计划起开日期以及价格运价本数据。 |
+| `nfe.query_lcl_space` | 查询拼箱舱位 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页查询班列货运拼箱(LCL)最新计划公布及空闲舱位报价明细。 |
+| `nfe.query_position_list` | 查询舱位管理列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页获取业务中心当前已分配、占满或预定的舱位管理条目总表。 |
+
+## 单证
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_customs_detail` | 查询订单报关详情 | `read_only` | `low` | 否 | `schemas/nfe.booking_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 查询报关详情，用于单证、报关草单、正式报关和放行判断。 |
+
+## 订单
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_air_order_detail` | 查询空运订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单唯一标识 ID 精确查询空运订单的详细状态、航班节点及明细数据。 |
+| `nfe.query_air_orders` | 查询空运订单列表 | `read_only` | `low` | 否 | `schemas/paged_date_range.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按起运日期范围分页获取航空货运包机或者散货空运的订单总表。 |
+| `nfe.query_booking_detail` | 查询订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 精确查询铁路订单的全部详细状态、节点跟踪及明细数据。 |
+| `nfe.query_cargo_list` | 查询订单货物明细 | `read_only` | `low` | 否 | `schemas/nfe.booking_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 查询货物件毛体、品名、包装、HS code 等明细，用于报价、单证和报关校验。 |
+| `nfe.query_ocean_orders` | 查询海运订单列表 | `read_only` | `low` | 否 | `schemas/paged_date_range.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取国际海运散货、集装箱及多式联运订单的多条件组合分页列表。 |
+| `nfe.query_order_detail_by_mode` | 按运输模式查询订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_order_detail_by_mode.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 和运输模式自动分派到铁路、海运、空运、卡车、租箱或其它订单详情查询能力；用于业务编排中的兼容入口。 |
+| `nfe.query_order_template_detail` | 查询订单模板详情 | `read_only` | `low` | 否 | `schemas/nfe.query_order_template_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据模板唯一标识 ID 查询订单模板的详细预设费用、港口及舱位基础配置数据。 |
+| `nfe.query_order_templates` | 查询订单模板列表 | `read_only` | `low` | 否 | `schemas/paged_date_range.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取系统内置的快速生成重复多频次国际大宗物流订单模板列表。 |
+| `nfe.query_other_order_detail` | 查询其它订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单唯一标识 ID 精确查询仓储、报关等其它增值代理服务类订单的详细状态及业务明细数据。 |
+| `nfe.query_other_orders` | 查询其它业务订单列表 | `read_only` | `low` | 否 | `schemas/paged_date_range.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询仓储、报关、商检等其它延伸增值代理服务类的订单总表。 |
+| `nfe.query_rail_orders` | 查询铁路整拼订单列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页获取全部铁路整箱和拼箱运输订单的业务列表。 |
+| `nfe.query_rent_container_order_detail` | 查询租箱订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单唯一标识 ID 精确查询集装箱租赁订单的提空、还箱及相关堆场租借状态明细数据。 |
+| `nfe.query_rent_container_orders` | 查询租箱业务订单列表 | `read_only` | `low` | 否 | `schemas/paged_date_range.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取集装箱租赁、堆场提空箱与还箱业务的专项租赁订单列表。 |
+| `nfe.query_sea_order_detail` | 查询海运订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单唯一标识 ID 精确查询海运订单的详细状态、运力节点及明细数据。 |
+| `nfe.query_truck_order_detail` | 查询国际卡车订单详情 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单唯一标识 ID 精确查询跨境卡车运输订单的详细状态、口岸放行及物流节点数据。 |
+| `nfe.query_truck_orders` | 查询国际卡车订单列表 | `read_only` | `low` | 否 | `schemas/paged_date_range.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按日期范围分页获取公路公路卡车跨境物流运输的业务订单列表。 |
+| `nfe.quick_search` | 订单速查 | `read_only` | `low` | 否 | `schemas/nfe.quick_search.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按订单号、箱号、HSCode、起运港和目的港快速检索物流订单列表。 |
+
+## 风控
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.match_special_prohibited_cargo_hs_code` | 匹配HS Code敏感禁运风险 | `read_only` | `low` | 否 | `schemas/nfe.match_special_prohibited_cargo_hs_code.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按 HS Code 调用 NFE 真实敏感/禁运匹配接口，返回是否命中及相似 HS Code。 |
+| `nfe.query_special_prohibited_cargo_categories` | 查询敏感禁运货品分类 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询特殊/禁运货品分类，用于询盘、报价和接单前风险识别。 |
+| `nfe.query_special_prohibited_cargo_list` | 查询敏感禁运货品清单 | `read_only` | `low` | 否 | `schemas/nfe.query_special_prohibited_cargo_list.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按真实分类 ID 查询特殊/禁运货品清单，返回 HS Code、品名、线路、口岸和总数等信息。 |
+
+## 基础数据
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_city_levels` | 查询城市层级数据 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取全国以及相关合作城市的物流区域与行政层级级别字典数据。 |
+| `nfe.query_client_account` | 查询客户账号信息 | `read_only` | `low` | 否 | `schemas/nfe.client_id.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据客户 ID 查询客户账号信息，用于订单客户、托书和收发通核对。 |
+| `nfe.query_config_value` | 查询系统配置值 | `read_only` | `low` | 否 | `schemas/nfe.query_config_value.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按配置键查询 NFE 系统配置，用于报价比例、订单参数等系统规则读取。 |
+| `nfe.query_countries` | 查询国家字典列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取全球各个国家的中英文双语标准缩写与国家字典主数据。 |
+| `nfe.query_custom_view` | 查询自定义视图列表 | `read_only` | `low` | 否 | `schemas/nfe.query_custom_view.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据特定视图类型编码获取对应的系统用户自定义看板或者数据表格布局视图。 |
+| `nfe.query_dashboard_bookings` | 查询Dashboard接单列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页拉取客服/运营工作台待确认或近期已处理的接单数据列表。 |
+| `nfe.query_dashboard_month_graph` | 查询Dashboard月度绩效 | `read_only` | `low` | 否 | `schemas/nfe.query_dashboard_month_graph.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按月份读取首页月度绩效图表数据，用于判断拼箱、整箱和其它订单的月度趋势。 |
+| `nfe.query_dashboard_stats` | 查询Dashboard统计 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 读取首页客服单证工作台统计卡片，包括待受理订单、待收账运费单和待开票金额等真实指标。 |
+| `nfe.query_dict_type` | 查询数据字典值 | `read_only` | `low` | 否 | `schemas/nfe.query_dict_type.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据具体的字典类型编码，获取其对应的映射名值对数据（如箱型、业务状态等）。 |
+| `nfe.query_dict_type_detail` | 查询数据字典详情 | `read_only` | `low` | 否 | `schemas/nfe.query_dict_type_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按字典数据 ID 查询系统字典明细，用于核对后台字典配置。 |
+| `nfe.query_exit_ports` | 查询出境口岸列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询陆运/铁路运输中支持的出境关口/口岸字典列表。 |
+| `nfe.query_fee_company` | 查询费用公司列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 查询铁大大系统的结算费用公司列表（如宁波铁大大、铁达达物流等）。 |
+| `nfe.query_loading_warehouses` | 查询装货堆场仓库列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页获取系统中全部装货堆场、海运集港/提箱仓库的地址及联系人信息列表数据。 |
+| `nfe.query_overseas_ports` | 查询海外港口列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取海外清关、派送和目的港物流场景使用的海外港口/站点字典列表。 |
+| `nfe.query_platform_rate` | 查询平台实时汇率 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取系统内置的各种币种之间进行结算核对的平台最新即期汇率表。 |
+| `nfe.query_ports` | 查询全部港口列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取系统内支持的所有海运及铁路线路起运港/目的港口主字典数据。 |
+| `nfe.query_ports_list` | 查询港口搜索列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 提供带分页的港口、铁路线路站点模糊搜索匹配列表数据接口。 |
+| `nfe.query_railway_ports` | 查询铁路口岸列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 专用于获取中欧/中亚班列线路的主要铁路过境和出入境口岸字典列表。 |
+| `nfe.query_sales` | 查询销售人员列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取在职销售顾问/客户经理列表，用于订单分配与跟进人查询。 |
+| `nfe.query_suppliers` | 查询供应商列表 | `read_only` | `low` | 否 | `schemas/nfe.query_suppliers.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按类别过滤并查询合作的物流或运力供应商列表数据。 |
+| `nfe.query_users_all` | 查询全部用户下拉列表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取系统内所有用户员工的下拉列表，主要用于客服或业务跟进人选择过滤。 |
+| `nfe.query_warehouse_options` | 查询仓库堆场选项 | `read_only` | `low` | 否 | `schemas/nfe.query_warehouse_options.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按仓库类型和港口 ID 查询装箱仓、集货仓、海港仓等供应商仓库选项。 |
+| `nfe.search_client` | 搜索客户信息 | `read_only` | `low` | 否 | `schemas/nfe.search_client.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按客户名称搜索客户扩展/下拉信息，用于询盘归属、订单客户和开票客户识别。 |
+
+## 经营统计
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_lcl_container_opening_stats` | 查询拼箱开柜统计 | `read_only` | `low` | 否 | `schemas/nfe.query_lcl_container_opening_stats.input.json` | contract, error\_codes | 按明确日期范围读取 NFE 拼箱仓位管理看板，统计已发布的拼箱集拼柜记录；用于回答本周拼箱开了几个柜子。 |
+| `nfe.query_lcl_operation_stats` | 查询拼箱运营统计 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes | 读取 NFE 拼箱运营 Dashboard 的实时待配箱、待装箱统计；该接口不提供按周开柜数量。 |
+
+## 设备追踪
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_booking_containers` | 查询订单集装箱列表 | `read_only` | `low` | 否 | `schemas/nfe.query_booking_detail.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单 ID 查询该订单下绑定的全部集装箱（箱号、封号、箱型及状态）列表数据。 |
+| `nfe.query_geo_fences` | 查询电子围栏列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页查询系统定义的全部电子地理围栏及经纬度覆盖区域列表数据。 |
+| `nfe.query_gps_devices` | 查询GPS设备列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取物流集装箱在途追踪中使用的GPS追踪绑定的硬件定位设备详情列表。 |
+
+## 通知公告
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.check_messages` | 查询系统站内信与通知 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 分页拉取系统自动推送的异常状态预警、审核流待办或者其它系统站内信通知列表。 |
+
+## 托书建单
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.build_human_clarification` | 生成人工澄清问题 | `read_only` | `low` | 否 | `schemas/nfe.build_human_clarification.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 把建单 blockers、候选客户、候选班列和缺失字段整理成一次性人工确认问题。 |
+| `nfe.compose_rail_fcl_order_payload` | 组装铁路整箱建单 Payload 草案 | `read_only` | `medium` | 否 | `schemas/nfe.compose_rail_fcl_order_payload.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 把托书字段、客户上下文和路线班列上下文组装为 rail\_add payload 草案，并调用本地预检；该能力不会创建订单。 |
+| `nfe.compose_rail_lcl_order_payload` | 组装铁路拼箱建单 Payload 草案 | `read_only` | `medium` | 否 | `schemas/nfe.compose_rail_lcl_order_payload.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 把托书字段、客户上下文和拼箱上下文组装为铁路拼箱建单草案；当前不执行写入，直到 LCL payload 契约通过真实验证。 |
+| `nfe.link_order_communication` | 生成订单沟通关联草案 | `read_only` | `low` | 否 | `schemas/nfe.link_order_communication.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 把订单号、邮件或消息 thread、客户/供应商沟通摘要整理成可追溯关联草案；不写 NFE、不外发。 |
+| `nfe.parse_shipment_instruction` | 解析客户托书 | `read_only` | `low` | 否 | `schemas/nfe.parse_shipment_instruction.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 读取或接收托书文本，输出客户、路线、箱型箱量、收发通、货物、价格和服务方式等结构化字段；不修改 NFE 数据。 |
+| `nfe.prepare_customer_reply_draft` | 生成客户回复草案 | `read_only` | `low` | 否 | `schemas/nfe.prepare_customer_reply_draft.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 基于订单事实、供应商更新或人工输入生成客户回复草案；不发送邮件或消息。 |
+| `nfe.query_rail_lcl_add_order_context` | 查询铁路拼箱建单上下文 | `read_only` | `low` | 否 | `schemas/nfe.query_rail_lcl_add_order_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 读取铁路拼箱新增订单前置上下文，包括拼箱舱位、港口、班列号、客户账号和 HS 风控；写接口只返回阻断边界。 |
+| `nfe.record_external_supplier_update` | 生成外部供应商更新草案 | `read_only` | `low` | 否 | `schemas/nfe.record_external_supplier_update.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 把外配供应商邮件或消息中的节点、费用、订舱等更新整理成订单事实草案；不写 NFE。 |
+| `nfe.resolve_order_party_context` | 解析订单客户主体 | `read_only` | `low` | 否 | `schemas/nfe.resolve_order_party_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据托书委托人、发货人或邮箱匹配 NFE 客户、客户账号、销售和客服组候选；不唯一时返回 blocker。 |
+| `nfe.resolve_rail_route_schedule` | 解析铁路路线班列 | `read_only` | `low` | 否 | `schemas/nfe.resolve_rail_route_schedule.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据起运地、目的地、班期和箱量匹配 NFE 港口、铁路整箱班列和舱位候选；不匹配时返回 blocker。 |
+
+## 系统安全
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.get_routers` | 获取系统路由菜单树 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取当前用户登录拥有的后台路由导航菜单树，代表当前用户能访问的所有页面模块集合。 |
+| `nfe.get_user_info` | 获取当前用户信息 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取当前会话凭证登录用户的具体公司属性、角色、功能点权限等认证描述数据。 |
+
+## 业务操作
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.draft_write_operation` | 生成 NFE 写操作草案 | `read_only` | `medium` | 否 | `schemas/nfe.draft_write_operation.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 为受理订单、退仓、取消订单、发车、确认报关、申请放行、开票、收款登记等写操作生成审批草案；该能力不会修改 NFE 数据。 |
+| `nfe.execute_approved_operation` | 执行已审批 NFE 操作 | `write` | `high` | 是 | `schemas/nfe.execute_approved_operation.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 企业中枢审批后的唯一 NFE 写执行器。模型不传 approval\_id 或 approved\_by；EnterpriseTool 在进入工具包前验证一次性审批令牌。执行器只校验真实接口、预发布铁路白名单以及 execute=true/dry\_run=false。 |
+| `nfe.list_write_operations` | 查询 NFE 写操作注册表 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 列出已抓到真实 endpoint 的写操作、当前允许执行策略，以及仍被阻断的核心物流业务写操作，用于 agent 判断能否进入审批执行。 |
+| `nfe.preflight_write_operation` | 执行 NFE 写操作前置检查 | `read_only` | `medium` | 否 | `schemas/nfe.preflight_write_operation.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 按写操作类型检查真实 endpoint、payload 必填项、订单状态、单证、履约和财务前置条件，输出 blockers；通过后才能生成草案和进入企业中枢审批。 |
+
+## 业务操作系统
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.evaluate_operation_readiness` | 评估 NFE 业务操作就绪度 | `read_only` | `medium` | 否 | `schemas/nfe.evaluate_operation_readiness.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单状态、流程分支和拟操作 payload 判断受理、提货、装箱、报关、放行、发车、POD、还箱等动作是否可进入草案或审批，并返回缺失字段和阻断原因。 |
+| `nfe.get_business_flow_playbook` | 生成 NFE 业务流程作业地图 | `read_only` | `low` | 否 | `schemas/nfe.get_business_flow_playbook.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 把整箱、拼箱、箱管、报关放行、境外配送等 NFE 实际流程沉淀成机器可读的阶段、分支、角色和操作前置条件，用于 agent 判断下一步而不是反复追问用户。 |
+| `nfe.get_order_360` | 生成订单 360 业务视图 | `read_only` | `low` | 否 | `schemas/nfe.order_business_check.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 聚合订单详情、货物、箱号、报关、费用和费用审批，输出统一业务状态模型，用于 agent 一次性判断履约、单证、财务和结案条件。 |
+| `nfe.resolve_business_context` | 解析用户业务上下文 | `read_only` | `low` | 否 | `schemas/nfe.resolve_business_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据用户一句话和可检索线索判断业务意图，先查 NFE 可查数据，再推荐下一步应调用的系统级能力，减少反复追问用户。 |
+
+## 业务聚合
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.analyze_order_stage` | 分析订单当前阶段 | `read_only` | `low` | 否 | `schemas/nfe.analyze_order_stage.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单号或订单 ID 自动组合订单速查、订单详情、费用与状态字段，判断订单处于获客后下单、受理、装箱、发运、到站、单证或财务待处理等阶段，并输出风险和下一步建议。 |
+| `nfe.check_collection_status` | 检查订单回款状态 | `read_only` | `low` | 否 | `schemas/nfe.order_business_check.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单号或订单 ID 汇总收款情况、费用明细、应收台账、报价单和放行条件，用于回答是否已收款、是否可开票、是否可放行或催款。 |
+| `nfe.check_document_status` | 检查订单单证状态 | `read_only` | `low` | 否 | `schemas/nfe.order_business_check.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单号或订单 ID 汇总托书、附件、报关状态、报关方式、提单类型和放行状态，用于回答单证、报关、放行相关问题。 |
+| `nfe.check_fulfillment_status` | 检查订单履约状态 | `read_only` | `low` | 否 | `schemas/nfe.order_business_check.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单号或订单 ID 汇总订单状态、ETD、ATD、ATA、班列、箱号、装箱仓、起运港物流和目的港物流，用于回答客户“这个单到哪了”。 |
+| `nfe.detect_order_risks` | 识别订单业务风险 | `read_only` | `low` | 否 | `schemas/nfe.order_business_check.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据订单状态、报关状态、收款情况、放行状态、报价单绑定、托书和 ETD 等字段识别未报关、未结清、未放行、缺报价、缺托书、缺 ETD 等风险。 |
+| `nfe.prepare_quote_context` | 准备报价上下文 | `read_only` | `low` | 否 | `schemas/nfe.prepare_quote_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 根据客户询盘已有字段自动查询港口、国家、舱位、汇率等报价上下文，输出可继续报价的依据、缺失字段和应询问客户的最小问题集合。 |
+
+## 运营管理
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_cs_group` | 查询客服组列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取运营部门内部根据特定线路、大客户划分的专属客服组配置明细列表。 |
+| `nfe.query_loss_profit` | 查询亏损与微利列表 | `read_only` | `low` | 否 | `schemas/paged.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取运营管控中，因各种原因引发微利或者亏损异常的异常订单预警跟进日志表。 |
+| `nfe.query_loss_statistics` | 查询亏损与微利统计数据 | `read_only` | `low` | 否 | `schemas/empty.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | 获取运营管控中的亏损及微利订单总量与金额等宏观统计数据分析。 |
+
+## Atom
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.call_business_atom` | Call NFE business atom | `read_only` | `medium` | 否 | `schemas/nfe.call_business_atom.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Execute a safe-read atom or return preflight evidence for write/state-change atoms. No placeholder data is generated. |
+| `nfe.describe_business_atom` | Describe NFE business atom | `read_only` | `low` | 否 | `schemas/nfe.describe_business_atom.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Describe one atomized NFE business node, including endpoint, action class, path parameters, source files, and execution policy. |
+| `nfe.list_business_atoms` | List NFE business atoms | `read_only` | `low` | 否 | `schemas/nfe.list_business_atoms.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | List atomized business nodes generated from every cataloged NFE endpoint. Write/state-change atoms are listed but remain preflight-only. |
+
+## Auth
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.session_status` | Check NFE session status | `read_only` | `low` | 否 | `schemas/nfe.session_status.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Check whether NFE\_SATOKEN or the local NFE prerelease session file is usable before calling real business APIs. |
+
+## Catalog
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.call_api` | Call cataloged NFE API | `read_only` | `medium` | 否 | `schemas/nfe.call_api.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Call a cataloged NFE endpoint. Safe reads are allowed by default; mutations require explicit allow\_write after approval. |
+| `nfe.list_api_catalog` | List NFE API catalog | `read_only` | `low` | 否 | `schemas/nfe.list_api_catalog.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | List raw API endpoints extracted from the NFE prerelease frontend assets. |
+
+## Order
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.get_order_accept_context` | Get order accept context | `read_only` | `low` | 否 | `schemas/nfe.get_order_accept_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Fetch read-only context for an NFE orderAccept page, including core detail and best-effort related data. |
+
+## Page
+
+| Capability ID | 业务名称 | 访问 | 风险 | 审批 | 输入 Schema | 合同缺口 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `nfe.query_car_order_list` | Query car order list | `read_only` | `low` | 否 | `schemas/nfe.query_order_page_list.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Read the real car order list used by /order/carOrderList via POST /car/booking/list. |
+| `nfe.query_order_template_list` | Query order template list | `read_only` | `low` | 否 | `schemas/nfe.query_order_page_list.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Read the real order template list used by /order/orderTemplateList via POST /bookingTemplate/list. |
+| `nfe.query_rail_fcl_add_order_context` | Query rail FCL add-order context | `read_only` | `low` | 否 | `schemas/nfe.query_rail_fcl_add_order_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Read the real page context for /order/addOrder?bookingType=FCL&transportMode=RAIL, including form contracts, selector data, train-list context when requested, and blocked write endpoints. |
+| `nfe.query_rail_order_list` | Query rail order list | `read_only` | `low` | 否 | `schemas/nfe.query_order_page_list.input.json` | 完整 | Read the real rail order list used by /order/railOrderList via POST /railBooking/list. |
+| `nfe.query_rent_container_order_list` | Query rent-container order list | `read_only` | `low` | 否 | `schemas/nfe.query_order_page_list.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Read the real rent-container order list used by /order/rentContainerOrderList via POST /rentCont/booking/list. |
+| `nfe.query_train_position_context` | Query train position context | `read_only` | `low` | 否 | `schemas/nfe.query_train_position_context.input.json` | contract, examples, error\_codes, business\_preconditions, empty\_result\_meaning | Read real train/container position context for /trainM/positionM. Missing identifiers return blockers instead of fake GPS data. |
+
+## 能力集
+
+面向 Agent 插件时不要直接依赖整包 111 个 capability，应依赖 `toolpacks/nfe-logistics/capability-sets/index.json` 中的稳定业务能力集，并在插件合同中保留解析后的 capability/operation 快照。

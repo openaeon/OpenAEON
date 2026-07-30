@@ -1,0 +1,118 @@
+---
+title: "Agent、Skill 与 Manifest"
+sidebarTitle: "Agent 与 Skill"
+description: "定义双 Manifest、Agent 岗位责任、Skill 工作流和参数来源规则。"
+icon: "bot"
+---
+
+## 双 Manifest
+
+`.codex-plugin/plugin.json` 声明 Codex 组件：
+
+- Skill 根目录；
+- MCP Server；
+- UI 展示信息。
+
+`.fcacore-plugin/plugin.json` 声明 FCACore 业务治理：
+
+- 专家类型与 Agent；
+- 岗位、职责和移交；
+- 工具白名单；
+- 插件命令工具；
+- ToolPack capability/operation 依赖；
+- 权限和审批策略。
+
+两个 Manifest 的 `name`、`version` 必须一致，目录名必须等于 `name`。
+
+## 插件命令工具
+
+```json
+{
+  "pluginCapabilities": {
+    "tools": [
+      {
+        "name": "customer_lookup",
+        "description": "按唯一客户编号读取客户资料。",
+        "command": "node \"$FCACORE_PLUGIN_ROOT/adapters/plugin-tool.mjs\"",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "customer_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["customer_id"],
+          "additionalProperties": false
+        }
+      }
+    ]
+  }
+}
+```
+
+运行时提供：
+
+| 环境变量 | 内容 |
+| --- | --- |
+| `FCACORE_PLUGIN_ROOT` | 已安装插件根目录 |
+| `AEON_TOOL_NAME` | 当前工具名 |
+| `AEON_TOOL_INPUT` | JSON 字符串参数 |
+
+命令必须固定。不能把用户输入拼接进 `command`。
+
+## Agent 规范
+
+Agent 文件定义长期岗位行为，至少包含：
+
+- 使命；
+- `owns` 和 `doesNotOwn`；
+- 参数与事实来源；
+- 工具选择规则；
+- 写操作审批边界；
+- 失败和移交；
+- 输出合同。
+
+不要在 Agent 文件中复制完整 API 文档、写入凭据、声明未授予权限或把工具发现结果当成执行成功。
+
+一个插件默认只包含一个责任清晰的 Agent。只有确实存在独立岗位和移交关系时才引入专家团队。
+
+## Skill 规范
+
+Skill frontmatter 只包含：
+
+```yaml
+---
+name: create-order
+description: 核验订单资料并生成可审批建单草稿。用户要求创建订单、导入托书、检查建单缺项或提交订单时使用。
+---
+```
+
+`description` 同时描述能力和触发场景。SKILL.md 只保留：
+
+- 工具选择；
+- 固定流程；
+- 阻断条件；
+- 资源导航；
+- 完成门。
+
+字段合同和协议放 `references/`，确定性转换放 `scripts/`。
+
+`agents/openai.yaml` 的默认提示必须显式引用 Skill：
+
+```yaml
+interface:
+  display_name: "订单创建"
+  short_description: "核验订单资料并生成可审批建单草稿和回读证据"
+  default_prompt: "使用 $create-order 核验资料并准备建单草稿。"
+policy:
+  allow_implicit_invocation: true
+```
+
+## 参数规则
+
+- 只接受用户输入、附件解析结果或真实工具返回。
+- Schema 对稳定业务动作使用 `additionalProperties: false`。
+- 不为了减少追问而给未知业务字段设置默认值。
+- 候选不唯一时返回 `input_required`。
+- 空结果是有效结果，不补造记录。
